@@ -1,0 +1,120 @@
+import React from 'react';
+import { Copy, Users } from 'lucide-react';
+
+const WaitingRoom = () => {
+  const students = [
+    { id: 1, name: 'เจษฎา ชาร้อน', role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix' },
+    { id: 2, name: 'Thanaphon', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka' },
+    { id: 3, name: 'Wimolchai', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai' },
+    { id: 4, name: 'Pathiphat', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pathiphat' },
+    { id: 5, name: 'ลีโอ วัฒนเดชา', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#E5E7EB] p-4 md:p-8 font-sans flex flex-col items-center">
+      {/* Top Profile Bar */}
+      <div className="w-full max-w-5xl flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
+          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" alt="Host" className="w-full h-full bg-sky-300" />
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-800 text-sm">Simon14</h3>
+          <p className="text-xs text-gray-400">อาจารย์</p>
+        </div>
+      </div>
+
+      <div className="w-full max-w-5xl bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col">
+        {/* Header Pink Section */}
+        <div className="bg-[#F8A4A4] p-6 md:px-10 flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter">
+            PROGRAMMING
+          </h1>
+          <div className="flex items-center gap-3 bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl">
+            <span className="text-[#4B3E7A] text-2xl md:text-3xl font-black">#8993633</span>
+            <button className="p-2 bg-white rounded-xl shadow-sm text-sky-400 hover:bg-gray-50 transition-colors">
+              <Copy size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="p-6 md:p-10 bg-[#E5E7EB] grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Left: Students List */}
+          <div className="flex flex-col gap-3">
+            {students.map((student) => (
+              <div 
+                key={student.id} 
+                className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border border-transparent hover:border-white transition-all"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border-2 border-white">
+                    <img src={student.avatar} alt={student.name} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-700 leading-tight">{student.name}</h4>
+                    <p className="text-xs text-gray-400">{student.role}</p>
+                  </div>
+                </div>
+                
+                <div className={`px-6 py-1.5 rounded-xl font-bold text-sm text-white shadow-sm
+                  ${student.status === 'ready' ? 'bg-[#6B8DCC]' : 'bg-[#C96C6C]'}
+                `}>
+                  {student.status === 'ready' ? 'Ready' : 'wait'}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Right: Info & Status */}
+          <div className="flex flex-col gap-6">
+            {/* Room Info Card */}
+            <div className="bg-white rounded-[32px] p-8 shadow-sm flex flex-col gap-6 relative">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
+                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" alt="Host" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-gray-700">Simon14</h3>
+                    <span className="bg-[#7B85A4] text-[10px] text-white px-2 py-0.5 rounded-md font-bold uppercase tracking-wider">Host</span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-medium">อาจารย์</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold text-[#4B3E7A]">จับกลุ่มวิชา Ai</h2>
+                <div className="grid grid-cols-2 gap-y-4">
+                  <div>
+                    <p className="text-sm text-gray-500 font-medium">กำหนดส่ง 12 พ.ย. นี้</p>
+                    <p className="text-sm text-gray-500 font-medium italic mt-1">จำนวน 30 คน กลุ่มละ 3 คน</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500 font-medium">เข้าร่วมแล้ว:</p>
+                    <p className="text-xl font-black text-[#4B3E7A]">30/30</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ready Status Big Card */}
+            <div className="bg-white rounded-[32px] overflow-hidden shadow-sm flex h-32 md:h-40">
+              <div className="flex-[3] flex items-center justify-center p-4">
+                <h1 className="text-5xl md:text-6xl font-black italic tracking-tighter text-[#6C63FF]/80 uppercase">
+                  READY
+                </h1>
+              </div>
+              <div className="flex-[2] bg-[#7559B8] flex flex-col items-center justify-center text-white p-4">
+                <span className="text-4xl md:text-5xl font-black">29/30</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default WaitingRoom;
