@@ -1,0 +1,168 @@
+'use client';
+
+import React, { useState } from 'react';
+import { LucideMessageCircle, Edit2, List, Info, Send, User } from 'lucide-react';
+
+export default function MyTeamPage() {
+  const [message, setMessage] = useState('');
+
+  // ข้อมูลสมาชิกในทีม (เฉพาะกลุ่มย่อย 3 คน)
+  const teamMembers = [
+    { id: 1, name: 'อีวาน นาวาริน', role: 'นักเรียน', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivan', isLeader: false },
+    { id: 2, name: 'เจษฎา ชาร้อน', role: 'นักเรียน', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed', isLeader: false },
+    { id: 3, name: 'Wimolchai', role: 'นักเรียน', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai', isLeader: true },
+  ];
+
+  // ข้อมูลแชทจำลอง
+  const chatMessages = [
+    { id: 1, sender: 'อีวาน นาวาริน', text: 'Hiii', time: '10:24', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivan' },
+    { id: 2, sender: 'เจษฎา ชาร้อน', text: '👋', time: '10:25', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed' },
+    { id: 3, sender: 'Wimolchai', text: 'Hi', time: '10:26', isMe: true },
+    { id: 4, sender: 'Wimolchai', text: 'เลือกหัวหน้ากันเลยดีไหม?', time: '10:26', isMe: true },
+    { id: 5, sender: 'เจษฎา ชาร้อน', text: 'Ok', time: '10:27', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
+      {/* Header Section - ปรับพื้นหลังให้เข้มตามภาพ */}
+      <header className="w-full flex items-center justify-between bg-white p-4 shadow-sm">
+        <div className="max-w-7xl mx-auto w-full flex items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
+              <img 
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <h2 className="font-bold text-xl text-gray-800 leading-tight">Wimolchai</h2>
+              <p className="text-xs text-gray-500 font-medium">นักเรียน</p>
+            </div>
+          </div>
+          <button className="bg-[#4ade80] p-3 rounded-full text-white shadow-lg">
+            <LucideMessageCircle fill="currentColor" size={28} />
+          </button>
+        </div>
+      </header>
+
+      {/* Main Sub-Header Tools */}
+      <div className="w-full max-w-7xl px-6 mt-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button className="bg-[#FF9142] text-white px-8 py-3 rounded-t-2xl font-bold text-xl shadow-lg">
+            My team
+          </button>
+          <button className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors">
+            <Edit2 size={20} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="bg-[#7096D1] text-white px-10 py-3 rounded-full font-bold text-xl flex items-center gap-2 shadow-inner">
+            3 :Members
+          </div>
+          <div className="flex gap-2">
+            <button className="bg-[#2D3E50] p-3 rounded-lg text-white"><List size={20} /></button>
+            <button className="bg-[#2D3E50] p-3 rounded-full text-white"><Info size={20} /></button>
+          </div>
+        </div>
+      </div>
+
+      {/* Team Content Grid */}
+      <main className="w-full max-w-7xl px-6 pb-12">
+        <div className="bg-[#E5E7EB] rounded-b-[40px] rounded-tr-[40px] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px] shadow-2xl">
+          
+          {/* Left Column: Team Management */}
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <div className="flex flex-col gap-3">
+              {teamMembers.map((member) => (
+                <div key={member.id} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm relative group">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
+                        <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                      </div>
+                      {member.isLeader && (
+                        <div className="absolute -bottom-1 -right-1 bg-[#2D3E50] text-white rounded-full p-1 border-2 border-white">
+                          <User size={12} fill="currentColor" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-800 text-lg">{member.name}</h4>
+                      <p className="text-sm text-gray-400">{member.role}</p>
+                    </div>
+                  </div>
+                  <button className="w-12 h-12 rounded-full bg-[#7086D1] flex items-center justify-center text-white text-2xl font-bold hover:bg-[#5A74B1] transition-colors">
+                    ?
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button className="w-full bg-[#7096D1] text-white py-4 rounded-2xl font-bold text-xl shadow-lg hover:bg-[#5A74B1] transition-all transform active:scale-95">
+              “Choose a team leader”
+            </button>
+
+            {/* Bottom Analysis Cards */}
+            <div className="grid grid-cols-2 gap-4 mt-auto">
+              <div className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200">
+                <span className="font-bold text-gray-700">Vote</span>
+                <div className="w-24 h-24 flex items-center justify-center">
+                  <img src="https://cdn-icons-png.flaticon.com/512/3050/3050525.png" alt="Vote Icon" className="w-full h-full object-contain" />
+                </div>
+              </div>
+              <div className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200">
+                <span className="font-bold text-gray-700">Analyze</span>
+                <div className="w-24 h-24 flex items-center justify-center">
+                  <img src="https://cdn-icons-png.flaticon.com/512/2620/2620703.png" alt="Analyze Icon" className="w-full h-full object-contain" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Chat Section */}
+          <div className="lg:col-span-7 bg-white rounded-[30px] flex flex-col overflow-hidden shadow-inner">
+            <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
+              <div className="text-center text-gray-400 text-sm mb-4">10:24</div>
+              
+              {chatMessages.map((msg) => (
+                <div key={msg.id} className={`flex items-end gap-3 ${msg.isMe ? 'flex-row-reverse' : ''}`}>
+                  {!msg.isMe && (
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+                      <img src={msg.avatar} alt={msg.sender} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className={`flex flex-col ${msg.isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                    <div className={`px-5 py-3 rounded-3xl font-medium text-lg shadow-sm ${
+                      msg.isMe 
+                      ? 'bg-[#7096D1] text-white rounded-br-none' 
+                      : 'bg-gray-600 text-white rounded-bl-none'
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
+              <input 
+                type="text" 
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="เริ่มแชท......"
+                className="flex-1 bg-gray-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700"
+              />
+              <button className="w-14 h-14 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all">
+                <Send size={28} />
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  );
+}
