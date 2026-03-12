@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, ChevronLeft, Users, BookOpen, AlignLeft } from 'lucide-react';
 
 export default function CreateRoomPage() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -11,9 +14,20 @@ export default function CreateRoomPage() {
     groupSize: ''
   });
 
+  const [showError, setShowError] = useState(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  const handleCreate = () => {
+    const { title, description, totalMembers, groupSize } = formData;
+    if (!title || !description || !totalMembers || !groupSize) {
+      setShowError(true);
+      return;
+    }
+    setShowError(false);
+    router.push('/create/typesetting');
   };
 
   return (
@@ -23,9 +37,9 @@ export default function CreateRoomPage() {
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200 shadow-sm">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" 
-                alt="Profile" 
+              <img
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon"
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -43,9 +57,12 @@ export default function CreateRoomPage() {
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-12 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
-          
+
           {/* Back Button */}
-          <button className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
+          <button
+            onClick={() => router.push('/')}
+            className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90"
+          >
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
 
@@ -61,7 +78,7 @@ export default function CreateRoomPage() {
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                   <BookOpen size={24} />
                 </div>
-                <input 
+                <input
                   type="text"
                   name="title"
                   placeholder="ชื่อกิจกรรม"
@@ -76,7 +93,7 @@ export default function CreateRoomPage() {
                 <div className="absolute left-4 top-6 text-gray-400">
                   <AlignLeft size={24} />
                 </div>
-                <textarea 
+                <textarea
                   name="description"
                   placeholder="รายละเอียดกิจกรรม / รายละเอียดห้อง"
                   value={formData.description}
@@ -92,7 +109,7 @@ export default function CreateRoomPage() {
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                     <Users size={24} />
                   </div>
-                  <input 
+                  <input
                     type="number"
                     name="totalMembers"
                     placeholder="จำนวนนักเรียนทั้งหมด"
@@ -105,7 +122,7 @@ export default function CreateRoomPage() {
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                     <Users size={24} />
                   </div>
-                  <input 
+                  <input
                     type="number"
                     name="groupSize"
                     placeholder="จำนวนกลุ่มละกี่คน"
@@ -119,14 +136,19 @@ export default function CreateRoomPage() {
 
             {/* Create Button */}
             <div className="pt-4">
-              <button className="w-full bg-[#7096D1] text-white py-6 rounded-[25px] font-black text-3xl shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] transition-all active:shadow-none active:translate-y-[8px] uppercase tracking-widest">
+              <button
+                onClick={handleCreate}
+                className="w-full bg-[#7096D1] text-white py-6 rounded-[25px] font-black text-3xl shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] transition-all active:shadow-none active:translate-y-[8px] uppercase tracking-widest">
                 CREATE
               </button>
             </div>
           </div>
 
-          <div className="mt-8 text-gray-400 text-sm font-medium italic opacity-60">
-            * ตรวจสอบข้อมูลให้ครบถ้วนก่อนกดสร้างห้อง
+          <div className="mt-8 text-sm font-medium italic">
+            {showError
+              ? <p className="text-red-500 font-bold opacity-90">⚠️ กรุณากรอกข้อมูลให้ครบทุกช่องก่อนกดสร้างห้อง</p>
+              : <p className="text-gray-400 opacity-60">* ตรวจสอบข้อมูลให้ครบถ้วนก่อนกดสร้างห้อง</p>
+            }
           </div>
         </div>
       </main>

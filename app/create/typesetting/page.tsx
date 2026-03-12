@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, ChevronLeft, Settings2, Users2, LayoutGrid, CheckCircle2 } from 'lucide-react';
 
 export default function TypesettingPage() {
+  const router = useRouter()
+
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
 
   const settingOptions = [
@@ -34,9 +37,9 @@ export default function TypesettingPage() {
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200 shadow-sm">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" 
-                alt="Profile" 
+              <img
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon"
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -54,9 +57,11 @@ export default function TypesettingPage() {
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
-          
+
           {/* Back Button */}
-          <button className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
+          <button
+            onClick={() => router.back()} // เพิ่ม onClick
+            className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
 
@@ -71,14 +76,14 @@ export default function TypesettingPage() {
           {/* Settings Options Grid */}
           <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {settingOptions.map((option) => (
-              <button 
+              <button
                 key={option.id}
                 onClick={() => setSelectedSetting(option.id)}
                 className={`
                   bg-[#2D3E50] rounded-[35px] p-8 flex flex-col items-center text-center gap-4 shadow-xl
                   transition-all duration-300 border-4 relative overflow-hidden group
-                  ${selectedSetting === option.id 
-                    ? 'border-[#7096D1] scale-105 ring-4 ring-[#7096D1]/20' 
+                  ${selectedSetting === option.id
+                    ? 'border-[#7096D1] scale-105 ring-4 ring-[#7096D1]/20'
                     : 'border-transparent hover:border-gray-500'}
                 `}
               >
@@ -96,11 +101,11 @@ export default function TypesettingPage() {
                 `}>
                   {option.icon}
                 </div>
-                
+
                 <h3 className="text-white text-2xl font-black italic tracking-wider">
                   {option.title}
                 </h3>
-                
+
                 <p className="text-gray-400 text-sm leading-relaxed font-medium">
                   {option.description}
                 </p>
@@ -110,12 +115,12 @@ export default function TypesettingPage() {
 
           {/* Action Button - ปรับให้เหมือนหน้า Create Room (3D Style) */}
           <div className="w-full flex justify-center pt-4">
-            <button 
+            <button
               disabled={!selectedSetting}
               className={`
                 w-full max-w-sm py-6 rounded-[25px] font-black text-3xl transition-all transform uppercase tracking-widest
-                ${selectedSetting 
-                  ? 'bg-[#7096D1] text-white shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]' 
+                ${selectedSetting
+                  ? 'bg-[#7096D1] text-white shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'}
               `}
             >

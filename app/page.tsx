@@ -1,7 +1,11 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, Brain, Lightbulb, Settings, Pencil, Plus, Minus } from 'lucide-react';
 
 const App = () => {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       {/* Header Section - ปรับให้ชนขอบจอสุด (Full Width) */}
@@ -32,7 +36,10 @@ const App = () => {
         {/* Left Section: Create, Join, Team (Keeping Original Design) */}
         <div className="bg-white rounded-[40px] p-6 shadow-sm flex flex-col gap-4 min-h-[500px]">
           {/* Create Button (Yellow) */}
-          <div className="relative bg-yellow-400 flex-1 rounded-[30px] flex flex-col items-center justify-center cursor-pointer hover:brightness-95 transition-all">
+          <div 
+            className="relative bg-yellow-400 flex-1 rounded-[30px] flex flex-col items-center justify-center cursor-pointer hover:brightness-95 transition-all"
+            onClick={() => router.push('/create/createroom')} // เพิ่ม onClick
+          >
             <h1 className="text-5xl font-black text-emerald-900 italic tracking-tighter">Create</h1>
             <p className="text-emerald-800 font-bold text-xl mt-1">สร้างห้อง</p>
           </div>
