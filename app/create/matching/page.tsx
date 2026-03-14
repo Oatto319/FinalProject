@@ -1,6 +1,19 @@
-import React from 'react';
+'use client';
+
+import { useRouter } from 'next/navigation'
+import React, { useEffect } from 'react';
+
 
 const MatchingPage = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push('/create/group');
+    }, 3000); // 3 วินาที แล้วไปหน้า Group
+
+    return () => clearTimeout(timer);
+  }, []);
   return (
     <div className="min-h-screen bg-[#1A2E44] flex flex-col items-center font-sans overflow-hidden">
       {/* ส่วนแถบโปรไฟล์ด้านบนสุด (Top Bar) */}

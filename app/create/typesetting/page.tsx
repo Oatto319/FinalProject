@@ -117,12 +117,13 @@ export default function TypesettingPage() {
           <div className="w-full flex justify-center pt-4">
             <button
               disabled={!selectedSetting}
+              onClick={() => selectedSetting && router.push('/create/match')}
               className={`
-                w-full max-w-sm py-6 rounded-[25px] font-black text-3xl transition-all transform uppercase tracking-widest
-                ${selectedSetting
+      w-full max-w-sm py-6 rounded-[25px] font-black text-3xl transition-all transform uppercase tracking-widest
+      ${selectedSetting
                   ? 'bg-[#7096D1] text-white shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'}
-              `}
+    `}
             >
               CONFIRM
             </button>

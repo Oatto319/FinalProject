@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Copy } from 'lucide-react';
 
@@ -12,6 +13,7 @@ interface Student {
 }
 
 const MatchPage = () => {
+   const router = useRouter();
   // จำลองข้อมูลนักเรียน: ปรับสถานะทุกคนเป็น 'ready' เพื่อจำลองเหตุการณ์ที่ทุกคนพร้อมแล้ว
   const [students, setStudents] = useState<Student[]>([
     { id: 1, name: 'เจษฎา ชาร์รอน', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jedsada' },
@@ -28,7 +30,7 @@ const MatchPage = () => {
 
   // ฟังก์ชันสลับสถานะ (ใช้สำหรับทดสอบโดยการคลิกที่แถบชื่อนักเรียน)
   const toggleReady = (id: number) => {
-    setStudents(prev => prev.map(s => 
+    setStudents(prev => prev.map(s =>
       s.id === id ? { ...s, status: s.status === 'wait' ? 'ready' : 'wait' } : s
     ));
   };
@@ -65,7 +67,7 @@ const MatchPage = () => {
           </h1>
           <div className="flex items-center gap-4 bg-white/20 px-6 py-2 rounded-2xl backdrop-blur-sm">
             <span className="text-[#4B3E7A] text-2xl md:text-3xl font-black">#8993633</span>
-            <button 
+            <button
               onClick={handleCopy}
               className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm"
             >
@@ -76,12 +78,12 @@ const MatchPage = () => {
 
         {/* ส่วนเนื้อหารายชื่อและสถานะ */}
         <div className="bg-[#D1D5DB]/40 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-b-[40px] border-b-8 border-gray-300 shadow-inner">
-          
+
           {/* รายชื่อนักเรียนทางด้านซ้าย */}
           <div className="flex flex-col gap-3">
             {students.map((student) => (
-              <div 
-                key={student.id} 
+              <div
+                key={student.id}
                 onClick={() => toggleReady(student.id)}
                 className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200"
               >
@@ -94,7 +96,7 @@ const MatchPage = () => {
                     <p className="text-[10px] text-gray-400 uppercase font-medium">{student.role}</p>
                   </div>
                 </div>
-                
+
                 <div className={`
                   px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors
                   ${student.status === 'ready' ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}
@@ -153,7 +155,9 @@ const MatchPage = () => {
                 </div>
               ) : (
                 /* กรณีที่ทุกคนพร้อมแล้ว (MATCH) */
-                <button className="w-full relative group transition-transform active:scale-95">
+                <button
+                  onClick={() => router.push('/create/matching')}
+                  className="w-full relative group transition-transform active:scale-95">
                   <div className="absolute inset-0 bg-[#D97706] rounded-[32px] translate-y-2 group-active:translate-y-1"></div>
                   <div className="relative bg-[#FF8A00] hover:bg-[#FF9D2E] text-white py-10 rounded-[32px] flex items-center justify-center transition-all border-b-4 border-white/20">
                     <h1 className="text-7xl font-black italic tracking-tighter uppercase drop-shadow-md">
@@ -167,7 +171,7 @@ const MatchPage = () => {
 
         </div>
       </div>
-      
+
       {/* คำแนะนำทดสอบ */}
       <div className="mt-8 text-center">
         <p className="text-gray-400 text-[10px] italic">
