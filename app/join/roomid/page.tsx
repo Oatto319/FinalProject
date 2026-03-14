@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, ChevronLeft, ArrowRightCircle } from 'lucide-react';
 
 export default function EnterRoomIdPage() {
+  const router = useRouter();
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       {/* Header Section - สไตล์เดิม ชนขอบจอสุด */}
@@ -59,9 +61,12 @@ export default function EnterRoomIdPage() {
           {/* Navigation Buttons */}
           <div className="w-full max-w-[500px] flex justify-between items-center">
             {/* Back Button */}
-            <button className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-all active:scale-90">
-              <ChevronLeft size={32} strokeWidth={2.5} />
-            </button>
+            <button 
+  className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-all active:scale-90"
+  onClick={() => router.back()}
+>
+  <ChevronLeft size={32} strokeWidth={2.5} />
+</button>
 
             {/* Next Button */}
             <button className="bg-[#2D3E50] text-white flex items-center gap-3 px-8 py-3 rounded-2xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-md group">
