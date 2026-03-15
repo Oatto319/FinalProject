@@ -1,9 +1,12 @@
 'use client';
 
 import React from 'react';
-import { LucideMessageCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LucideMessageCircle, ChevronLeft } from 'lucide-react';
 
 export default function TemplatesPage() {
+  const router = useRouter();
+
   const templates = [
     {
       title: 'PROGRAMMING',
@@ -42,9 +45,9 @@ export default function TemplatesPage() {
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
-                alt="Profile" 
+              <img
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -62,16 +65,26 @@ export default function TemplatesPage() {
       {/* Main Content - เลื่อนระยะลงมาจาก App Bar ด้วย mt-8 */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center">
-          
+
+          {/* --- เพิ่ม: ปุ่ม Back --- */}
+          <div className="w-full flex items-center mb-6">
+            <button
+              onClick={() => router.push('/')}
+              className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-colors active:scale-95">
+              <ChevronLeft size={28} strokeWidth={2.5} />
+            </button>
+          </div>
+
           <h1 className="text-2xl md:text-3xl font-bold text-[#2D3142] mb-10 text-center">
-            “Choose Templates”
+            "Choose Templates"
           </h1>
 
           {/* Templates Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             {templates.map((item, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
+                onClick={() => index === 0 && router.push('/question/programming')}
                 className={`${item.bgColor} rounded-[35px] p-6 flex flex-col items-center cursor-pointer hover:scale-[1.02] transition-transform duration-300 shadow-md min-h-[280px]`}
               >
                 {/* Title Section */}

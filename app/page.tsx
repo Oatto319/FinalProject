@@ -82,7 +82,10 @@ const App = () => {
             </div>
 
             {/* Central Circle */}
-            <div className="w-44 h-44 bg-teal-200 rounded-full flex items-center justify-center shadow-inner border-4 border-white z-10">
+            <div
+              onClick={() => router.push('/mytype')}
+              className="w-44 h-44 bg-teal-200 rounded-full flex items-center justify-center shadow-inner border-4 border-white z-10 cursor-pointer hover:bg-teal-300 transition-colors"
+            >
               <h2 className="text-3xl font-black text-indigo-900 tracking-tighter">MY TYPE</h2>
             </div>
           </div>
@@ -92,7 +95,9 @@ const App = () => {
             {/* Red Row */}
             <div className="flex items-center gap-4">
               <div className="flex-grow bg-rose-300 h-16 rounded-2xl"></div>
-              <div className="w-16 h-16 bg-green-100 border-4 border-green-200 rounded-full flex items-center justify-center text-green-500 cursor-pointer hover:bg-green-200 transition-colors">
+              <div
+                onClick={() => router.push('/templates')}
+                className="w-16 h-16 bg-green-100 border-4 border-green-200 rounded-full flex items-center justify-center text-green-500 cursor-pointer hover:bg-green-200 transition-colors">
                 <Plus size={32} strokeWidth={4} />
               </div>
             </div>

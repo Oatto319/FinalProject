@@ -1,7 +1,11 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { X, Pencil, Brain, Lightbulb, Settings } from 'lucide-react';
 
 const MyTypePage = () => {
+  const router = useRouter();
   const types = [
     {
       id: 'programming',
@@ -70,10 +74,10 @@ const MyTypePage = () => {
       {/* Top Bar */}
       <div className="w-full max-w-6xl flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
-          <img 
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
-            alt="User Profile" 
-            className="w-full h-full bg-yellow-100" 
+          <img
+            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
+            alt="User Profile"
+            className="w-full h-full bg-yellow-100"
           />
         </div>
         <div>
@@ -84,13 +88,16 @@ const MyTypePage = () => {
 
       {/* Main Card Container */}
       <div className="w-full max-w-6xl bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col relative border-b-8 border-gray-300">
-        
+
         {/* Header Label */}
         <div className="flex justify-between items-center p-6 pb-0">
           <div className="bg-[#A7F3D0] px-10 py-3 rounded-tl-3xl rounded-br-3xl shadow-sm">
             <h1 className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter">MY TYPE</h1>
           </div>
-          <button className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <button
+            onClick={() => router.back()}
+            className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100 transition-colors"
+          >
             <X size={24} strokeWidth={3} className="text-gray-800" />
           </button>
         </div>
@@ -105,7 +112,7 @@ const MyTypePage = () => {
                   {item.title}
                 </h2>
               </div>
-              
+
               {/* Type Details Body */}
               <div className="bg-white p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
                 <div className="flex flex-col items-center gap-2 min-w-[120px]">
@@ -114,7 +121,7 @@ const MyTypePage = () => {
                   </div>
                   <p className="font-bold text-gray-600 text-sm">{item.subtitle}</p>
                 </div>
-                
+
                 <div className="flex-1">
                   <h4 className="font-bold text-gray-700 mb-2">ลักษณะเด่น:</h4>
                   <ul className="space-y-1">
