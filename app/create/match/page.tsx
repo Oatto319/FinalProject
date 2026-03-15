@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Copy } from 'lucide-react';
 
 interface Student {
@@ -12,28 +12,44 @@ interface Student {
   avatar: string;
 }
 
+const TOTAL_MEMBERS = 5;
+
 const MatchPage = () => {
-   const router = useRouter();
-  // จำลองข้อมูลนักเรียน: ปรับสถานะทุกคนเป็น 'ready' เพื่อจำลองเหตุการณ์ที่ทุกคนพร้อมแล้ว
-  const [students, setStudents] = useState<Student[]>([
-    { id: 1, name: 'เจษฎา ชาร์รอน', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jedsada' },
-    { id: 2, name: 'Thanaphon', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Thanaphon' },
-    { id: 3, name: 'Wimolchai', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai' },
-    { id: 4, name: 'Pathiphat', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pathiphat' },
-    { id: 5, name: 'ลีโอ วัฒนเดชา', role: 'นักเรียน', status: 'ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo' },
-  ]);
+  const router = useRouter();
 
-  // คำนวณจำนวนคนที่พร้อม
-  const readyCount = students.filter(s => s.status === 'ready').length;
-  const totalCount = students.length;
-  const isAllReady = readyCount === totalCount;
+  // ข้อมูลนักเรียน (คงเดิม)
+  const students: Student[] = [
+    { id: 1, name: 'เจษฎา ชาร์รอน', role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jedsada' },
+    { id: 2, name: 'Thanaphon',       role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Thanaphon' },
+    { id: 3, name: 'Wimolchai',       role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai' },
+    { id: 4, name: 'Pathiphat',       role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pathiphat' },
+    { id: 5, name: 'ลีโอ วัฒนเดชา', role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo' },
+  ];
 
-  // ฟังก์ชันสลับสถานะ (ใช้สำหรับทดสอบโดยการคลิกที่แถบชื่อนักเรียน)
-  const toggleReady = (id: number) => {
-    setStudents(prev => prev.map(s =>
-      s.id === id ? { ...s, status: s.status === 'wait' ? 'ready' : 'wait' } : s
-    ));
-  };
+  // --- เพิ่ม: อ่านสถานะ ready จาก localStorage แทนการ hardcode ---
+  const [readyUsers, setReadyUsers] = useState<string[]>([]);
+
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
+    setReadyUsers(stored);
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
+      setReadyUsers(stored);
+    };
+    window.addEventListener('storage', handleStorage);
+    const interval = setInterval(handleStorage, 2000);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
+
+  const readyCount = readyUsers.length;
+  const isAllReady = readyCount >= TOTAL_MEMBERS;
+  // --- สิ้นสุดส่วนที่เพิ่ม ---
 
   // ฟังก์ชันคัดลอกรหัสห้อง
   const handleCopy = () => {
@@ -84,7 +100,6 @@ const MatchPage = () => {
             {students.map((student) => (
               <div
                 key={student.id}
-                onClick={() => toggleReady(student.id)}
                 className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200"
               >
                 <div className="flex items-center gap-4">
@@ -97,11 +112,12 @@ const MatchPage = () => {
                   </div>
                 </div>
 
+                {/* --- แก้: สถานะอ่านจาก readyUsers แทน student.status --- */}
                 <div className={`
                   px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors
-                  ${student.status === 'ready' ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}
+                  ${readyUsers.includes(student.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}
                 `}>
-                  {student.status}
+                  {readyUsers.includes(student.name) ? 'ready' : 'wait'}
                 </div>
               </div>
             ))}
@@ -138,7 +154,7 @@ const MatchPage = () => {
               </div>
             </div>
 
-            {/* ส่วนแสดงผลเงื่อนไข: ตอนนี้ทุกคน Ready แล้ว จะแสดงปุ่ม Match */}
+            {/* ส่วนแสดงผลเงื่อนไข */}
             <div className="flex-1 flex flex-col justify-end">
               {!isAllReady ? (
                 /* กรณีที่มีคนยังไม่พร้อม */
@@ -148,8 +164,9 @@ const MatchPage = () => {
                       READY
                     </span>
                   </div>
+                  {/* --- แก้: แสดง readyCount จริงจาก localStorage --- */}
                   <div className="flex-[2] bg-[#7C3AED] flex flex-col items-center justify-center text-white">
-                    <span className="text-6xl font-black leading-none">{readyCount}/{totalCount}</span>
+                    <span className="text-6xl font-black leading-none">{readyCount}/{TOTAL_MEMBERS}</span>
                     <span className="text-xs font-bold uppercase mt-2 tracking-widest opacity-80">Waiting...</span>
                   </div>
                 </div>

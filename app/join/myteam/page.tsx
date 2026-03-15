@@ -1,10 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, Edit2, List, Info, Send, User } from 'lucide-react';
 
 export default function MyTeamPage() {
+  const router = useRouter();
   const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([
+    { id: 1, sender: 'อีวาน นาวาริน', text: 'Hiii', time: '10:24', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivan' },
+    { id: 2, sender: 'เจษฎา ชาร้อน', text: '👋', time: '10:25', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed' },
+    { id: 3, sender: 'Wimolchai', text: 'Hi', time: '10:26', isMe: true },
+    { id: 4, sender: 'Wimolchai', text: 'เลือกหัวหน้ากันเลยดีไหม?', time: '10:26', isMe: true },
+    { id: 5, sender: 'เจษฎา ชาร้อน', text: 'Ok', time: '10:27', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed' },
+  ]);
 
   // ข้อมูลสมาชิกในทีม (เฉพาะกลุ่มย่อย 3 คน)
   const teamMembers = [
@@ -13,14 +22,22 @@ export default function MyTeamPage() {
     { id: 3, name: 'Wimolchai', role: 'นักเรียน', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai', isLeader: true },
   ];
 
-  // ข้อมูลแชทจำลอง
-  const chatMessages = [
-    { id: 1, sender: 'อีวาน นาวาริน', text: 'Hiii', time: '10:24', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivan' },
-    { id: 2, sender: 'เจษฎา ชาร้อน', text: '👋', time: '10:25', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed' },
-    { id: 3, sender: 'Wimolchai', text: 'Hi', time: '10:26', isMe: true },
-    { id: 4, sender: 'Wimolchai', text: 'เลือกหัวหน้ากันเลยดีไหม?', time: '10:26', isMe: true },
-    { id: 5, sender: 'เจษฎา ชาร้อน', text: 'Ok', time: '10:27', isMe: false, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed' },
-  ];
+  // --- เพิ่ม: ฟังก์ชัน send message ---
+  const handleSend = () => {
+    if (!message.trim()) return;
+    const now = new Date();
+    const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+    setMessages((prev) => [
+      ...prev,
+      { id: prev.length + 1, sender: 'Wimolchai', text: message.trim(), time, isMe: true },
+    ]);
+    setMessage('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSend();
+  };
+  // --- สิ้นสุดส่วนที่เพิ่ม ---
 
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
@@ -52,7 +69,10 @@ export default function MyTeamPage() {
           <button className="bg-[#FF9142] text-white px-8 py-3 rounded-t-2xl font-bold text-xl shadow-lg">
             My team
           </button>
-          <button className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors">
+          {/* --- เพิ่ม: กด Edit เพื่อแก้ชื่อทีม (placeholder) --- */}
+          <button
+            onClick={() => alert('แก้ไขชื่อทีม')}
+            className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors">
             <Edit2 size={20} />
           </button>
         </div>
@@ -62,8 +82,17 @@ export default function MyTeamPage() {
             3 :Members
           </div>
           <div className="flex gap-2">
-            <button className="bg-[#2D3E50] p-3 rounded-lg text-white"><List size={20} /></button>
-            <button className="bg-[#2D3E50] p-3 rounded-full text-white"><Info size={20} /></button>
+            {/* --- เพิ่ม: List = ดูรายชื่อทั้งหมดในห้อง, Info = ดูรายละเอียดห้อง --- */}
+            <button
+              onClick={() => router.push('/join/myroom')}
+              className="bg-[#2D3E50] p-3 rounded-lg text-white hover:bg-slate-700 transition-colors">
+              <List size={20} />
+            </button>
+            <button
+              onClick={() => router.push('/join/myroom')}
+              className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors">
+              <Info size={20} />
+            </button>
           </div>
         </div>
       </div>
@@ -93,26 +122,38 @@ export default function MyTeamPage() {
                       <p className="text-sm text-gray-400">{member.role}</p>
                     </div>
                   </div>
-                  <button className="w-12 h-12 rounded-full bg-[#7086D1] flex items-center justify-center text-white text-2xl font-bold hover:bg-[#5A74B1] transition-colors">
+                  {/* --- เพิ่ม: กด ? เพื่อดูโปรไฟล์สมาชิก --- */}
+                  <button
+                    onClick={() => alert(`ดูโปรไฟล์: ${member.name}`)}
+                    className="w-12 h-12 rounded-full bg-[#7086D1] flex items-center justify-center text-white text-2xl font-bold hover:bg-[#5A74B1] transition-colors">
                     ?
                   </button>
                 </div>
               ))}
             </div>
 
-            <button className="w-full bg-[#7096D1] text-white py-4 rounded-2xl font-bold text-xl shadow-lg hover:bg-[#5A74B1] transition-all transform active:scale-95">
-              “Choose a team leader”
+            {/* --- เพิ่ม: กด Choose a team leader ไปหน้า vote --- */}
+            <button
+              onClick={() => router.push('/join/vote')}
+              className="w-full bg-[#7096D1] text-white py-4 rounded-2xl font-bold text-xl shadow-lg hover:bg-[#5A74B1] transition-all transform active:scale-95">
+              "Choose a team leader"
             </button>
 
             {/* Bottom Analysis Cards */}
             <div className="grid grid-cols-2 gap-4 mt-auto">
-              <div className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200">
+              {/* --- เพิ่ม: กด Vote ไปหน้า vote --- */}
+              <div
+                onClick={() => router.push('/join/vote')}
+                className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
                 <span className="font-bold text-gray-700">Vote</span>
                 <div className="w-24 h-24 flex items-center justify-center">
                   <img src="https://cdn-icons-png.flaticon.com/512/3050/3050525.png" alt="Vote Icon" className="w-full h-full object-contain" />
                 </div>
               </div>
-              <div className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200">
+              {/* --- เพิ่ม: กด Analyze ไปหน้า analyze --- */}
+              <div
+                onClick={() => router.push('/join/analyze')}
+                className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
                 <span className="font-bold text-gray-700">Analyze</span>
                 <div className="w-24 h-24 flex items-center justify-center">
                   <img src="https://cdn-icons-png.flaticon.com/512/2620/2620703.png" alt="Analyze Icon" className="w-full h-full object-contain" />
@@ -126,7 +167,7 @@ export default function MyTeamPage() {
             <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
               <div className="text-center text-gray-400 text-sm mb-4">10:24</div>
               
-              {chatMessages.map((msg) => (
+              {messages.map((msg) => (
                 <div key={msg.id} className={`flex items-end gap-3 ${msg.isMe ? 'flex-row-reverse' : ''}`}>
                   {!msg.isMe && (
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
@@ -152,10 +193,14 @@ export default function MyTeamPage() {
                 type="text" 
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="เริ่มแชท......"
                 className="flex-1 bg-gray-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700"
               />
-              <button className="w-14 h-14 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all">
+              {/* --- เพิ่ม: กด Send เพื่อส่งข้อความ --- */}
+              <button
+                onClick={handleSend}
+                className="w-14 h-14 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all">
                 <Send size={28} />
               </button>
             </div>

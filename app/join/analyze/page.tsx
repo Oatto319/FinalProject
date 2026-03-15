@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, ChevronLeft, Sparkles, BrainCircuit } from 'lucide-react';
 
 export default function AnalyzePage() {
+  const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
 
   // ข้อมูลสมาชิกในทีมพร้อมคะแนนการวิเคราะห์จำลอง
@@ -28,9 +30,9 @@ export default function AnalyzePage() {
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
-                alt="Profile" 
+              <img
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -48,9 +50,11 @@ export default function AnalyzePage() {
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-[#E5E7EB] rounded-[40px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative overflow-hidden">
-          
+
           {/* Back Button */}
-          <button className="absolute left-8 top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-md hover:bg-gray-100 transition-all z-20">
+          <button
+            onClick={() => router.back()}
+            className="absolute left-8 top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-md hover:bg-gray-100 transition-all z-20">
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
 
@@ -75,7 +79,7 @@ export default function AnalyzePage() {
           {/* Analysis Results Grid */}
           <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
             {teamMembers.map((member) => (
-              <div 
+              <div
                 key={member.id}
                 className={`
                   bg-white rounded-[35px] p-6 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
@@ -97,28 +101,28 @@ export default function AnalyzePage() {
                   </div>
                   {isAnalyzing && (
                     <div className="absolute inset-0 bg-blue-400/20 rounded-full animate-pulse flex items-center justify-center">
-                       <div className="w-full h-1 bg-blue-400 absolute animate-[scan_2s_ease-in-out_infinite]"></div>
+                      <div className="w-full h-1 bg-blue-400 absolute animate-[scan_2s_ease-in-out_infinite]"></div>
                     </div>
                   )}
                 </div>
-                
+
                 <div className="text-center w-full">
                   <h4 className="font-bold text-gray-800 text-lg leading-tight">{member.name}</h4>
                   <p className="text-sm text-gray-400 mt-1 mb-3">{member.role}</p>
-                  
+
                   {/* Suitability Score Bar */}
                   <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full transition-all duration-1000 ease-out ${isAnalyzing ? 'w-0' : 'w-full'}`}
-                      style={{ 
+                      style={{
                         width: isAnalyzing ? '0%' : `${member.score}%`,
-                        backgroundColor: member.id === 2 ? '#FACC15' : '#7096D1' 
+                        backgroundColor: member.id === 2 ? '#FACC15' : '#7096D1'
                       }}
                     ></div>
                   </div>
                   <div className="flex justify-between mt-1 px-1">
-                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Suitability</span>
-                     <span className="text-[10px] font-bold text-gray-700">{isAnalyzing ? '...' : `${member.score}%`}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Suitability</span>
+                    <span className="text-[10px] font-bold text-gray-700">{isAnalyzing ? '...' : `${member.score}%`}</span>
                   </div>
                 </div>
               </div>
@@ -126,13 +130,14 @@ export default function AnalyzePage() {
           </div>
 
           {/* Result Action Button */}
-          <button 
+          <button
+            onClick={() => !isAnalyzing && router.push('/join/myteam')}
             className={`
-              w-full max-w-sm py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
-              ${isAnalyzing 
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+    w-full max-w-sm py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
+    ${isAnalyzing
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-[#2D3E50] text-white hover:bg-[#1E293B] shadow-[#1A2635]/30'}
-            `}
+  `}
             disabled={isAnalyzing}
           >
             {isAnalyzing ? 'ANALYZING...' : 'CONFIRM LEADER'}

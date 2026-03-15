@@ -73,7 +73,9 @@ export default function JoinCheckPage() {
 
           {/* Action Buttons */}
           <div className="flex gap-4 mt-auto">
-            <button className="flex-1 bg-gray-500 text-white py-4 rounded-2xl font-bold text-xl shadow-md hover:bg-gray-600 transition-colors">
+            <button
+              onClick={() => router.back()}
+              className="flex-1 bg-gray-500 text-white py-4 rounded-2xl font-bold text-xl shadow-md hover:bg-gray-600 transition-colors">
               Cancel
             </button>
             <button

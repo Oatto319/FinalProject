@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, ChevronLeft } from 'lucide-react';
 
 export default function VotePage() {
+  const router = useRouter();
   // กำหนดเป็น number | null เพื่อความชัดเจน
   const [selectedMember, setSelectedMember] = useState<number | null>(null);
 
@@ -29,9 +31,9 @@ export default function VotePage() {
         <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200 shadow-sm">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
-                alt="Profile" 
+              <img
+                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -49,17 +51,19 @@ export default function VotePage() {
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-[#E5E7EB] rounded-[40px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative">
-          
+
           {/* Back Button */}
-          <button className="absolute left-8 top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-md hover:bg-gray-100 transition-all active:scale-90">
+          <button
+            onClick={() => router.back()}
+            className="absolute left-8 top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-md hover:bg-gray-100 transition-all active:scale-90">
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
 
           {/* Top Illustration */}
           <div className="w-full flex justify-center -mt-16 mb-6">
-            <img 
-              src="/img/team.png" 
-              alt="Team Illustration" 
+            <img
+              src="/img/team.png"
+              alt="Team Illustration"
               className="w-full max-w-[280px] h-auto object-contain drop-shadow-lg"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -76,35 +80,35 @@ export default function VotePage() {
           {/* Members Selection Grid */}
           <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
             {teamMembers.map((member) => (
-              <button 
+              <button
                 key={member.id}
                 onClick={() => setSelectedMember(member.id)}
                 className={`
                   bg-white rounded-[30px] p-6 flex flex-col items-center gap-4 shadow-sm cursor-pointer
                   transition-all duration-200 border-4 outline-none
-                  ${selectedMember === member.id 
-                    ? 'border-[#7096D1] scale-105 shadow-xl' 
+                  ${selectedMember === member.id
+                    ? 'border-[#7096D1] scale-105 shadow-xl'
                     : 'border-transparent hover:border-gray-200'}
                 `}
               >
                 <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
-                  <img 
-                    src={member.avatar} 
-                    alt={member.name} 
-                    className="w-full h-full object-cover" 
+                  <img
+                    src={member.avatar}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
                   />
                 </div>
-                
+
                 <div className="text-center">
                   <h4 className="font-bold text-gray-800 text-lg leading-tight">{member.name}</h4>
                   <p className="text-sm text-gray-400 mt-1">{member.role}</p>
                 </div>
-                
+
                 {/* Radio Indicator */}
                 <div className={`
                   w-7 h-7 rounded-full border-2 flex items-center justify-center mt-2
-                  ${selectedMember === member.id 
-                    ? 'bg-[#7096D1] border-[#7096D1]' 
+                  ${selectedMember === member.id
+                    ? 'bg-[#7096D1] border-[#7096D1]'
                     : 'border-gray-200'}
                 `}>
                   {selectedMember === member.id && (
@@ -116,13 +120,13 @@ export default function VotePage() {
           </div>
 
           {/* Vote Button */}
-          <button 
+          <button
             disabled={selectedMember === null}
             onClick={handleVote}
             className={`
               w-full max-w-xs py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
-              ${selectedMember !== null 
-                ? 'bg-[#2D3E50] text-white hover:bg-[#1E293B] shadow-[#1A2635]/30' 
+              ${selectedMember !== null
+                ? 'bg-[#2D3E50] text-white hover:bg-[#1E293B] shadow-[#1A2635]/30'
                 : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-none'}
             `}
           >
