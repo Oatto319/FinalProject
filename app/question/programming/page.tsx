@@ -7,11 +7,18 @@ import { Plus, Minus, CheckCircle2 } from 'lucide-react';
 const ProgrammingQuestionnaire = () => {
   const router = useRouter();
 
-  // ข้อมูลคำถาม (จำลองจากรูปภาพ)
+  // ข้อมูลคำถาม MBTI-based
   const questions = [
-    { id: 1, text: "เมื่อเริ่มโปรเจกต์ใหม่ คุณมักทำอะไรเป็นอันดับแรก?" },
-    { id: 2, text: "เมื่อเริ่มโปรเจกต์ใหม่ คุณมักทำอะไรเป็นอันดับแรก?" },
-    { id: 3, text: "เมื่อเริ่มโปรเจกต์ใหม่ คุณมักทำอะไรเป็นอันดับแรก?" },
+    { id: 1,  text: 'ฉันชอบพูดคุยแลกเปลี่ยนไอเดียกับทีมมากกว่าคิดคนเดียว', dimension: 'EI' },
+    { id: 2,  text: 'ฉันให้ความสำคัญกับรายละเอียดการทำงานมากกว่าภาพรวมของโปรเจกต์', dimension: 'SN' },
+    { id: 3,  text: 'เมื่อตัดสินใจเรื่องฟีเจอร์ ฉันพิจารณาจากตรรกะและข้อมูลมากกว่าความรู้สึกของผู้ใช้', dimension: 'TF' },
+    { id: 4,  text: 'ฉันชอบวางแผนและกำหนดขั้นตอนก่อนลงมือทำงาน', dimension: 'JP' },
+    { id: 5,  text: 'ฉันชอบเป็นผู้นำและตัดสินใจมากกว่าปฏิบัติตามแผนที่วางไว้', dimension: 'EI_lead' },
+    { id: 6,  text: 'ฉันให้ความสำคัญกับประสบการณ์ผู้ใช้มากกว่าความเร็วและประสิทธิภาพของระบบ', dimension: 'TF_user' },
+    { id: 7,  text: 'ฉันชอบทดลองวิธีการใหม่ๆ มากกว่าใช้แนวทางที่เคยได้ผลมาแล้ว', dimension: 'SN2' },
+    { id: 8,  text: 'เมื่องานเปลี่ยนแปลงกะทันหัน ฉันปรับตัวได้ง่ายโดยไม่รู้สึกกดดัน', dimension: 'JP2' },
+    { id: 9,  text: 'หลังจากประชุมหรือทำงานร่วมกับหลายคน ฉันรู้สึกมีพลังงานมากขึ้น', dimension: 'EI2' },
+    { id: 10, text: 'ฉันสามารถให้ feedback ตรงๆ กับเพื่อนร่วมงานได้โดยไม่กังวลว่าเขาจะรู้สึกอย่างไร', dimension: 'TF2' },
   ];
 
   // เก็บสถานะการเลือกของแต่ละคำถาม (1-7)
@@ -19,6 +26,7 @@ const ProgrammingQuestionnaire = () => {
 
   // --- เพิ่ม: state สำหรับ popup ---
   const [showPopup, setShowPopup] = useState(false);
+  const [jobResult, setJobResult] = useState<{ title: string; description: string; jobs: string[] } | null>(null);
 
   const handleSelect = (questionId: number, value: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -31,6 +39,43 @@ const ProgrammingQuestionnaire = () => {
       alert('กรุณาตอบให้ครบทุกข้อก่อนนะครับ');
       return;
     }
+
+    // คำนวณ MBTI dimensions
+    // pole: agree(1-3)=+1, neutral(4)=0, disagree(5-7)=-1
+    const pole = (val: number) => val <= 3 ? 1 : val >= 5 ? -1 : 0;
+    // Q1,Q5,Q9: agree=E  |  Q2: agree=S  |  Q7: agree=N (reversed)
+    // Q3,Q10: agree=T  |  Q6: agree=F (reversed)  |  Q4: agree=J  |  Q8: agree=P (reversed)
+    const EI_score = pole(answers[1]) + pole(answers[5]) + pole(answers[9]);
+    const SN_score = pole(answers[2]) + (-1 * pole(answers[7]));
+    const TF_score = pole(answers[3]) + (-1 * pole(answers[6])) + pole(answers[10]);
+    const JP_score = pole(answers[4]) + (-1 * pole(answers[8]));
+
+    const T = TF_score >= 0, S = SN_score >= 0;
+
+    let title: string, desc: string, jobs: string[];
+    if (T && !S) {
+      // นักวิเคราะห์ (T + N)
+      title = '🔍 นักวิเคราะห์';
+      desc = 'คุณคิดเชิงระบบ ชอบวิเคราะห์ปัญหาเชิงลึก และมองหาโซลูชันที่มีประสิทธิภาพสูงสุด มีความสามารถในการคิดเชิงนามธรรมและออกแบบระบบที่ซับซ้อนได้ดี';
+      jobs = ['Data Analyst', 'Data Engineer', 'Backend Developer', 'Software Architect', 'AI/ML Engineer', 'Security Engineer'];
+    } else if (!T && !S) {
+      // นักคิดสร้างสรรค์ (F + N)
+      title = '✨ นักคิดสร้างสรรค์';
+      desc = 'คุณมีจินตนาการสูง ชอบคิดนอกกรอบ และสร้างสิ่งใหม่ที่มีความหมาย เข้าใจความต้องการของผู้ใช้และแปลงเป็นประสบการณ์ที่ดีได้อย่างเป็นธรรมชาติ';
+      jobs = ['UI/UX Designer', 'Frontend Developer', 'Product Manager', 'Product Designer', 'Creative Technologist'];
+    } else if (T && S) {
+      // ผู้ปฏิบัติการ (T + S)
+      title = '⚙️ ผู้ปฏิบัติการ';
+      desc = 'คุณทำงานได้จริงจัง มีความแม่นยำสูง และพึ่งพาข้อเท็จจริงในการตัดสินใจ ชอบแก้ปัญหาที่จับต้องได้และเห็นผลลัพธ์ที่ชัดเจน เป็นคนที่ทีมวางใจได้';
+      jobs = ['DevOps Engineer', 'System Administrator', 'QA Engineer', 'Database Administrator', 'Infrastructure Engineer'];
+    } else {
+      // นักประสานงาน (F + S)
+      title = '🤝 นักประสานงาน';
+      desc = 'คุณทำงานเป็นทีมได้ดีเยี่ยม เข้าใจความต้องการของผู้คน และสร้างบรรยากาศการทำงานที่ดี มีทักษะการสื่อสารและการประสานงานที่โดดเด่น';
+      jobs = ['Project Manager', 'Scrum Master', 'Business Analyst', 'Tech Lead', 'Customer Success Manager'];
+    }
+
+    setJobResult({ title, description: desc, jobs });
     setShowPopup(true);
   };
 
@@ -139,13 +184,25 @@ const ProgrammingQuestionnaire = () => {
       </div>
 
       {/* --- เพิ่ม: Popup เสร็จแล้ว --- */}
-      {showPopup && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-[40px] p-10 flex flex-col items-center gap-6 shadow-2xl mx-4 max-w-sm w-full">
-            <CheckCircle2 size={72} className="text-green-500" strokeWidth={1.5} />
-            <div className="text-center">
-              <h2 className="text-2xl font-black text-[#1A2E44] mb-2">เสร็จแล้ว!</h2>
-              <p className="text-gray-400 font-medium">คุณตอบแบบทดสอบครบทุกข้อแล้ว</p>
+      {showPopup && jobResult && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[40px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
+            <CheckCircle2 size={64} className="text-green-500" strokeWidth={1.5} />
+            <div className="text-center w-full">
+              <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>
+              <p className="text-xs text-gray-400 font-medium mb-3">ประเภทบุคลิกภาพการทำงานของคุณ</p>
+              <p className="text-2xl font-black text-[#4B3E7A] mb-3">{jobResult.title}</p>
+              <p className="text-gray-500 text-sm leading-relaxed mb-4">{jobResult.description}</p>
+              <div className="text-left">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
+                <div className="flex flex-wrap gap-2">
+                  {jobResult.jobs.map((job) => (
+                    <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">
+                      {job}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
             <button
               onClick={handlePopupClose}
