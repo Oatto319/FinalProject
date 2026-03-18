@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Minus, CheckCircle2 } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 
 const ProgrammingQuestionnaire = () => {
   const router = useRouter();
@@ -26,7 +26,7 @@ const ProgrammingQuestionnaire = () => {
 
   // --- เพิ่ม: state สำหรับ popup ---
   const [showPopup, setShowPopup] = useState(false);
-  const [jobResult, setJobResult] = useState<{ title: string; description: string; jobs: string[] } | null>(null);
+  const [jobResult, setJobResult] = useState<{ title: string; description: string; jobs: string[]; icon: string } | null>(null);
 
   const handleSelect = (questionId: number, value: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -53,29 +53,34 @@ const ProgrammingQuestionnaire = () => {
     const T = TF_score >= 0, S = SN_score >= 0;
 
     let title: string, desc: string, jobs: string[];
+    let icon: string;
     if (T && !S) {
       // นักวิเคราะห์ (T + N)
       title = '🔍 นักวิเคราะห์';
       desc = 'คุณคิดเชิงระบบ ชอบวิเคราะห์ปัญหาเชิงลึก และมองหาโซลูชันที่มีประสิทธิภาพสูงสุด มีความสามารถในการคิดเชิงนามธรรมและออกแบบระบบที่ซับซ้อนได้ดี';
       jobs = ['Data Analyst', 'Data Engineer', 'Backend Developer', 'Software Architect', 'AI/ML Engineer', 'Security Engineer'];
+      icon = '/img/brain.png';
     } else if (!T && !S) {
       // นักคิดสร้างสรรค์ (F + N)
       title = '✨ นักคิดสร้างสรรค์';
       desc = 'คุณมีจินตนาการสูง ชอบคิดนอกกรอบ และสร้างสิ่งใหม่ที่มีความหมาย เข้าใจความต้องการของผู้ใช้และแปลงเป็นประสบการณ์ที่ดีได้อย่างเป็นธรรมชาติ';
       jobs = ['UI/UX Designer', 'Frontend Developer', 'Product Manager', 'Product Designer', 'Creative Technologist'];
+      icon = '/img/idea.png';
     } else if (T && S) {
       // ผู้ปฏิบัติการ (T + S)
       title = '⚙️ ผู้ปฏิบัติการ';
       desc = 'คุณทำงานได้จริงจัง มีความแม่นยำสูง และพึ่งพาข้อเท็จจริงในการตัดสินใจ ชอบแก้ปัญหาที่จับต้องได้และเห็นผลลัพธ์ที่ชัดเจน เป็นคนที่ทีมวางใจได้';
       jobs = ['DevOps Engineer', 'System Administrator', 'QA Engineer', 'Database Administrator', 'Infrastructure Engineer'];
+      icon = '/img/pencil.png';
     } else {
       // นักประสานงาน (F + S)
       title = '🤝 นักประสานงาน';
       desc = 'คุณทำงานเป็นทีมได้ดีเยี่ยม เข้าใจความต้องการของผู้คน และสร้างบรรยากาศการทำงานที่ดี มีทักษะการสื่อสารและการประสานงานที่โดดเด่น';
       jobs = ['Project Manager', 'Scrum Master', 'Business Analyst', 'Tech Lead', 'Customer Success Manager'];
+      icon = '/imgmake.png';
     }
 
-    setJobResult({ title, description: desc, jobs });
+    setJobResult({ title, description: desc, jobs, icon });
     setShowPopup(true);
   };
 
@@ -187,7 +192,7 @@ const ProgrammingQuestionnaire = () => {
       {showPopup && jobResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[40px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
-            <CheckCircle2 size={64} className="text-green-500" strokeWidth={1.5} />
+            <img src={jobResult.icon} alt={jobResult.title} className="w-24 h-24 object-contain" />
             <div className="text-center w-full">
               <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>
               <p className="text-xs text-gray-400 font-medium mb-3">ประเภทบุคลิกภาพการทำงานของคุณ</p>
