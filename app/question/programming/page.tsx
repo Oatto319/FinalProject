@@ -26,7 +26,13 @@ const ProgrammingQuestionnaire = () => {
 
   // --- เพิ่ม: state สำหรับ popup ---
   const [showPopup, setShowPopup] = useState(false);
-  const [jobResult, setJobResult] = useState<{ title: string; description: string; jobs: string[]; icon: string } | null>(null);
+  const [jobResult, setJobResult] = useState<{
+    title: string;
+    description: string;
+    jobs: string[];
+    icon: string;
+    typeScores: { title: string; icon: string; score: number }[];
+  } | null>(null);
 
   const handleSelect = (questionId: number, value: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -51,6 +57,18 @@ const ProgrammingQuestionnaire = () => {
     const JP_score = pole(answers[4]) + (-1 * pole(answers[8]));
 
     const T = TF_score >= 0, S = SN_score >= 0;
+
+    // คำนวณคะแนนแต่ละ type (0-5)
+    const T_comp = Math.max(0, TF_score);
+    const F_comp = Math.max(0, -TF_score);
+    const S_comp = Math.max(0, SN_score);
+    const N_comp = Math.max(0, -SN_score);
+    const typeScores = [
+      { title: 'นักวิเคราะห์',    icon: '/img/brain.png',  score: T_comp + N_comp },
+      { title: 'นักคิดสร้างสรรค์', icon: '/img/idea.png',   score: F_comp + N_comp },
+      { title: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png', score: T_comp + S_comp },
+      { title: 'นักประสานงาน',     icon: '/img/make.png',   score: F_comp + S_comp },
+    ];
 
     let title: string, desc: string, jobs: string[];
     let icon: string;
@@ -80,7 +98,7 @@ const ProgrammingQuestionnaire = () => {
       icon = '/img/make.png';
     }
 
-    setJobResult({ title, description: desc, jobs, icon });
+    setJobResult({ title, description: desc, jobs, icon, typeScores });
     setShowPopup(true);
   };
 
@@ -205,6 +223,24 @@ const ProgrammingQuestionnaire = () => {
                     <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">
                       {job}
                     </span>
+                  ))}
+                </div>
+              </div>
+              <div className="text-left w-full mt-2">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">คะแนนแต่ละประเภท</p>
+                <div className="flex flex-col gap-3">
+                  {jobResult.typeScores.map((t) => (
+                    <div key={t.title} className="flex items-center gap-3">
+                      <img src={t.icon} alt={t.title} className="w-8 h-8 object-contain flex-shrink-0" />
+                      <span className="text-sm font-bold text-[#1A2E44] w-28 flex-shrink-0">{t.title}</span>
+                      <div className="flex-1 bg-gray-100 rounded-full h-2.5">
+                        <div
+                          className="bg-[#4B3E7A] h-2.5 rounded-full transition-all duration-500"
+                          style={{ width: `${(t.score / 5) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-black text-[#4B3E7A] w-8 text-right flex-shrink-0">{t.score}/5</span>
+                    </div>
                   ))}
                 </div>
               </div>
