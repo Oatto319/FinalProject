@@ -19,6 +19,16 @@ const ProgrammingQuestionnaire = () => {
     { id: 8,  text: 'เมื่องานเปลี่ยนแปลงกะทันหัน ฉันปรับตัวได้ง่ายโดยไม่รู้สึกกดดัน', dimension: 'JP2' },
     { id: 9,  text: 'หลังจากประชุมหรือทำงานร่วมกับหลายคน ฉันรู้สึกมีพลังงานมากขึ้น', dimension: 'EI2' },
     { id: 10, text: 'ฉันสามารถให้ feedback ตรงๆ กับเพื่อนร่วมงานได้โดยไม่กังวลว่าเขาจะรู้สึกอย่างไร', dimension: 'TF2' },
+    { id: 11, text: 'ฉันชอบงานที่มีขั้นตอนชัดเจนและทำซ้ำได้ มากกว่างานที่ต้องคิดวิธีแก้ใหม่ทุกครั้ง', dimension: 'SN3' },
+    { id: 12, text: 'เมื่อทีมมีความเห็นต่าง ฉันโน้มน้าวด้วยข้อมูลและเหตุผลมากกว่าการสร้างความเข้าใจร่วมกัน', dimension: 'TF3' },
+    { id: 13, text: 'ฉันชอบทำงานให้เสร็จล่วงหน้ามากกว่ารอจนใกล้ deadline', dimension: 'JP3' },
+    { id: 14, text: 'ฉันชอบระดมความคิดร่วมกับทีมมากกว่านั่งคิดคนเดียวก่อนนำเสนอ', dimension: 'EI3' },
+    { id: 15, text: 'ฉันให้ความสำคัญกับ morale ของทีมมากกว่าการประเมินผลงานที่ตรงไปตรงมา', dimension: 'TF4' },
+    { id: 16, text: 'ฉันเชื่อมั่นในแนวทางที่พิสูจน์มาแล้วมากกว่าทดลองสิ่งใหม่ที่ยังไม่แน่ใจ', dimension: 'SN4' },
+    { id: 17, text: 'ฉันทำงานได้ดีแม้ไม่มีแผนชัดเจน และชอบปรับเปลี่ยนไปตามสถานการณ์', dimension: 'JP4' },
+    { id: 18, text: 'ฉันชอบทำงานในที่เงียบๆ คนเดียว มากกว่าทำงานในบรรยากาศที่มีคนรอบข้าง', dimension: 'EI4' },
+    { id: 19, text: 'เมื่อ code review ฉันให้ความสำคัญกับความถูกต้องและประสิทธิภาพมากกว่าความรู้สึกของเจ้าของ code', dimension: 'TF5' },
+    { id: 20, text: 'ฉันสนใจภาพรวมและทิศทางระยะยาวของโปรเจกต์มากกว่ารายละเอียดการใช้งานในปัจจุบัน', dimension: 'SN5' },
   ];
 
   // เก็บสถานะการเลือกของแต่ละคำถาม (1-7)
@@ -49,12 +59,14 @@ const ProgrammingQuestionnaire = () => {
     // คำนวณ MBTI dimensions
     // pole: agree(1-3)=+1, neutral(4)=0, disagree(5-7)=-1
     const pole = (val: number) => val <= 3 ? 1 : val >= 5 ? -1 : 0;
-    // Q1,Q5,Q9: agree=E  |  Q2: agree=S  |  Q7: agree=N (reversed)
-    // Q3,Q10: agree=T  |  Q6: agree=F (reversed)  |  Q4: agree=J  |  Q8: agree=P (reversed)
-    const EI_score = pole(answers[1]) + pole(answers[5]) + pole(answers[9]);
-    const SN_score = pole(answers[2]) + (-1 * pole(answers[7]));
-    const TF_score = pole(answers[3]) + (-1 * pole(answers[6])) + pole(answers[10]);
-    const JP_score = pole(answers[4]) + (-1 * pole(answers[8]));
+    // EI: Q1,Q5,Q9,Q14=agree→E  |  Q18=agree→I (reversed)
+    // SN: Q2,Q11,Q16=agree→S   |  Q7,Q20=agree→N (reversed)
+    // TF: Q3,Q10,Q12,Q19=agree→T  |  Q6,Q15=agree→F (reversed)
+    // JP: Q4,Q13=agree→J  |  Q8,Q17=agree→P (reversed)
+    const EI_score = pole(answers[1]) + pole(answers[5]) + pole(answers[9]) + pole(answers[14]) + (-1 * pole(answers[18]));
+    const SN_score = pole(answers[2]) + (-1 * pole(answers[7])) + pole(answers[11]) + pole(answers[16]) + (-1 * pole(answers[20]));
+    const TF_score = pole(answers[3]) + (-1 * pole(answers[6])) + pole(answers[10]) + pole(answers[12]) + (-1 * pole(answers[15])) + pole(answers[19]);
+    const JP_score = pole(answers[4]) + (-1 * pole(answers[8])) + pole(answers[13]) + (-1 * pole(answers[17]));
 
     const T = TF_score >= 0, S = SN_score >= 0;
 
@@ -236,10 +248,10 @@ const ProgrammingQuestionnaire = () => {
                       <div className="flex-1 bg-gray-100 rounded-full h-2.5">
                         <div
                           className="bg-[#4B3E7A] h-2.5 rounded-full transition-all duration-500"
-                          style={{ width: `${(t.score / 5) * 100}%` }}
+                          style={{ width: `${(t.score / 11) * 100}%` }}
                         />
                       </div>
-                      <span className="text-sm font-black text-[#4B3E7A] w-8 text-right flex-shrink-0">{t.score}/5</span>
+                      <span className="text-sm font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}/11</span>
                     </div>
                   ))}
                 </div>
