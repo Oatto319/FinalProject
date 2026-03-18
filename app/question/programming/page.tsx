@@ -56,28 +56,28 @@ const ProgrammingQuestionnaire = () => {
     let icon: string;
     if (T && !S) {
       // นักวิเคราะห์ (T + N)
-      title = '🔍 นักวิเคราะห์';
+      title = 'นักวิเคราะห์';
       desc = 'คุณคิดเชิงระบบ ชอบวิเคราะห์ปัญหาเชิงลึก และมองหาโซลูชันที่มีประสิทธิภาพสูงสุด มีความสามารถในการคิดเชิงนามธรรมและออกแบบระบบที่ซับซ้อนได้ดี';
       jobs = ['Data Analyst', 'Data Engineer', 'Backend Developer', 'Software Architect', 'AI/ML Engineer', 'Security Engineer'];
       icon = '/img/brain.png';
     } else if (!T && !S) {
       // นักคิดสร้างสรรค์ (F + N)
-      title = '✨ นักคิดสร้างสรรค์';
+      title = 'นักคิดสร้างสรรค์';
       desc = 'คุณมีจินตนาการสูง ชอบคิดนอกกรอบ และสร้างสิ่งใหม่ที่มีความหมาย เข้าใจความต้องการของผู้ใช้และแปลงเป็นประสบการณ์ที่ดีได้อย่างเป็นธรรมชาติ';
       jobs = ['UI/UX Designer', 'Frontend Developer', 'Product Manager', 'Product Designer', 'Creative Technologist'];
       icon = '/img/idea.png';
     } else if (T && S) {
       // ผู้ปฏิบัติการ (T + S)
-      title = '⚙️ ผู้ปฏิบัติการ';
+      title = 'ผู้ปฏิบัติการ';
       desc = 'คุณทำงานได้จริงจัง มีความแม่นยำสูง และพึ่งพาข้อเท็จจริงในการตัดสินใจ ชอบแก้ปัญหาที่จับต้องได้และเห็นผลลัพธ์ที่ชัดเจน เป็นคนที่ทีมวางใจได้';
       jobs = ['DevOps Engineer', 'System Administrator', 'QA Engineer', 'Database Administrator', 'Infrastructure Engineer'];
       icon = '/img/pencil.png';
     } else {
       // นักประสานงาน (F + S)
-      title = '🤝 นักประสานงาน';
+      title = 'นักประสานงาน';
       desc = 'คุณทำงานเป็นทีมได้ดีเยี่ยม เข้าใจความต้องการของผู้คน และสร้างบรรยากาศการทำงานที่ดี มีทักษะการสื่อสารและการประสานงานที่โดดเด่น';
       jobs = ['Project Manager', 'Scrum Master', 'Business Analyst', 'Tech Lead', 'Customer Success Manager'];
-      icon = '/imgmake.png';
+      icon = '/img/make.png';
     }
 
     setJobResult({ title, description: desc, jobs, icon });
@@ -212,7 +212,7 @@ const ProgrammingQuestionnaire = () => {
             <button
               onClick={handlePopupClose}
               className="w-full bg-[#4B3E7A] text-white py-4 rounded-2xl font-black text-lg hover:bg-[#3b3161] transition-colors shadow-lg">
-              กลับหน้าหลัก
+              Finished
             </button>
           </div>
         </div>
