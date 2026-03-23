@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, ArrowLeft } from 'lucide-react';
 
 const ProgrammingQuestionnaire = () => {
   const router = useRouter();
@@ -156,6 +156,12 @@ const ProgrammingQuestionnaire = () => {
       {/* Top Bar - ข้อมูลผู้ใช้ */}
       <div className="w-full max-w-5xl flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.back()}
+            className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-600" />
+          </button>
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-yellow-100">
             <img 
               src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
