@@ -1,14 +1,34 @@
-"use client"; // เพิ่มบรรทัดนี้เพื่อระบุว่าเป็น Client Component ให้ Next.js
+"use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
-/**
- * หน้าเลือกประเภทผู้ใช้งาน (Who Are You?)
- * แก้ไขปัญหา:
- * 1. Runtime Error: Event handlers cannot be passed to Client Component props
- * 2. TypeScript Error: Property 'src' does not exist on type 'EventTarget'
- */
 const App = () => {
+  const router = useRouter();
+
+  const handleSelect = (role: 'user' | 'host') => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) {
+      const currentUser = JSON.parse(raw);
+      const updated = { ...currentUser, role };
+      localStorage.setItem('currentUser', JSON.stringify(updated));
+
+      // อัปเดตใน users array ด้วย
+      const usersRaw = localStorage.getItem('users');
+      if (usersRaw) {
+        const users = JSON.parse(usersRaw);
+        const idx = users.findIndex(
+          (u: { name: string }) => u.name.toLowerCase() === currentUser.name.toLowerCase()
+        );
+        if (idx >= 0) {
+          users[idx] = { ...users[idx], role };
+          localStorage.setItem('users', JSON.stringify(users));
+        }
+      }
+    }
+    router.push('/');
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#E5E7EB] p-4 font-sans text-[#2D3748]">
       {/* ส่วนหัวข้อหลัก */}
@@ -23,39 +43,43 @@ const App = () => {
 
       {/* ส่วนการ์ดตัวเลือก */}
       <div className="flex flex-col gap-6 md:flex-row md:gap-8">
-        {/* Card: STUDENT */}
-        <button className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80">
+        {/* Card: USER */}
+        <button
+          onClick={() => handleSelect('user')}
+          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80"
+        >
           <h2 className="mb-8 text-4xl font-bold tracking-tight text-[#E5A546]">
-            STUDENT
+            USER
           </h2>
           <div className="relative h-48 w-full overflow-hidden rounded-xl">
             <img
               src="/img/student.png"
-              alt="Student"
+              alt="User"
               className="h-full w-full object-contain"
               onError={(e) => {
-                // ทำการ cast type เพื่อไม่ให้ TypeScript แจ้ง error
                 const target = e.target as HTMLImageElement;
-                target.src = "https://placeholder.com/300x200?text=Student+Image";
+                target.src = "https://placeholder.com/300x200?text=User+Image";
               }}
             />
           </div>
         </button>
 
-        {/* Card: TEACHER */}
-        <button className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80">
+        {/* Card: HOST */}
+        <button
+          onClick={() => handleSelect('host')}
+          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80"
+        >
           <h2 className="mb-8 text-4xl font-bold tracking-tight text-[#9F7AEA]">
-            TEACHER
+            HOST
           </h2>
           <div className="relative h-48 w-full overflow-hidden rounded-xl">
             <img
               src="/img/teacher.png"
-              alt="Teacher"
+              alt="Host"
               className="h-full w-full object-contain"
               onError={(e) => {
-                // ทำการ cast type เพื่อไม่ให้ TypeScript แจ้ง error
                 const target = e.target as HTMLImageElement;
-                target.src = "https://placeholder.com/300x200?text=Teacher+Image";
+                target.src = "https://placeholder.com/300x200?text=Host+Image";
               }}
             />
           </div>

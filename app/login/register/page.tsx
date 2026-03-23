@@ -8,6 +8,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [gender, setGender] = useState('Male');
+  const [gmail, setGmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -17,6 +18,20 @@ export default function RegisterPage() {
       setError('กรุณากรอกชื่อ');
       return;
     }
+    if (!gmail.trim() || !gmail.toLowerCase().endsWith('@gmail.com')) {
+      setError('กรุณากรอก Gmail ที่ถูกต้อง (ต้องลงท้ายด้วย @gmail.com)');
+      return;
+    }
+
+    // ตรวจว่า gmail ซ้ำกับที่มีอยู่แล้วไหม
+    const usersRaw = localStorage.getItem('users');
+    const users: { gmail: string }[] = usersRaw ? JSON.parse(usersRaw) : [];
+    const duplicate = users.find((u) => u.gmail?.toLowerCase() === gmail.trim().toLowerCase());
+    if (duplicate) {
+      setError('Gmail นี้ถูกใช้งานแล้ว');
+      return;
+    }
+
     if (!password.trim() || password.length < 4) {
       setError('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
       return;
@@ -24,7 +39,7 @@ export default function RegisterPage() {
 
     localStorage.setItem(
       'pendingRegistration',
-      JSON.stringify({ name: name.trim(), gender, password })
+      JSON.stringify({ name: name.trim(), gender, gmail: gmail.trim().toLowerCase(), password })
     );
     router.push('/login/profile');
   };
@@ -48,7 +63,7 @@ export default function RegisterPage() {
         {/* Name Input Section */}
         <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">
           <label className="text-white text-xl font-bold italic">
-            "What&apos;s your name?"
+            &quot;What&apos;s your name?&quot;
           </label>
           <input
             type="text"
@@ -62,7 +77,7 @@ export default function RegisterPage() {
         {/* Gender Select Section */}
         <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">
           <label className="text-white text-xl font-bold italic">
-            "What is your gender?"
+            &quot;What is your gender?&quot;
           </label>
           <div className="relative group">
             <select
@@ -80,10 +95,24 @@ export default function RegisterPage() {
           </div>
         </div>
 
+        {/* Gmail Input Section */}
+        <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">
+          <label className="text-white text-xl font-bold italic">
+            &quot;What&apos;s your Gmail?&quot;
+          </label>
+          <input
+            type="email"
+            placeholder="example@gmail.com"
+            value={gmail}
+            onChange={(e) => setGmail(e.target.value)}
+            className="w-full bg-white rounded-xl py-4 px-6 text-[#2D3E50] font-bold text-lg focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all"
+          />
+        </div>
+
         {/* Password Section */}
         <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">
           <label className="text-white text-xl font-bold italic">
-            "Create a password"
+            &quot;Create a password&quot;
           </label>
           <input
             type="password"

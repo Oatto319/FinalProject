@@ -90,7 +90,7 @@ export default function WelcomePage() {
 
       {/* Go to Home Button */}
       <button
-        onClick={() => router.push('/')}
+        onClick={() => router.push('/firstpage')}
         className="z-10 bg-[#2D3E50] text-white px-12 py-4 rounded-2xl font-bold text-xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-lg"
       >
         เริ่มต้นใช้งาน →

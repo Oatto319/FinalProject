@@ -5,28 +5,32 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
+  const [gmail, setGmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSignIn = () => {
     setError('');
-    if (!username.trim() || !password.trim()) {
-      setError('กรุณากรอก Username และรหัสผ่าน');
+    if (!gmail.trim() || !password.trim()) {
+      setError('กรุณากรอก Gmail และรหัสผ่าน');
+      return;
+    }
+    if (!gmail.toLowerCase().endsWith('@gmail.com')) {
+      setError('กรุณากรอก Gmail ที่ถูกต้อง');
       return;
     }
 
     const usersRaw = localStorage.getItem('users');
-    const users: { name: string; gender: string; password: string; avatarSeed: number }[] = usersRaw
+    const users: { name: string; gender: string; gmail: string; password: string; avatarSeed: number }[] = usersRaw
       ? JSON.parse(usersRaw)
       : [];
 
     const found = users.find(
-      (u) => u.name.toLowerCase() === username.toLowerCase() && u.password === password
+      (u) => u.gmail?.toLowerCase() === gmail.trim().toLowerCase() && u.password === password
     );
 
     if (!found) {
-      setError('Username หรือรหัสผ่านไม่ถูกต้อง');
+      setError('Gmail หรือรหัสผ่านไม่ถูกต้อง');
       return;
     }
 
@@ -64,12 +68,12 @@ export default function LoginPage() {
         {/* Login Form Gray Box */}
         <div className="w-full bg-[#D1D5DB] rounded-[30px] p-8 mb-6 flex flex-col gap-4 shadow-inner">
           <div className="flex flex-col gap-2">
-            <label className="text-[#4A4E69] font-bold text-lg ml-2">Username</label>
+            <label className="text-[#4A4E69] font-bold text-lg ml-2">Gmail</label>
             <input
-              type="text"
-              placeholder="กรอกชื่อผู้ใช้......"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              placeholder="example@gmail.com"
+              value={gmail}
+              onChange={(e) => setGmail(e.target.value)}
               className="w-full bg-white rounded-full py-4 px-6 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all placeholder:text-gray-300"
             />
           </div>

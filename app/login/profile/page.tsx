@@ -9,7 +9,7 @@ export default function ProfilePage() {
 
   const avatars = Array.from({ length: 15 }, (_, i) => ({
     id: i + 1,
-    url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 100}`,
+    url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 101}`,
   }));
 
   const handleConfirm = () => {
