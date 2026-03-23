@@ -116,6 +116,36 @@ const ProgrammingQuestionnaire = () => {
 
   // --- เพิ่ม: ปิด popup แล้วกลับ templates ---
   const handlePopupClose = () => {
+    if (jobResult) {
+      const raw = localStorage.getItem('currentUser');
+      if (raw) {
+        const user = JSON.parse(raw);
+        const updatedUser = {
+          ...user,
+          types: {
+            ...user.types,
+            programming: {
+              title: jobResult.title,
+              description: jobResult.description,
+              jobs: jobResult.jobs,
+              icon: jobResult.icon,
+              typeScores: jobResult.typeScores,
+              completedAt: new Date().toISOString(),
+            }
+          }
+        };
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        const usersRaw = localStorage.getItem('users');
+        if (usersRaw) {
+          const users = JSON.parse(usersRaw);
+          const idx = users.findIndex((u: { name: string }) => u.name === user.name);
+          if (idx >= 0) {
+            users[idx] = { ...users[idx], types: updatedUser.types };
+            localStorage.setItem('users', JSON.stringify(users));
+          }
+        }
+      }
+    }
     setShowPopup(false);
     router.push('/templates');
   };

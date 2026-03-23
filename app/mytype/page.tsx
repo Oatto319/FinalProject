@@ -1,73 +1,40 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Pencil, Brain, Lightbulb, Settings } from 'lucide-react';
+import { X } from 'lucide-react';
+
+type MBTIResult = {
+  title: string;
+  description: string;
+  jobs: string[];
+  icon: string;
+  typeScores: { title: string; icon: string; score: number }[];
+  completedAt: string;
+};
+
+type UserTypes = {
+  programming?: MBTIResult;
+  service?: MBTIResult;
+  presentation?: MBTIResult;
+  design?: MBTIResult;
+};
+
+const TEMPLATES = [
+  { id: 'programming',  label: 'PROGRAMMING',       color: 'bg-[#F8A4A4]', textColor: 'text-[#4B3E7A]', route: '/question/programming' },
+  { id: 'service',      label: 'CUSTOMER / SERVICE', color: 'bg-[#A7F3D0]', textColor: 'text-[#FF4D8D]', route: '/question/service' },
+  { id: 'presentation', label: 'PRESENTATION',       color: 'bg-[#E2F37C]', textColor: 'text-[#22C55E]', route: '/question/presentation' },
+  { id: 'design',       label: 'DESIGN / CREATIVE',  color: 'bg-[#C7D2FE]', textColor: 'text-[#818CF8]', route: '/question/design' },
+];
 
 const MyTypePage = () => {
   const router = useRouter();
-  const types = [
-    {
-      id: 'programming',
-      title: 'PROGRAMMING',
-      subtitle: 'ผู้ปฏิบัติ',
-      color: 'bg-[#F8A4A4]',
-      textColor: 'text-[#4B3E7A]',
-      icon: <Pencil className="text-white w-10 h-10" fill="currentColor" />,
-      iconBg: 'bg-[#FF5A5A]',
-      features: [
-        'ลงมือทำจริง ทำงานเร็ว',
-        'ไม่พูดเยอะ แต่ทำได้จริง',
-        'ทำงานหนักได้',
-        'ชอบให้เห็นผลลัพธ์เป็นรูปธรรม'
-      ]
-    },
-    {
-      id: 'service',
-      title: 'CUSTOMER / SERVICE',
-      subtitle: 'นักวิเคราะห์',
-      color: 'bg-[#A7F3D0]',
-      textColor: 'text-[#FF4D8D]',
-      icon: <Brain className="text-[#FF4D8D] w-10 h-10" fill="currentColor" />,
-      iconBg: 'bg-[#4B3E7A]',
-      features: [
-        'คิดเป็นระบบ มีเหตุผล',
-        'มองรายละเอียดรอบคอบ',
-        'เก่งการวิเคราะห์ข้อมูล/ปัญหา',
-        'ตัดสินใจจากหลักฐาน ไม่ใช่ความรู้สึก'
-      ]
-    },
-    {
-      id: 'presentation',
-      title: 'PRESENTATION',
-      subtitle: 'นักสร้างสรรค์',
-      color: 'bg-[#E2F37C]',
-      textColor: 'text-[#22C55E]',
-      icon: <Lightbulb className="text-yellow-300 w-10 h-10" fill="currentColor" />,
-      iconBg: 'bg-[#0369A1]',
-      features: [
-        'ชอบคิดไอเดียใหม่ ๆ',
-        'คิดนอกกรอบ ชอบทดลอง',
-        'เห็นความเป็นไปได้ที่คนอื่นมองไม่เห็น',
-        'สามารถแก้ปัญหาแบบไม่จำกัดวิธี'
-      ]
-    },
-    {
-      id: 'design',
-      title: 'DESIGN / CREATIVE',
-      subtitle: 'ผู้ประสานงาน',
-      color: 'bg-[#C7D2FE]',
-      textColor: 'text-[#818CF8]',
-      icon: <Settings className="text-white w-10 h-10" />,
-      iconBg: 'bg-[#0284C7]',
-      features: [
-        'สื่อสารเก่ง ฟังคนอื่น',
-        'ทำให้บรรยากาศในทีมดี',
-        'ไกล่เกลี่ยปัญหา',
-        'ช่วยให้เพื่อนทำงานร่วมกันได้ง่ายขึ้น'
-      ]
-    }
-  ];
+  const [user, setUser] = useState<{ name: string; avatarSeed: number; types?: UserTypes } | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] p-4 md:p-8 font-sans flex flex-col items-center">
@@ -75,13 +42,13 @@ const MyTypePage = () => {
       <div className="w-full max-w-6xl flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
           <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
+            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 'default'}`}
             alt="User Profile"
             className="w-full h-full bg-yellow-100"
           />
         </div>
         <div>
-          <h3 className="font-bold text-gray-800 text-sm">Wimolchai</h3>
+          <h3 className="font-bold text-gray-800 text-sm">{user?.name ?? '...'}</h3>
           <p className="text-xs text-gray-400">นักเรียน</p>
         </div>
       </div>
@@ -104,38 +71,72 @@ const MyTypePage = () => {
 
         {/* Content Grid */}
         <div className="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {types.map((item) => (
-            <div key={item.id} className="flex flex-col rounded-[32px] overflow-hidden shadow-sm border border-gray-100">
-              {/* Type Title Header */}
-              <div className={`${item.color} py-3 px-6 text-center`}>
-                <h2 className={`${item.textColor} text-xl font-black tracking-tight uppercase`}>
-                  {item.title}
-                </h2>
-              </div>
+          {TEMPLATES.map((tmpl) => {
+            const result = user?.types?.[tmpl.id as keyof UserTypes];
+            return (
+              <div key={tmpl.id} className="flex flex-col rounded-[32px] overflow-hidden shadow-sm border border-gray-100">
+                {/* Template Title Header */}
+                <div className={`${tmpl.color} py-3 px-6 text-center`}>
+                  <h2 className={`${tmpl.textColor} text-xl font-black tracking-tight uppercase`}>
+                    {tmpl.label}
+                  </h2>
+                </div>
 
-              {/* Type Details Body */}
-              <div className="bg-white p-6 flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                <div className="flex flex-col items-center gap-2 min-w-[120px]">
-                  <div className={`w-24 h-24 rounded-full ${item.iconBg} flex items-center justify-center shadow-lg`}>
-                    {item.icon}
+                {result ? (
+                  /* มีผลแล้ว — แสดงข้อมูลจริง */
+                  <div className="bg-white p-6 flex flex-col gap-4">
+                    <div className="flex items-center gap-4">
+                      <img src={result.icon} alt={result.title} className="w-16 h-16 object-contain flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพการทำงาน</p>
+                        <p className="text-xl font-black text-[#4B3E7A]">{result.title}</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-500 text-sm leading-relaxed">{result.description}</p>
+                    <div>
+                      <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
+                      <div className="flex flex-wrap gap-2">
+                        {result.jobs.map((job) => (
+                          <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">
+                            {job}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">คะแนนแต่ละประเภท</p>
+                      <div className="flex flex-col gap-2">
+                        {result.typeScores.map((t) => (
+                          <div key={t.title} className="flex items-center gap-3">
+                            <img src={t.icon} alt={t.title} className="w-6 h-6 object-contain flex-shrink-0" />
+                            <span className="text-xs font-bold text-[#1A2E44] w-24 flex-shrink-0">{t.title}</span>
+                            <div className="flex-1 bg-gray-100 rounded-full h-2">
+                              <div
+                                className="bg-[#4B3E7A] h-2 rounded-full"
+                                style={{ width: `${(t.score / 11) * 100}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}/11</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                  <p className="font-bold text-gray-600 text-sm">{item.subtitle}</p>
-                </div>
-
-                <div className="flex-1">
-                  <h4 className="font-bold text-gray-700 mb-2">ลักษณะเด่น:</h4>
-                  <ul className="space-y-1">
-                    {item.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-gray-600 font-medium">
-                        <span className="text-gray-400 mt-1.5">•</span>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                ) : (
+                  /* ยังไม่ได้ทำ */
+                  <div className="bg-white p-6 flex flex-col items-center justify-center gap-4 min-h-[160px]">
+                    <p className="text-gray-400 font-medium text-sm">ยังไม่ได้ทำ template นี้</p>
+                    <button
+                      onClick={() => router.push(tmpl.route)}
+                      className="bg-[#4B3E7A] text-white px-6 py-2.5 rounded-2xl font-bold text-sm hover:bg-[#3b3161] transition-colors"
+                    >
+                      ไปทำเลย
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
