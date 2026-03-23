@@ -1,41 +1,58 @@
 'use client';
 
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LucideMessageCircle, ChevronLeft } from 'lucide-react';
+import { LucideMessageCircle, ChevronLeft, CheckCircle2 } from 'lucide-react';
 
 export default function TemplatesPage() {
   const router = useRouter();
+  const [userTypes, setUserTypes] = useState<Record<string, unknown>>({});
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) {
+      const user = JSON.parse(raw);
+      setUserTypes(user.types ?? {});
+    }
+  }, []);
 
   const templates = [
     {
+      id: 'programming',
       title: 'PROGRAMMING',
       description: 'จับกลุ่มคนทำงานสายเทคนิคที่ต้องทำงานร่วมกันจริงจัง เช่น Dev ทีมโปรเจกต์ เพื่อให้สไตล์การคิดและการแก้ปัญหาเข้ากันได้',
-      bgColor: 'bg-[#FF9B9B]', // สีชมพูอ่อน
-      innerColor: 'bg-[#E37A7A]', // สีชมพูเข้มด้านใน
-      textColor: 'text-[#4A4E69]'
+      bgColor: 'bg-[#FF9B9B]',
+      innerColor: 'bg-[#E37A7A]',
+      textColor: 'text-[#4A4E69]',
+      route: '/question/programming',
     },
     {
+      id: 'service',
       title: 'CUSTOMER / SERVICE',
       description: 'จับกลุ่มงานที่ต้องติดต่อสื่อสารกับผู้คน เช่น HR, Sales, Customer Service ที่ต้องใช้ทักษะความเข้าใจผู้อื่นสูง',
-      bgColor: 'bg-[#76EAD7]', // สีเขียวมินต์
-      innerColor: 'bg-[#58C9B9]', // สีเขียวเข้มด้านใน
-      textColor: 'text-[#FF4D8D]' // สีชมพูเข้มสำหรับหัวข้อ
+      bgColor: 'bg-[#76EAD7]',
+      innerColor: 'bg-[#58C9B9]',
+      textColor: 'text-[#FF4D8D]',
+      route: '/question/service',
     },
     {
+      id: 'presentation',
       title: 'PRESENTATION',
       description: 'จับกลุ่มงานที่ต้องสื่อสารต่อหน้าคนอื่น ต้องการคนที่กล้าแสดงออกและจัดลำดับเนื้อหาได้ดี',
-      bgColor: 'bg-[#D4E24D]', // สีเขียวตองอ่อน
-      innerColor: 'bg-[#B4C13D]', // สีเขียวเข้มด้านใน
-      textColor: 'text-[#2D6A4F]'
+      bgColor: 'bg-[#D4E24D]',
+      innerColor: 'bg-[#B4C13D]',
+      textColor: 'text-[#2D6A4F]',
+      route: '/question/presentation',
     },
     {
+      id: 'design',
       title: 'DESIGN / CREATIVE',
       description: 'จับกลุ่มงานที่ต้องใช้ความคิดสร้างสรรค์ เช่น ออกแบบ UI, โปสเตอร์ หรือคอนเทนต์',
-      bgColor: 'bg-[#9D8BFF]', // สีม่วงอ่อน
-      innerColor: 'bg-[#7B6AD4]', // สีม่วงเข้มด้านใน
-      textColor: 'text-white'
-    }
+      bgColor: 'bg-[#9D8BFF]',
+      innerColor: 'bg-[#7B6AD4]',
+      textColor: 'text-white',
+      route: '/question/design',
+    },
   ];
 
   return (
@@ -81,25 +98,36 @@ export default function TemplatesPage() {
 
           {/* Templates Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-            {templates.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => index === 0 && router.push('/question/programming')}
-                className={`${item.bgColor} rounded-[35px] p-6 flex flex-col items-center cursor-pointer hover:scale-[1.02] transition-transform duration-300 shadow-md min-h-[280px]`}
-              >
-                {/* Title Section */}
-                <h2 className={`text-2xl md:text-3xl font-black mb-6 tracking-wider ${item.textColor} text-center uppercase`}>
-                  {item.title}
-                </h2>
+            {templates.map((item, index) => {
+              const done = !!userTypes[item.id];
+              return (
+                <div
+                  key={index}
+                  onClick={() => item.id === 'programming' && router.push(item.route)}
+                  className={`${item.bgColor} rounded-[35px] p-6 flex flex-col items-center cursor-pointer hover:scale-[1.02] transition-transform duration-300 shadow-md min-h-[280px] relative`}
+                >
+                  {/* Done Badge */}
+                  {done && (
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/80 backdrop-blur-sm text-green-600 text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
+                      <CheckCircle2 size={14} strokeWidth={2.5} />
+                      เสร็จแล้ว
+                    </div>
+                  )}
 
-                {/* Description Box Section */}
-                <div className={`${item.innerColor} rounded-[25px] p-5 flex-grow flex items-center justify-center`}>
-                  <p className="text-white text-base md:text-lg leading-relaxed text-center font-medium">
-                    {item.description}
-                  </p>
+                  {/* Title Section */}
+                  <h2 className={`text-2xl md:text-3xl font-black mb-6 tracking-wider ${item.textColor} text-center uppercase`}>
+                    {item.title}
+                  </h2>
+
+                  {/* Description Box Section */}
+                  <div className={`${item.innerColor} rounded-[25px] p-5 flex-grow flex items-center justify-center`}>
+                    <p className="text-white text-base md:text-lg leading-relaxed text-center font-medium">
+                      {item.description}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
         </div>
