@@ -1,11 +1,34 @@
 'use client';
 
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, Brain, Lightbulb, Settings, Pencil, Plus, Minus } from 'lucide-react';
 
+interface User {
+  name: string;
+  gender: string;
+  avatarSeed: number;
+}
+
 const App = () => {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) {
+      router.replace('/login');
+    } else {
+      setUser(JSON.parse(raw));
+    }
+  }, [router]);
+
+  if (!user) return null;
+
+  const avatarUrl = user.avatarSeed === 0
+    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`
+    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed + 100}`;
+
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       {/* Header Section - ปรับให้ชนขอบจอสุด (Full Width) */}
@@ -14,14 +37,14 @@ const App = () => {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
               <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
+                src={avatarUrl}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
-              <h2 className="font-bold text-2xl text-gray-800 leading-tight">Wimolchai</h2>
-              <p className="text-sm text-gray-500 font-medium">นักเรียน</p>
+              <h2 className="font-bold text-2xl text-gray-800 leading-tight">{user.name}</h2>
+              <p className="text-sm text-gray-500 font-medium">{user.gender}</p>
             </div>
           </div>
           <button className="bg-green-500 p-4 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">

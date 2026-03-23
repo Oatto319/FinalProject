@@ -1,18 +1,37 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface User {
+  name: string;
+  gender: string;
+  avatarSeed: number;
+}
 
 export default function WelcomePage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const raw = localStorage.getItem('currentUser');
+    if (raw) {
+      setUser(JSON.parse(raw));
+    } else {
+      router.push('/login');
+    }
+  }, [router]);
+
+  const avatarUrl = user
+    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed + 100}`
+    : '';
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center relative overflow-hidden font-sans">
-      
-      {/* Confetti Background Effect (Simulated with CSS) */}
+
+      {/* Confetti Background Effect */}
       <div className="absolute inset-0 pointer-events-none">
         {mounted && Array.from({ length: 50 }).map((_, i) => (
           <div
@@ -26,7 +45,7 @@ export default function WelcomePage() {
               backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'][Math.floor(Math.random() * 5)],
               borderRadius: Math.random() > 0.5 ? '50%' : '2px',
               animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${Math.random() * 2 + 2}s`
+              animationDuration: `${Math.random() * 2 + 2}s`,
             }}
           />
         ))}
@@ -37,18 +56,19 @@ export default function WelcomePage() {
         WELCOME
       </h1>
 
-      {/* Profile Section with Party Popper */}
+      {/* Profile Section */}
       <div className="relative mb-8">
-        {/* Profile Circle */}
         <div className="w-40 h-40 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-xl bg-orange-50">
-          <img 
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
-            alt="Profile" 
-            className="w-full h-full object-cover"
-          />
+          {user && (
+            <img
+              src={avatarUrl}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          )}
         </div>
 
-        {/* Party Popper SVG Icon */}
+        {/* Party Popper Icon */}
         <div className="absolute -right-4 bottom-4 w-16 h-16 md:w-20 md:h-20 drop-shadow-lg animate-bounce">
           <svg viewBox="0 0 100 100" className="w-full h-full">
             <path d="M20,80 L40,60 L60,80 Z" fill="#FFCA3A" />
@@ -63,10 +83,18 @@ export default function WelcomePage() {
       </div>
 
       {/* User Info */}
-      <div className="text-center z-10">
-        <h2 className="text-2xl font-bold text-gray-800 mb-1">Wimolchai</h2>
-        <p className="text-gray-500 font-medium">นักเรียน</p>
+      <div className="text-center z-10 mb-10">
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">{user?.name}</h2>
+        <p className="text-gray-500 font-medium">{user?.gender}</p>
       </div>
+
+      {/* Go to Home Button */}
+      <button
+        onClick={() => router.push('/')}
+        className="z-10 bg-[#2D3E50] text-white px-12 py-4 rounded-2xl font-bold text-xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-lg"
+      >
+        เริ่มต้นใช้งาน →
+      </button>
 
       <style jsx global>{`
         @keyframes fade-in-down {

@@ -1,12 +1,37 @@
 'use client';
 
-import React from 'react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChevronDown, ArrowRightCircle } from 'lucide-react';
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [gender, setGender] = useState('Male');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleNext = () => {
+    setError('');
+    if (!name.trim()) {
+      setError('กรุณากรอกชื่อ');
+      return;
+    }
+    if (!password.trim() || password.length < 4) {
+      setError('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร');
+      return;
+    }
+
+    localStorage.setItem(
+      'pendingRegistration',
+      JSON.stringify({ name: name.trim(), gender, password })
+    );
+    router.push('/login/profile');
+  };
+
   return (
     <div className="min-h-screen bg-[#1E293B] flex flex-col items-center justify-center p-4 font-sans">
-      
+
       {/* Header Text */}
       <div className="text-center mb-8">
         <h1 className="text-white text-5xl md:text-6xl font-black tracking-tighter uppercase mb-2">
@@ -19,15 +44,17 @@ export default function RegisterPage() {
 
       {/* Form Container */}
       <div className="bg-white w-full max-w-[600px] rounded-[40px] p-8 md:p-12 shadow-2xl flex flex-col gap-6">
-        
+
         {/* Name Input Section */}
         <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">
           <label className="text-white text-xl font-bold italic">
-            “What’s your name?”
+            "What&apos;s your name?"
           </label>
-          <input 
-            type="text" 
-            defaultValue="Wimolchai"
+          <input
+            type="text"
+            placeholder="กรอกชื่อของคุณ..."
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             className="w-full bg-white rounded-xl py-4 px-6 text-[#2D3E50] font-bold text-lg focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all"
           />
         </div>
@@ -35,12 +62,13 @@ export default function RegisterPage() {
         {/* Gender Select Section */}
         <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">
           <label className="text-white text-xl font-bold italic">
-            “What is your gender?”
+            "What is your gender?"
           </label>
           <div className="relative group">
-            <select 
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
               className="w-full bg-white rounded-xl py-4 px-6 text-[#2D3E50] font-bold text-lg appearance-none focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all cursor-pointer"
-              defaultValue="Male"
             >
               <option value="Male">Male</option>
               <option value="Female">Female</option>
@@ -52,9 +80,36 @@ export default function RegisterPage() {
           </div>
         </div>
 
+        {/* Password Section */}
+        <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">
+          <label className="text-white text-xl font-bold italic">
+            "Create a password"
+          </label>
+          <input
+            type="password"
+            placeholder="รหัสผ่านอย่างน้อย 4 ตัวอักษร..."
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-white rounded-xl py-4 px-6 text-[#2D3E50] font-bold text-lg focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all"
+          />
+        </div>
+
+        {error && (
+          <p className="text-red-500 text-sm text-center font-medium -mt-2">{error}</p>
+        )}
+
         {/* Next Button */}
-        <div className="flex justify-end mt-4">
-          <button className="bg-[#2D3E50] text-white flex items-center gap-3 px-8 py-3 rounded-2xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-lg group">
+        <div className="flex justify-between items-center mt-4">
+          <button
+            onClick={() => router.push('/login')}
+            className="text-gray-400 hover:text-gray-600 transition-colors text-sm font-medium"
+          >
+            ← กลับ
+          </button>
+          <button
+            onClick={handleNext}
+            className="bg-[#2D3E50] text-white flex items-center gap-3 px-8 py-3 rounded-2xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-lg group"
+          >
             <span className="font-bold text-lg">Next</span>
             <ArrowRightCircle className="group-hover:translate-x-1 transition-transform" />
           </button>
