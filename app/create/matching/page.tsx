@@ -14,6 +14,12 @@ const MatchingPage = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Set matchDone flag so students can access /join/myteam
+      const roomRaw = localStorage.getItem('currentRoom');
+      if (roomRaw) {
+        const room = JSON.parse(roomRaw);
+        localStorage.setItem(`matchDone_${room.id}`, 'true');
+      }
       router.push('/create/group');
     }, 3000);
     return () => clearTimeout(timer);

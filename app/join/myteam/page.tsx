@@ -36,6 +36,7 @@ export default function MyTeamPage() {
   const [teamMembers, setTeamMembers] = useState<RoomMember[]>([]);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isMatched, setIsMatched] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -49,6 +50,8 @@ export default function MyTeamPage() {
     const roomRaw = localStorage.getItem('currentRoom');
     if (roomRaw) {
       const room: CurrentRoom = JSON.parse(roomRaw);
+      const matched = localStorage.getItem(`matchDone_${room.id}`);
+      setIsMatched(!!matched);
       // Load latest members from rooms registry
       const roomsRaw = localStorage.getItem('rooms');
       let members: RoomMember[] = room.members ?? [];
@@ -166,8 +169,15 @@ export default function MyTeamPage() {
 
           {/* Left Column: Team Management */}
           <div className="lg:col-span-5 flex flex-col gap-6">
+            {!isMatched && (
+              <div className="bg-white rounded-2xl p-8 text-center text-gray-400 flex flex-col items-center gap-3">
+                <div className="text-5xl">⏳</div>
+                <p className="font-bold text-gray-500">รอ Host จับกลุ่ม...</p>
+                <p className="text-sm">ทีมจะปรากฏเมื่อ Host กด Match</p>
+              </div>
+            )}
             <div className="flex flex-col gap-3">
-              {teamMembers.length === 0 ? (
+              {!isMatched ? null : teamMembers.length === 0 ? (
                 <div className="bg-white rounded-2xl p-6 text-center text-gray-400">
                   ไม่พบสมาชิกในทีม
                 </div>

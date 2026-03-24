@@ -185,7 +185,7 @@ const App = () => {
 
           {/* Team Button (Purple) */}
           <div
-            onClick={() => router.push('/join/myteam')}
+            onClick={() => router.push('/join/myprojects')}
             className="relative bg-indigo-500 flex-1 rounded-[30px] flex flex-col items-center justify-center cursor-pointer hover:brightness-95 transition-all">
             <h1 className="text-5xl font-black text-white italic tracking-tighter">Team</h1>
             <p className="text-indigo-100 font-bold text-xl mt-1">ทีมของฉัน</p>

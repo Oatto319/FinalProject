@@ -59,6 +59,15 @@ export default function JoinCheckPage() {
     rooms[room.id] = currentRoom;
     localStorage.setItem('rooms', JSON.stringify(rooms));
     localStorage.setItem('currentRoom', JSON.stringify(currentRoom));
+
+    // Track joined rooms per user
+    const joinedKey = `joinedRooms_${user.name}`;
+    const joined: string[] = JSON.parse(localStorage.getItem(joinedKey) || '[]');
+    if (!joined.includes(room.id)) {
+      joined.push(room.id);
+      localStorage.setItem(joinedKey, JSON.stringify(joined));
+    }
+
     router.push('/join/myroom');
   };
 
