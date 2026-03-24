@@ -1,11 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LucideMessageCircle, ChevronLeft, Settings2, Users2, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Settings2, Users2, LayoutGrid, CheckCircle2 } from 'lucide-react';
 
 export default function TypesettingPage() {
-  const router = useRouter()
+  const router = useRouter();
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+  }, []);
 
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
 
@@ -32,28 +38,6 @@ export default function TypesettingPage() {
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      {/* Header Section */}
-      <header className="w-full flex items-center justify-between bg-white p-6 shadow-sm">
-        <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200 shadow-sm">
-              <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h2 className="font-bold text-2xl text-gray-800 leading-tight">Simon14</h2>
-              <p className="text-sm text-gray-500 font-medium">อาจารย์</p>
-            </div>
-          </div>
-          <button className="bg-green-500 p-4 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">
-            <LucideMessageCircle fill="currentColor" size={32} />
-          </button>
-        </div>
-      </header>
-
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">

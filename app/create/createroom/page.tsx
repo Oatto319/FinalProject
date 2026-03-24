@@ -1,11 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LucideMessageCircle, ChevronLeft, Users, BookOpen, AlignLeft } from 'lucide-react';
+import { ChevronLeft, Users, BookOpen, AlignLeft } from 'lucide-react';
+
+interface CurrentUser {
+  name: string;
+  gender: string;
+  avatarSeed: number;
+}
 
 export default function CreateRoomPage() {
   const router = useRouter();
+  const [user, setUser] = useState<CurrentUser | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+  }, []);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -20,6 +32,7 @@ export default function CreateRoomPage() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
   const handleCreate = () => {
     const { title, description, totalMembers, groupSize } = formData;
     if (!title || !description || !totalMembers || !groupSize) {
@@ -27,33 +40,32 @@ export default function CreateRoomPage() {
       return;
     }
     setShowError(false);
+
+    const roomId = Math.floor(1000000 + Math.random() * 9000000).toString();
+    const roomData = {
+      id: roomId,
+      title,
+      description,
+      totalMembers: parseInt(totalMembers),
+      groupSize: parseInt(groupSize),
+      template: 'PROGRAMMING',
+      hostName: user?.name ?? '',
+      hostAvatarSeed: user?.avatarSeed ?? 0,
+      members: [] as { name: string; avatarSeed: number; gmail: string }[],
+      createdAt: new Date().toISOString(),
+    };
+
+    const roomsRaw = localStorage.getItem('rooms');
+    const rooms = roomsRaw ? JSON.parse(roomsRaw) : {};
+    rooms[roomId] = roomData;
+    localStorage.setItem('rooms', JSON.stringify(rooms));
+    localStorage.setItem('currentRoom', JSON.stringify(roomData));
+
     router.push('/create/typesetting');
   };
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      {/* Header Section */}
-      <header className="w-full flex items-center justify-between bg-white p-6 shadow-sm">
-        <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200 shadow-sm">
-              <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h2 className="font-bold text-2xl text-gray-800 leading-tight">Simon14</h2>
-              <p className="text-sm text-gray-500 font-medium">อาจารย์</p>
-            </div>
-          </div>
-          <button className="bg-green-500 p-4 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">
-            <LucideMessageCircle fill="currentColor" size={32} />
-          </button>
-        </div>
-      </header>
-
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-12 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">

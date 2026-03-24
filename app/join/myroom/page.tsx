@@ -1,62 +1,87 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { LucideMessageCircle, Copy } from 'lucide-react';
 
-const MY_NAME = 'Wimolchai';
+interface RoomMember {
+  name: string;
+  avatarSeed: number;
+  gmail: string;
+}
+
+interface CurrentRoom {
+  id: string;
+  title: string;
+  description: string;
+  totalMembers: number;
+  groupSize: number;
+  template: string;
+  hostName: string;
+  hostAvatarSeed: number;
+  members: RoomMember[];
+}
 
 export default function MyRoomPage() {
-  // ข้อมูลจำลองสำหรับรายชื่อสมาชิก
-  const members = [
-    { id: 1, name: 'เจษฎา ชาร้อน', role: 'นักเรียน', status: 'Ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed' },
-    { id: 2, name: 'Thanaphon', role: 'นักเรียน', status: 'Ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Than' },
-    { id: 3, name: 'Wimolchai', role: 'นักเรียน', status: 'Wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai' },
-    { id: 4, name: 'Pathiphat', role: 'นักเรียน', status: 'Ready', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pathi' },
-    { id: 5, name: 'ลีโอ วัฒนเดชา', role: 'นักเรียน', status: 'Wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo' },
-  ];
-
-  // --- เพิ่ม: state สำหรับสถานะ ready ของตัวเองและของทุกคน ---
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [room, setRoom] = useState<CurrentRoom | null>(null);
+  const [members, setMembers] = useState<RoomMember[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
 
-  useEffect(() => {
+  const loadData = () => {
+    const roomRaw = localStorage.getItem('currentRoom');
+    if (roomRaw) {
+      const r: CurrentRoom = JSON.parse(roomRaw);
+      setRoom(r);
+      // Load latest members from rooms registry
+      const roomsRaw = localStorage.getItem('rooms');
+      if (roomsRaw) {
+        const rooms = JSON.parse(roomsRaw);
+        const latest: CurrentRoom = rooms[r.id];
+        if (latest) setMembers(latest.members ?? []);
+      }
+    }
     const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
     setReadyUsers(stored);
-    setIsReady(stored.includes(MY_NAME));
+  };
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) {
+      const u = JSON.parse(raw);
+      setUser(u);
+      const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
+      setIsReady(stored.includes(u.name));
+    }
+    loadData();
   }, []);
 
   useEffect(() => {
-    const handleStorage = () => {
-      const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
-      setReadyUsers(stored);
-      setIsReady(stored.includes(MY_NAME));
-    };
-    window.addEventListener('storage', handleStorage);
-    const interval = setInterval(handleStorage, 2000);
+    window.addEventListener('storage', loadData);
+    const interval = setInterval(loadData, 2000);
     return () => {
-      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('storage', loadData);
       clearInterval(interval);
     };
   }, []);
 
   const handleReady = () => {
+    if (!user) return;
     const newStatus = !isReady;
     setIsReady(newStatus);
     const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
     const updated = newStatus
-      ? stored.includes(MY_NAME) ? stored : [...stored, MY_NAME]
-      : stored.filter((n) => n !== MY_NAME);
+      ? stored.includes(user.name) ? stored : [...stored, user.name]
+      : stored.filter((n) => n !== user.name);
     localStorage.setItem('readyUsers', JSON.stringify(updated));
     setReadyUsers(updated);
     window.dispatchEvent(new StorageEvent('storage', { key: 'readyUsers' }));
   };
-  // --- สิ้นสุดส่วนที่เพิ่ม ---
 
   const copyToClipboard = () => {
-    const roomId = "8993633";
-    // ใช้ document.execCommand สำหรับสภาพแวดล้อมที่มีข้อจำกัด
+    if (!room) return;
     const el = document.createElement('textarea');
-    el.value = roomId;
+    el.value = room.id;
     document.body.appendChild(el);
     el.select();
     document.execCommand('copy');
@@ -70,14 +95,14 @@ export default function MyRoomPage() {
         <div className="max-w-6xl mx-auto w-full flex items-center justify-between px-4">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
-                alt="Profile" 
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`}
+                alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
-              <h2 className="font-bold text-2xl text-gray-800 leading-tight">Wimolchai</h2>
+              <h2 className="font-bold text-2xl text-gray-800 leading-tight">{user?.name ?? '...'}</h2>
               <p className="text-sm text-gray-500 font-medium">นักเรียน</p>
             </div>
           </div>
@@ -90,15 +115,15 @@ export default function MyRoomPage() {
       {/* Main Content Area */}
       <main className="w-full max-w-6xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] overflow-hidden shadow-sm min-h-[700px]">
-          
+
           {/* Top Banner Section */}
           <div className="bg-[#FFA4A4] p-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 className="text-[#4A4E69] text-5xl font-black tracking-widest uppercase">
-              PROGRAMMING
+              {room?.template ?? 'PROGRAMMING'}
             </h1>
             <div className="flex items-center gap-3 bg-[#4A4E69]/10 px-6 py-2 rounded-2xl">
-              <span className="text-[#4A4E69] text-4xl font-black">#8993633</span>
-              <button 
+              <span className="text-[#4A4E69] text-4xl font-black">#{room?.id ?? '...'}</span>
+              <button
                 onClick={copyToClipboard}
                 className="bg-white/80 p-2 rounded-full hover:bg-white transition-colors text-[#4A4E69]"
               >
@@ -109,26 +134,31 @@ export default function MyRoomPage() {
 
           {/* Content Columns */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 p-8 bg-gray-200/50 min-h-[600px]">
-            
-            {/* Left Column: Member List (Now on the left in image_97f8d4.png) */}
+
+            {/* Left Column: Member List */}
             <div className="md:col-span-6 flex flex-col gap-3">
-              {members.map((member) => (
-                <div key={member.id} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-                      <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-gray-800">{member.name}</h4>
-                      <p className="text-xs text-gray-400">{member.role}</p>
-                    </div>
-                  </div>
-                  {/* --- แก้: สถานะแสดงตาม readyUsers จริง --- */}
-                  <button className={`px-6 py-1.5 rounded-xl font-bold text-white text-sm ${readyUsers.includes(member.name) ? 'bg-[#7096D1]' : 'bg-[#C76A6A]'}`}>
-                    {readyUsers.includes(member.name) ? 'Ready' : 'Wait'}
-                  </button>
+              {members.length === 0 ? (
+                <div className="bg-white rounded-2xl p-6 text-center text-gray-400">
+                  รอสมาชิกเข้าร่วม...
                 </div>
-              ))}
+              ) : (
+                members.map((member, idx) => (
+                  <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
+                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`} alt={member.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-800">{member.name}</h4>
+                        <p className="text-xs text-gray-400">นักเรียน</p>
+                      </div>
+                    </div>
+                    <button className={`px-6 py-1.5 rounded-xl font-bold text-white text-sm ${readyUsers.includes(member.name) ? 'bg-[#7096D1]' : 'bg-[#C76A6A]'}`}>
+                      {readyUsers.includes(member.name) ? 'Ready' : 'Wait'}
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Right Column: Room Details & Ready Button */}
@@ -137,11 +167,11 @@ export default function MyRoomPage() {
               <div className="bg-white rounded-[30px] p-8 shadow-sm">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100 bg-blue-50">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" alt="Host" />
+                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room?.hostAvatarSeed ?? 0}`} alt="Host" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-lg text-gray-700">Simon14</span>
+                      <span className="font-bold text-lg text-gray-700">{room?.hostName ?? '...'}</span>
                       <span className="bg-[#8E97B0] text-white text-xs px-2 py-0.5 rounded uppercase font-bold">Host</span>
                     </div>
                     <p className="text-gray-400 text-sm">อาจารย์</p>
@@ -150,22 +180,24 @@ export default function MyRoomPage() {
 
                 <div className="space-y-4 text-gray-700">
                   <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span className="font-bold text-lg">จับกลุ่มวิชาAi</span>
+                    <span className="font-bold text-lg">{room?.title ?? '...'}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span className="font-bold text-lg text-gray-500 font-medium">กำหนดส่ง 12 พ.ย. นี้</span>
+                    <span className="font-bold text-lg text-gray-500">{room?.description ?? ''}</span>
                     <div className="text-right">
                       <p className="text-sm text-gray-400">เข้าร่วมแล้ว:</p>
-                      <p className="font-bold text-xl text-[#2D3E50]">30/30</p>
+                      <p className="font-bold text-xl text-[#2D3E50]">{members.length}/{room?.totalMembers ?? '?'}</p>
                     </div>
                   </div>
                   <div className="pt-2">
-                    <p className="font-bold text-lg text-gray-600">จำนวน 30 คน กลุ่มละ 3 คน</p>
+                    <p className="font-bold text-lg text-gray-600">
+                      {room ? `จำนวน ${room.totalMembers} คน กลุ่มละ ${room.groupSize} คน` : ''}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* --- แก้: ปุ่ม READY กด toggle ได้ และเปลี่ยนสีเมื่อ ready --- */}
+              {/* READY Button */}
               <button
                 onClick={handleReady}
                 className={`mt-auto w-full py-8 rounded-[30px] font-black text-5xl uppercase tracking-[0.2em] text-white transition-all

@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LucideMessageCircle, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2 } from 'lucide-react';
 
 export default function TemplatesPage() {
   const router = useRouter();
   const [userTypes, setUserTypes] = useState<Record<string, unknown>>({});
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (raw) {
-      const user = JSON.parse(raw);
-      setUserTypes(user.types ?? {});
+      const parsed = JSON.parse(raw);
+      setUser(parsed);
+      setUserTypes(parsed.types ?? {});
     }
   }, []);
 
@@ -57,29 +59,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      {/* Header Section - ปรับให้ชนขอบจอสุด (Full Width) */}
-      <header className="w-full flex items-center justify-between bg-white p-6 shadow-sm">
-        <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
-              <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h2 className="font-bold text-2xl text-gray-800 leading-tight">Wimolchai</h2>
-              <p className="text-sm text-gray-500 font-medium">นักเรียน</p>
-            </div>
-          </div>
-          <button className="bg-green-500 p-4 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">
-            <LucideMessageCircle fill="currentColor" size={32} />
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content - เลื่อนระยะลงมาจาก App Bar ด้วย mt-8 */}
+      {/* Main Content */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center">
 

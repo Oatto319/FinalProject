@@ -1,11 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ArrowLeft } from 'lucide-react';
 
 const ProgrammingQuestionnaire = () => {
   const router = useRouter();
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+  }, []);
 
   // ข้อมูลคำถาม MBTI-based
   const questions = [
@@ -163,14 +169,14 @@ const ProgrammingQuestionnaire = () => {
             <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-600" />
           </button>
           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-yellow-100">
-            <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai" 
-              alt="User" 
-              className="w-full h-full" 
+            <img
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`}
+              alt="User"
+              className="w-full h-full"
             />
           </div>
           <div>
-            <h3 className="font-bold text-gray-800 text-sm">Wimolchai</h3>
+            <h3 className="font-bold text-gray-800 text-sm">{user?.name ?? '...'}</h3>
             <p className="text-xs text-gray-400">นักเรียน</p>
           </div>
         </div>

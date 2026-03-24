@@ -1,61 +1,73 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Copy } from 'lucide-react';
 
-interface Student {
-  id: number;
+interface RoomMember {
   name: string;
-  role: string;
-  status: 'ready' | 'wait';
-  avatar: string;
+  avatarSeed: number;
+  gmail: string;
 }
 
-const TOTAL_MEMBERS = 5;
+interface CurrentRoom {
+  id: string;
+  title: string;
+  description: string;
+  totalMembers: number;
+  groupSize: number;
+  template: string;
+  hostName: string;
+  hostAvatarSeed: number;
+  members: RoomMember[];
+}
 
 const MatchPage = () => {
   const router = useRouter();
-
-  // ข้อมูลนักเรียน (คงเดิม)
-  const students: Student[] = [
-    { id: 1, name: 'เจษฎา ชาร์รอน', role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jedsada' },
-    { id: 2, name: 'Thanaphon',       role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Thanaphon' },
-    { id: 3, name: 'Wimolchai',       role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai' },
-    { id: 4, name: 'Pathiphat',       role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Pathiphat' },
-    { id: 5, name: 'ลีโอ วัฒนเดชา', role: 'นักเรียน', status: 'wait', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Leo' },
-  ];
-
-  // --- เพิ่ม: อ่านสถานะ ready จาก localStorage แทนการ hardcode ---
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [room, setRoom] = useState<CurrentRoom | null>(null);
+  const [members, setMembers] = useState<RoomMember[]>([]);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
 
-  useEffect(() => {
+  const loadData = () => {
+    const roomRaw = localStorage.getItem('currentRoom');
+    if (roomRaw) {
+      const r: CurrentRoom = JSON.parse(roomRaw);
+      setRoom(r);
+      const roomsRaw = localStorage.getItem('rooms');
+      if (roomsRaw) {
+        const rooms = JSON.parse(roomsRaw);
+        const latest: CurrentRoom = rooms[r.id];
+        if (latest) setMembers(latest.members ?? []);
+      }
+    }
     const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
     setReadyUsers(stored);
+  };
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+    loadData();
   }, []);
 
   useEffect(() => {
-    const handleStorage = () => {
-      const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
-      setReadyUsers(stored);
-    };
-    window.addEventListener('storage', handleStorage);
-    const interval = setInterval(handleStorage, 2000);
+    window.addEventListener('storage', loadData);
+    const interval = setInterval(loadData, 2000);
     return () => {
-      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('storage', loadData);
       clearInterval(interval);
     };
   }, []);
 
   const readyCount = readyUsers.length;
-  const isAllReady = readyCount >= TOTAL_MEMBERS;
-  // --- สิ้นสุดส่วนที่เพิ่ม ---
+  const totalMembers = room?.totalMembers ?? members.length;
+  const isAllReady = members.length > 0 && readyCount >= members.length;
 
-  // ฟังก์ชันคัดลอกรหัสห้อง
   const handleCopy = () => {
-    const text = "#8993633";
+    if (!room) return;
     const el = document.createElement('textarea');
-    el.value = text;
+    el.value = room.id;
     document.body.appendChild(el);
     el.select();
     document.execCommand('copy');
@@ -67,10 +79,10 @@ const MatchPage = () => {
       {/* โปรไฟล์อาจารย์ด้านบน */}
       <div className="w-full max-w-6xl flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-sky-300">
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" alt="Host" />
+          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`} alt="Host" />
         </div>
         <div>
-          <h3 className="font-bold text-gray-800 text-sm leading-none">Simon14</h3>
+          <h3 className="font-bold text-gray-800 text-sm leading-none">{user?.name ?? '...'}</h3>
           <p className="text-[10px] text-gray-400 mt-1 uppercase">อาจารย์</p>
         </div>
       </div>
@@ -79,10 +91,10 @@ const MatchPage = () => {
         {/* ส่วนหัววิชาสีชมพู */}
         <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">
-            PROGRAMMING
+            {room?.template ?? 'PROGRAMMING'}
           </h1>
           <div className="flex items-center gap-4 bg-white/20 px-6 py-2 rounded-2xl backdrop-blur-sm">
-            <span className="text-[#4B3E7A] text-2xl md:text-3xl font-black">#8993633</span>
+            <span className="text-[#4B3E7A] text-2xl md:text-3xl font-black">#{room?.id ?? '...'}</span>
             <button
               onClick={handleCopy}
               className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm"
@@ -97,30 +109,34 @@ const MatchPage = () => {
 
           {/* รายชื่อนักเรียนทางด้านซ้าย */}
           <div className="flex flex-col gap-3">
-            {students.map((student) => (
-              <div
-                key={student.id}
-                className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
-                    <img src={student.avatar} alt={student.name} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-700 leading-tight">{student.name}</h4>
-                    <p className="text-[10px] text-gray-400 uppercase font-medium">{student.role}</p>
-                  </div>
-                </div>
-
-                {/* --- แก้: สถานะอ่านจาก readyUsers แทน student.status --- */}
-                <div className={`
-                  px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors
-                  ${readyUsers.includes(student.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}
-                `}>
-                  {readyUsers.includes(student.name) ? 'ready' : 'wait'}
-                </div>
+            {members.length === 0 ? (
+              <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">
+                รอนักเรียนเข้าร่วม...
               </div>
-            ))}
+            ) : (
+              members.map((member, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
+                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`} alt={member.name} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-700 leading-tight">{member.name}</h4>
+                      <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
+                    </div>
+                  </div>
+                  <div className={`
+                    px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors
+                    ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}
+                  `}>
+                    {readyUsers.includes(member.name) ? 'ready' : 'wait'}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* รายละเอียดห้องและปุ่ม Match ทางด้านขวา */}
@@ -128,11 +144,11 @@ const MatchPage = () => {
             <div className="bg-white rounded-[32px] p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
-                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" alt="Host" />
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`} alt="Host" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-800">Simon14</h3>
+                    <h3 className="font-bold text-gray-800">{user?.name ?? '...'}</h3>
                     <span className="bg-[#94A3B8] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">HOST</span>
                   </div>
                   <p className="text-xs text-gray-400">อาจารย์</p>
@@ -140,15 +156,15 @@ const MatchPage = () => {
               </div>
 
               <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-800">จับกลุ่มวิชา Ai</h2>
+                <h2 className="text-xl font-bold text-gray-800">{room?.title ?? '...'}</h2>
                 <div className="grid grid-cols-2 gap-y-4 text-sm font-medium">
                   <div className="text-gray-500">
-                    <p>กำหนดส่ง 12 พ.ย. นี้</p>
-                    <p className="italic">จำนวน 30 คน กลุ่มละ 3 คน</p>
+                    <p>{room?.description ?? ''}</p>
+                    <p className="italic">{room ? `จำนวน ${room.totalMembers} คน กลุ่มละ ${room.groupSize} คน` : ''}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-gray-400 text-xs">เข้าร่วมแล้ว:</p>
-                    <p className="text-3xl font-black text-[#4B3E7A] leading-none">30/30</p>
+                    <p className="text-3xl font-black text-[#4B3E7A] leading-none">{members.length}/{totalMembers}</p>
                   </div>
                 </div>
               </div>
@@ -166,7 +182,7 @@ const MatchPage = () => {
                   </div>
                   {/* --- แก้: แสดง readyCount จริงจาก localStorage --- */}
                   <div className="flex-[2] bg-[#7C3AED] flex flex-col items-center justify-center text-white">
-                    <span className="text-6xl font-black leading-none">{readyCount}/{TOTAL_MEMBERS}</span>
+                    <span className="text-6xl font-black leading-none">{readyCount}/{members.length || '?'}</span>
                     <span className="text-xs font-bold uppercase mt-2 tracking-widest opacity-80">Waiting...</span>
                   </div>
                 </div>
@@ -189,12 +205,6 @@ const MatchPage = () => {
         </div>
       </div>
 
-      {/* คำแนะนำทดสอบ */}
-      <div className="mt-8 text-center">
-        <p className="text-gray-400 text-[10px] italic">
-          * จำลองสถานะทุกคนเป็น Ready เพื่อแสดงปุ่ม MATCH
-        </p>
-      </div>
     </div>
   );
 };

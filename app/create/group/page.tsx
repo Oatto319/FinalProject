@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Settings, Lightbulb, X } from 'lucide-react';
 
@@ -30,6 +30,15 @@ const GroupResultPage = () => {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [selectedReq, setSelectedReq] = useState<TransferRequest | null>(null);
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [room, setRoom] = useState<{ id: string; title: string; totalMembers: number; groupSize: number } | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+    const roomRaw = localStorage.getItem('currentRoom');
+    if (roomRaw) setRoom(JSON.parse(roomRaw));
+  }, []);
 
   const [transferRequests, setTransferRequests] = useState<TransferRequest[]>([
     { id: 1, name: 'เรน โชติกาญจน์', swapWith: 'Pathiphat', fromGroup: 'J.O.D', toGroup: 'สามประสาน', reason: 'เพื่อนสนิทอยู่กลุ่มนั้นครับ' },
@@ -98,10 +107,10 @@ const GroupResultPage = () => {
       {/* Top Bar */}
       <div className="w-full max-w-6xl flex items-center gap-3 mb-6">
         <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" alt="Host" className="w-full h-full bg-sky-300" />
+          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`} alt="Host" className="w-full h-full bg-sky-300" />
         </div>
         <div>
-          <h3 className="font-bold text-gray-800 text-sm">Simon14</h3>
+          <h3 className="font-bold text-gray-800 text-sm">{user?.name ?? '...'}</h3>
           <p className="text-xs text-gray-400">อาจารย์</p>
         </div>
       </div>
@@ -122,16 +131,13 @@ const GroupResultPage = () => {
           <div className="bg-white rounded-[32px] p-8 shadow-sm">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
-                <p className="font-bold text-gray-700">จับกลุ่มวิชา Ai</p>
-                <p className="text-sm text-gray-500">กำหนดส่ง 12 พ.ย. นี้</p>
-                <p className="text-sm text-gray-500 italic">จำนวน 30 คน กลุ่มละ 3 คน</p>
+                <p className="font-bold text-gray-700">{room?.title ?? '...'}</p>
+                <p className="text-sm text-gray-500 italic">
+                  {room ? `จำนวน ${room.totalMembers} คน กลุ่มละ ${room.groupSize} คน` : ''}
+                </p>
               </div>
               <div className="text-right space-y-2">
-                <p className="font-bold text-[#4B3E7A]">ID: 8993633</p>
-                <div className="flex flex-col items-end">
-                  <p className="text-xs text-gray-400">เข้าร่วมแล้ว:</p>
-                  <p className="text-lg font-black text-gray-700">29/30</p>
-                </div>
+                <p className="font-bold text-[#4B3E7A]">ID: {room?.id ?? '...'}</p>
               </div>
             </div>
           </div>

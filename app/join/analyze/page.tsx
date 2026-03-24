@@ -4,24 +4,53 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LucideMessageCircle, ChevronLeft, Sparkles, BrainCircuit } from 'lucide-react';
 
+interface RoomMember {
+  name: string;
+  avatarSeed: number;
+  gmail: string;
+}
+
 export default function AnalyzePage() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; score: number }[]>([]);
 
-  // ข้อมูลสมาชิกในทีมพร้อมคะแนนการวิเคราะห์จำลอง
-  const teamMembers = [
-    { id: 1, name: 'อีวาน นาวาริน', role: 'นักเรียน', score: 85, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ivan', traits: ['Creative', 'Diligent'] },
-    { id: 2, name: 'เจษฎา ชาร้อน', role: 'นักเรียน', score: 92, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jed', traits: ['Technical', 'Fast Learner'] },
-    { id: 3, name: 'Wimolchai', role: 'นักเรียน', score: 88, avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai', traits: ['Organized', 'Helpful'] },
-  ];
-
-  // จำลองการโหลดการวิเคราะห์
   useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+
+    // Load members from current room and generate scores
+    const roomRaw = localStorage.getItem('currentRoom');
+    if (roomRaw) {
+      const room = JSON.parse(roomRaw);
+      const roomsRaw = localStorage.getItem('rooms');
+      let members: RoomMember[] = room.members ?? [];
+      if (roomsRaw) {
+        const rooms = JSON.parse(roomsRaw);
+        const latest = rooms[room.id];
+        if (latest) members = latest.members ?? [];
+      }
+      // Generate a deterministic score per member based on their avatarSeed
+      const withScores = members.map((m: RoomMember) => ({
+        name: m.name,
+        avatarSeed: m.avatarSeed,
+        score: 75 + (m.avatarSeed % 25),
+      }));
+      setTeamMembers(withScores);
+    }
+
     const timer = setTimeout(() => {
       setIsAnalyzing(false);
     }, 2500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Find best-fit member (highest score)
+  const bestFitIdx = teamMembers.reduce(
+    (best, m, idx) => (m.score > (teamMembers[best]?.score ?? 0) ? idx : best),
+    0
+  );
 
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
@@ -31,13 +60,13 @@ export default function AnalyzePage() {
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
               <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
             </div>
             <div>
-              <h2 className="font-bold text-xl text-gray-800 leading-tight">Wimolchai</h2>
+              <h2 className="font-bold text-xl text-gray-800 leading-tight">{user?.name ?? '...'}</h2>
               <p className="text-xs text-gray-500 font-medium">นักเรียน</p>
             </div>
           </div>
@@ -78,55 +107,65 @@ export default function AnalyzePage() {
 
           {/* Analysis Results Grid */}
           <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-            {teamMembers.map((member) => (
-              <div
-                key={member.id}
-                className={`
-                  bg-white rounded-[35px] p-6 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
-                  transition-all duration-500 border-4
-                  ${!isAnalyzing && member.id === 2 ? 'border-yellow-400 scale-105 shadow-2xl' : 'border-transparent'}
-                `}
-              >
-                {/* Result Badge */}
-                {!isAnalyzing && member.id === 2 && (
-                  <div className="absolute top-4 right-4 bg-yellow-400 text-white p-1 rounded-full">
-                    <Sparkles size={16} fill="currentColor" />
-                  </div>
-                )}
-
-                {/* Avatar with Scanning Effect */}
-                <div className="relative w-24 h-24 md:w-28 md:h-28">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
-                    <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
-                  </div>
-                  {isAnalyzing && (
-                    <div className="absolute inset-0 bg-blue-400/20 rounded-full animate-pulse flex items-center justify-center">
-                      <div className="w-full h-1 bg-blue-400 absolute animate-[scan_2s_ease-in-out_infinite]"></div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="text-center w-full">
-                  <h4 className="font-bold text-gray-800 text-lg leading-tight">{member.name}</h4>
-                  <p className="text-sm text-gray-400 mt-1 mb-3">{member.role}</p>
-
-                  {/* Suitability Score Bar */}
-                  <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-1000 ease-out ${isAnalyzing ? 'w-0' : 'w-full'}`}
-                      style={{
-                        width: isAnalyzing ? '0%' : `${member.score}%`,
-                        backgroundColor: member.id === 2 ? '#FACC15' : '#7096D1'
-                      }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between mt-1 px-1">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Suitability</span>
-                    <span className="text-[10px] font-bold text-gray-700">{isAnalyzing ? '...' : `${member.score}%`}</span>
-                  </div>
-                </div>
+            {teamMembers.length === 0 && !isAnalyzing ? (
+              <div className="col-span-3 text-center text-gray-400 font-medium py-8">
+                ไม่พบข้อมูลสมาชิกในทีม
               </div>
-            ))}
+            ) : (
+              teamMembers.map((member, idx) => {
+                const isBest = !isAnalyzing && idx === bestFitIdx;
+                return (
+                  <div
+                    key={idx}
+                    className={`
+                      bg-white rounded-[35px] p-6 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
+                      transition-all duration-500 border-4
+                      ${isBest ? 'border-yellow-400 scale-105 shadow-2xl' : 'border-transparent'}
+                    `}
+                  >
+                    {isBest && (
+                      <div className="absolute top-4 right-4 bg-yellow-400 text-white p-1 rounded-full">
+                        <Sparkles size={16} fill="currentColor" />
+                      </div>
+                    )}
+
+                    <div className="relative w-24 h-24 md:w-28 md:h-28">
+                      <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
+                        <img
+                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`}
+                          alt={member.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      {isAnalyzing && (
+                        <div className="absolute inset-0 bg-blue-400/20 rounded-full animate-pulse flex items-center justify-center">
+                          <div className="w-full h-1 bg-blue-400 absolute animate-[scan_2s_ease-in-out_infinite]"></div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-center w-full">
+                      <h4 className="font-bold text-gray-800 text-lg leading-tight">{member.name}</h4>
+                      <p className="text-sm text-gray-400 mt-1 mb-3">นักเรียน</p>
+
+                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="h-full transition-all duration-1000 ease-out"
+                          style={{
+                            width: isAnalyzing ? '0%' : `${member.score}%`,
+                            backgroundColor: isBest ? '#FACC15' : '#7096D1',
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-1 px-1">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Suitability</span>
+                        <span className="text-[10px] font-bold text-gray-700">{isAnalyzing ? '...' : `${member.score}%`}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           {/* Result Action Button */}

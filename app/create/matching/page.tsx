@@ -1,17 +1,21 @@
 'use client';
 
-import { useRouter } from 'next/navigation'
-import React, { useEffect } from 'react';
-
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 const MatchingPage = () => {
   const router = useRouter();
+  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (raw) setUser(JSON.parse(raw));
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       router.push('/create/group');
-    }, 3000); // 3 วินาที แล้วไปหน้า Group
-
+    }, 3000);
     return () => clearTimeout(timer);
   }, []);
   return (
@@ -20,14 +24,14 @@ const MatchingPage = () => {
       <div className="w-full bg-[#1A2E44]/80 backdrop-blur-md p-4 flex items-center justify-start border-b border-white/5">
         <div className="max-w-7xl mx-auto w-full flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden border border-white/20 shadow-sm">
-            <img 
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=Simon" 
-              alt="Profile" 
-              className="w-full h-full bg-sky-300" 
+            <img
+              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`}
+              alt="Profile"
+              className="w-full h-full bg-sky-300"
             />
           </div>
           <div>
-            <h3 className="font-bold text-white text-sm leading-none">Simon14</h3>
+            <h3 className="font-bold text-white text-sm leading-none">{user?.name ?? '...'}</h3>
             <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-wider">อาจารย์</p>
           </div>
         </div>
