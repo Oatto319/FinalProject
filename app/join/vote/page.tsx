@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LucideMessageCircle, ChevronLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
+import Navbar from '../../components/Navbar';
 
 export default function VotePage() {
   const router = useRouter();
@@ -26,27 +27,7 @@ export default function VotePage() {
 
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
-      {/* Header Section */}
-      <header className="w-full flex items-center justify-between bg-white p-4 shadow-sm">
-        <div className="max-w-5xl mx-auto w-full flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200 shadow-sm">
-              <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=Wimolchai"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h2 className="font-bold text-xl text-gray-800 leading-tight">Wimolchai</h2>
-              <p className="text-xs text-gray-500 font-medium">นักเรียน</p>
-            </div>
-          </div>
-          <button className="bg-[#4ade80] p-3 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">
-            <LucideMessageCircle fill="currentColor" size={28} />
-          </button>
-        </div>
-      </header>
+      <Navbar subtitle="นักเรียน" />
 
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">

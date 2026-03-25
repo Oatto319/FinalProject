@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { LucideMessageCircle, ArrowRightCircle } from 'lucide-react';
+import { ArrowRightCircle } from 'lucide-react';
+import Navbar from '../../components/Navbar';
 
 interface RoomMember {
   name: string;
@@ -73,27 +74,7 @@ export default function JoinCheckPage() {
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      {/* Header Section */}
-      <header className="w-full flex items-center justify-between bg-white p-6 shadow-sm">
-        <div className="max-w-6xl mx-auto w-full flex items-center justify-between px-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
-              <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div>
-              <h2 className="font-bold text-2xl text-gray-800 leading-tight">{user?.name ?? '...'}</h2>
-              <p className="text-sm text-gray-500 font-medium">นักเรียน</p>
-            </div>
-          </div>
-          <button className="bg-green-500 p-4 rounded-full text-white shadow-lg">
-            <LucideMessageCircle fill="currentColor" size={32} />
-          </button>
-        </div>
-      </header>
+      <Navbar subtitle="นักเรียน" />
 
       {/* Main Content Area */}
       <main className="w-full max-w-6xl mt-8 px-4 grid grid-cols-1 md:grid-cols-12 gap-6 pb-12">
