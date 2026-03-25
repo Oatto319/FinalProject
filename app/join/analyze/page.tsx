@@ -9,6 +9,13 @@ interface RoomMember {
   name: string;
   avatarSeed: number;
   gmail: string;
+  role?: string;
+}
+
+interface MatchedGroup {
+  id: number;
+  name: string;
+  members: RoomMember[];
 }
 
 export default function AnalyzePage() {
@@ -19,21 +26,36 @@ export default function AnalyzePage() {
   useEffect(() => {
 
 
-    // Load members from current room and generate scores
+    // Load members from matched group of current user
+    const userRaw = localStorage.getItem('currentUser');
     const roomRaw = localStorage.getItem('currentRoom');
-    if (roomRaw) {
+    if (userRaw && roomRaw) {
+      const currentUser = JSON.parse(userRaw);
       const room = JSON.parse(roomRaw);
-      const roomsRaw = localStorage.getItem('rooms');
-      let members: RoomMember[] = room.members ?? [];
-      if (roomsRaw) {
-        const rooms = JSON.parse(roomsRaw);
-        const latest = rooms[room.id];
-        if (latest) members = latest.members ?? [];
+
+      let members: RoomMember[] = [];
+
+      // ใช้ matchedGroups ก่อน ถ้าไม่มีค่อย fallback ทั้งห้อง
+      const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
+      if (groupsRaw) {
+        const groups: MatchedGroup[] = JSON.parse(groupsRaw);
+        const mine = groups.find((g) => g.members.some((m) => m.name === currentUser.name));
+        if (mine) members = mine.members;
       }
+      if (members.length === 0) {
+        const roomsRaw = localStorage.getItem('rooms');
+        if (roomsRaw) {
+          const rooms = JSON.parse(roomsRaw);
+          const latest = rooms[room.id];
+          if (latest) members = latest.members ?? [];
+        }
+      }
+
       // Generate a deterministic score per member based on their avatarSeed
       const withScores = members.map((m: RoomMember) => ({
         name: m.name,
         avatarSeed: m.avatarSeed,
+        role: m.role,
         score: 75 + (m.avatarSeed % 25),
       }));
       setTeamMembers(withScores);
@@ -111,7 +133,7 @@ export default function AnalyzePage() {
                     <div className="relative w-24 h-24 md:w-28 md:h-28">
                       <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
                         <img
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`}
+                          src={member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
                           alt={member.name}
                           className="w-full h-full object-cover"
                         />
@@ -149,7 +171,32 @@ export default function AnalyzePage() {
 
           {/* Result Action Button */}
           <button
-            onClick={() => !isAnalyzing && router.push('/join/myteam')}
+            onClick={() => {
+              if (isAnalyzing) return;
+              const leader = teamMembers[bestFitIdx];
+              if (leader) {
+                const roomRaw = localStorage.getItem('currentRoom');
+                if (roomRaw) {
+                  const room = JSON.parse(roomRaw);
+                  const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
+                  if (groupsRaw) {
+                    const groups: MatchedGroup[] = JSON.parse(groupsRaw);
+                    const updated = groups.map((g) => {
+                      if (!g.members.some((m) => m.name === leader.name)) return g;
+                      return { ...g, leaderId: leader.name };
+                    });
+                    localStorage.setItem(`matchedGroups_${room.id}`, JSON.stringify(updated));
+                    // หา groupId ของ leader แล้วบันทึก fallback key ด้วย
+                    const leaderGroup = groups.find((g) => g.members.some((m) => m.name === leader.name));
+                    if (leaderGroup) localStorage.setItem(`groupLeader_${room.id}_${leaderGroup.id}`, leader.name);
+                  } else {
+                    // ไม่มี matchedGroups ใช้ fallback key group 0
+                    localStorage.setItem(`groupLeader_${room.id}_0`, leader.name);
+                  }
+                }
+              }
+              router.push('/join/myteam');
+            }}
             className={`
     w-full max-w-sm py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
     ${isAnalyzing

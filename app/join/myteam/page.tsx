@@ -25,6 +25,7 @@ interface MatchedGroup {
   id: number;
   name: string;
   members: RoomMember[];
+  leaderId?: string;
 }
 
 interface CurrentRoom {
@@ -49,47 +50,51 @@ export default function MyTeamPage() {
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
-    let currentUser: { name: string; avatarSeed: number } | null = null;
-    if (raw) {
-      currentUser = JSON.parse(raw);
-      setUser(currentUser);
-    }
+    if (!raw) return;
+    const currentUser = JSON.parse(raw);
+    setUser(currentUser);
 
-    // Load team members from currentRoom
     const roomRaw = localStorage.getItem('currentRoom');
-    if (roomRaw) {
-      const room: CurrentRoom = JSON.parse(roomRaw);
-      const matched = localStorage.getItem(`matchDone_${room.id}`);
-      setIsMatched(!!matched);
-      // Load latest members from rooms registry
-      const roomsRaw = localStorage.getItem('rooms');
-      let members: RoomMember[] = room.members ?? [];
-      if (roomsRaw) {
-        const rooms = JSON.parse(roomsRaw);
-        const latest: CurrentRoom = rooms[room.id];
-        if (latest) members = latest.members ?? [];
-      }
-      setTeamMembers(members);
+    if (!roomRaw) return;
+    const room: CurrentRoom = JSON.parse(roomRaw);
 
-      // Load matched group for current user
-      if (matched && currentUser) {
-        const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
-        if (groupsRaw) {
-          const groups: MatchedGroup[] = JSON.parse(groupsRaw);
-          const mine = groups.find((g) => g.members.some((m) => m.name === currentUser.name));
-          if (mine) setMyGroup(mine);
+    // Load members & chat once
+    const matched = localStorage.getItem(`matchDone_${room.id}`);
+    setIsMatched(!!matched);
+    const roomsRaw = localStorage.getItem('rooms');
+    let members: RoomMember[] = room.members ?? [];
+    if (roomsRaw) {
+      const rooms = JSON.parse(roomsRaw);
+      const latest: CurrentRoom = rooms[room.id];
+      if (latest) members = latest.members ?? [];
+    }
+    setTeamMembers(members);
+
+    const chatKey = `chat_${room.id}`;
+    const savedMessages = localStorage.getItem(chatKey);
+    setMessages(savedMessages ? JSON.parse(savedMessages) : []);
+
+    // Poll myGroup (รวม leaderId) ทุก 1 วินาที
+    const loadGroup = () => {
+      const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
+      if (groupsRaw) {
+        const groups: MatchedGroup[] = JSON.parse(groupsRaw);
+        const mine = groups.find((g) => g.members.some((m) => m.name === currentUser.name));
+        if (mine) {
+          // ถ้า matchedGroups ไม่มี leaderId ให้เช็ค fallback key
+          const fallbackLeader = localStorage.getItem(`groupLeader_${room.id}_${mine.id}`);
+          setMyGroup({ ...mine, leaderId: mine.leaderId ?? fallbackLeader ?? undefined });
+          return;
         }
       }
+      // fallback: ไม่มี matchedGroups เช็ค key group 0
+      const fallbackLeader = localStorage.getItem(`groupLeader_${room.id}_0`);
+      if (fallbackLeader) setMyGroup((prev) => prev ? { ...prev, leaderId: fallbackLeader } : prev);
+    };
 
-      // Load saved chat messages or initialize with welcome message
-      const chatKey = `chat_${room.id}`;
-      const savedMessages = localStorage.getItem(chatKey);
-      if (savedMessages) {
-        setMessages(JSON.parse(savedMessages));
-      } else {
-        setMessages([]);
-      }
-    }
+    loadGroup();
+    const interval = setInterval(loadGroup, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSend = () => {
@@ -205,7 +210,8 @@ export default function MyTeamPage() {
                               )}
                             </div>
                             <div>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {myGroup?.leaderId === member.name && <span className="text-lg">👑</span>}
                                 <h4 className="font-bold text-gray-800 text-lg">{member.name}</h4>
                                 {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                               </div>
@@ -231,11 +237,9 @@ export default function MyTeamPage() {
             )}
 
 
-            <button
-              onClick={() => router.push('/join/vote')}
-              className="w-full bg-[#7096D1] text-white py-4 rounded-2xl font-bold text-xl shadow-lg hover:bg-[#5A74B1] transition-all transform active:scale-95">
+            <div className="w-full bg-[#7096D1] text-white py-4 rounded-2xl font-bold text-xl text-center select-none">
               &quot;Choose a team leader&quot;
-            </button>
+            </div>
 
             {/* Bottom Analysis Cards */}
             <div className="grid grid-cols-2 gap-4 mt-auto">
@@ -267,17 +271,14 @@ export default function MyTeamPage() {
                   <div key={msg.id} className={`flex items-end gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
                     {!isMe && (
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                        {msg.avatarSeed !== undefined ? (
-                          <img
-                            src={msg.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
-                            alt={msg.sender}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-xs font-bold">
-                            {msg.sender.charAt(0)}
-                          </div>
-                        )}
+                        <img
+                          src={(() => {
+                            const seed = msg.avatarSeed ?? (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed;
+                            return seed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                          })()}
+                          alt={msg.sender}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>

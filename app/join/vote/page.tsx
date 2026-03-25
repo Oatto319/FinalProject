@@ -71,10 +71,33 @@ export default function VotePage() {
     const roomRaw = localStorage.getItem('currentRoom');
     if (!roomRaw) return;
     const room = JSON.parse(roomRaw);
-    const key = `votes_${room.id}_${myGroup.id}`;
-    const existing = JSON.parse(localStorage.getItem(key) || '{}');
-    existing[user?.name ?? ''] = selectedMember;
-    localStorage.setItem(key, JSON.stringify(existing));
+
+    // บันทึก vote
+    const voteKey = `votes_${room.id}_${myGroup.id}`;
+    const votes = JSON.parse(localStorage.getItem(voteKey) || '{}');
+    votes[user?.name ?? ''] = selectedMember;
+    localStorage.setItem(voteKey, JSON.stringify(votes));
+
+    // นับคะแนน หา winner
+    const tally: Record<string, number> = {};
+    Object.values(votes).forEach((name) => {
+      tally[name as string] = (tally[name as string] ?? 0) + 1;
+    });
+    const winner = Object.entries(tally).reduce((a, b) => b[1] >= a[1] ? b : a)[0];
+
+    // บันทึก leaderId ลง matchedGroups
+    const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
+    if (groupsRaw) {
+      const groups = JSON.parse(groupsRaw);
+      const updated = groups.map((g: { id: number; members: { name: string }[]; leaderId?: string }) => {
+        if (!g.members.some((m) => m.name === winner)) return g;
+        return { ...g, leaderId: winner };
+      });
+      localStorage.setItem(`matchedGroups_${room.id}`, JSON.stringify(updated));
+    }
+    // fallback key สำหรับกรณีไม่มี matchedGroups
+    localStorage.setItem(`groupLeader_${room.id}_${myGroup.id}`, winner);
+
     setVoted(true);
   };
 
