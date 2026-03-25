@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, CheckCircle2 } from 'lucide-react';
+import Navbar from '../navbar/page';
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -59,6 +60,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
+      <Navbar />
       {/* Main Content */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center">

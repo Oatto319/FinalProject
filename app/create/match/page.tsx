@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Copy } from 'lucide-react';
+import Navbar from '../../navbar/page';
 
 interface RoomMember {
   name: string;
@@ -75,19 +76,10 @@ const MatchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] p-4 md:p-8 font-sans flex flex-col items-center">
-      {/* โปรไฟล์อาจารย์ด้านบน */}
-      <div className="w-full max-w-6xl flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-sky-300">
-          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`} alt="Host" />
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-800 text-sm leading-none">{user?.name ?? '...'}</h3>
-          <p className="text-[10px] text-gray-400 mt-1 uppercase">อาจารย์</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
+      <Navbar subtitle="อาจารย์" />
 
-      <div className="w-full max-w-6xl">
+      <div className="w-full max-w-6xl px-4 mt-8 pb-12">
         {/* ส่วนหัววิชาสีชมพู */}
         <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">

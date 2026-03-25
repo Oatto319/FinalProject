@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ArrowLeft } from 'lucide-react';
+import Navbar from '../../navbar/page';
 
 const ProgrammingQuestionnaire = () => {
   const router = useRouter();
@@ -158,28 +159,15 @@ const ProgrammingQuestionnaire = () => {
   // --- สิ้นสุดส่วนที่เพิ่ม ---
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] p-4 md:p-8 font-sans flex flex-col items-center">
-      {/* Top Bar - ข้อมูลผู้ใช้ */}
-      <div className="w-full max-w-5xl flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-          >
-            <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-600" />
-          </button>
-          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm bg-yellow-100">
-            <img
-              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`}
-              alt="User"
-              className="w-full h-full"
-            />
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-800 text-sm">{user?.name ?? '...'}</h3>
-            <p className="text-xs text-gray-400">นักเรียน</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
+      <Navbar subtitle="นักเรียน" />
+      <div className="w-full max-w-5xl flex items-center justify-between px-4 md:px-8 mt-6 mb-6">
+        <button
+          onClick={() => router.back()}
+          className="w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+        >
+          <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-600" />
+        </button>
 
         {/* ป้ายชื่อวิชาด้านขวา */}
         <div className="bg-[#F8A4A4] px-8 py-3 rounded-2xl shadow-sm">

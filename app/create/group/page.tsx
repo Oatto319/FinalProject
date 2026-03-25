@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Settings, Lightbulb, X } from 'lucide-react';
+import Navbar from '../../navbar/page';
 
 interface Member {
   name: string;
@@ -102,20 +103,10 @@ const GroupResultPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] p-4 md:p-8 font-sans flex flex-col items-center">
+    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
+      <Navbar subtitle="อาจารย์" />
 
-      {/* Top Bar */}
-      <div className="w-full max-w-6xl flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
-          <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`} alt="Host" className="w-full h-full bg-sky-300" />
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-800 text-sm">{user?.name ?? '...'}</h3>
-          <p className="text-xs text-gray-400">อาจารย์</p>
-        </div>
-      </div>
-
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="w-full max-w-6xl px-4 mt-8 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Left Column */}
         <div className="lg:col-span-5 flex flex-col gap-6">

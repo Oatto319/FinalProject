@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Users, CheckCircle2, Clock } from 'lucide-react';
+import Navbar from '../../navbar/page';
 
 interface RoomData {
   id: string;
@@ -47,7 +48,8 @@ export default function MyProjectsPage() {
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      <main className="w-full max-w-5xl mt-12 px-4 pb-12">
+      <Navbar />
+      <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col min-h-[600px] relative">
 
           {/* Back Button */}
@@ -60,14 +62,6 @@ export default function MyProjectsPage() {
 
           {/* Header */}
           <div className="flex flex-col items-center mb-10 mt-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200 mb-3">
-              <img
-                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${(user?.avatarSeed ?? 0) + 100}`}
-                alt="avatar"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <h1 className="text-2xl font-black text-[#2D3E50]">{user?.name ?? '...'}</h1>
             <p className="text-gray-400 text-sm mt-1">ห้องที่เคยเข้าร่วม</p>
           </div>
 
