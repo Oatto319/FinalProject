@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRightCircle } from 'lucide-react';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../navbar/page';
 
 interface RoomMember {
   name: string;

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Sparkles, BrainCircuit } from 'lucide-react';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../navbar/page';
 
 interface RoomMember {
   name: string;

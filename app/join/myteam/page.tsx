@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Edit2, List, Info, Send, User } from 'lucide-react';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../navbar/page';
 
 interface ChatMessage {
   id: number;

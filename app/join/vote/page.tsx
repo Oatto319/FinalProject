@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../navbar/page';
 
 export default function VotePage() {
   const router = useRouter();

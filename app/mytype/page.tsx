@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Navbar from '../navbar/page';
 
 type MBTIResult = {
   title: string;

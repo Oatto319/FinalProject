@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Brain, Lightbulb, Settings, Pencil, Plus, Minus } from 'lucide-react';
-import Navbar from './components/Navbar';
+import Navbar from './navbar/page';
 
 const App = () => {
   const router = useRouter();

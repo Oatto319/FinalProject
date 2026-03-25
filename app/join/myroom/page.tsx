@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Copy } from 'lucide-react';
-import Navbar from '../../components/Navbar';
+import Navbar from '../../navbar/page';
 
 interface RoomMember {
   name: string;
