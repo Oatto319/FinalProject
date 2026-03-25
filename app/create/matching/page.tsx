@@ -14,17 +14,87 @@ const MatchingPage = () => {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Set matchDone flag so students can access /join/myteam
+    const runMatchAndRedirect = () => {
       const roomRaw = localStorage.getItem('currentRoom');
-      if (roomRaw) {
-        const room = JSON.parse(roomRaw);
-        localStorage.setItem(`matchDone_${room.id}`, 'true');
+      if (!roomRaw) { router.push('/create/group'); return; }
+      const room = JSON.parse(roomRaw);
+
+      // Load latest members
+      const roomsRaw = localStorage.getItem('rooms');
+      const rooms = roomsRaw ? JSON.parse(roomsRaw) : {};
+      const latestRoom = rooms[room.id] ?? room;
+      const members: { name: string; avatarSeed: number; gmail: string }[] = latestRoom.members ?? [];
+
+      // Load match settings
+      const pendingRaw = localStorage.getItem('pendingRoom');
+      const pending = pendingRaw ? JSON.parse(pendingRaw) : {};
+      const matchMode: string = pending.matchMode ?? 'auto';
+      const typeComposition: Record<string, number> = pending.typeComposition ?? {};
+
+      // Load users for MBTI lookup
+      const usersRaw = localStorage.getItem('users');
+      const allUsers: { name: string; types?: Record<string, { typeScores: { title: string; score: number }[] }> }[] = usersRaw ? JSON.parse(usersRaw) : [];
+      const template = (room.template ?? 'programming').toLowerCase();
+
+      const getMemberType = (memberName: string): string => {
+        const u = allUsers.find((u) => u.name === memberName);
+        if (!u?.types?.[template]?.typeScores?.length) return 'ไม่ระบุ';
+        return u.types[template].typeScores.reduce((a, b) => a.score >= b.score ? a : b).title;
+      };
+
+      const groupSize: number = room.groupSize ?? 4;
+      const numGroups = Math.max(1, Math.ceil(members.length / groupSize));
+      const groups: { id: number; name: string; members: (typeof members[0] & { role: string })[] }[] =
+        Array.from({ length: numGroups }, (_, i) => ({ id: i + 1, name: `ทีม ${i + 1}`, members: [] }));
+
+      if (matchMode === 'auto') {
+        // Interleave by type for balanced distribution
+        const byType: Record<string, (typeof members[0] & { role: string })[]> = {};
+        members.forEach((m) => {
+          const t = getMemberType(m.name);
+          if (!byType[t]) byType[t] = [];
+          byType[t].push({ ...m, role: t });
+        });
+        const typeArrays = Object.values(byType);
+        const interleaved: (typeof members[0] & { role: string })[] = [];
+        const maxLen = Math.max(...typeArrays.map((a) => a.length), 0);
+        for (let i = 0; i < maxLen; i++) {
+          typeArrays.forEach((arr) => { if (arr[i]) interleaved.push(arr[i]); });
+        }
+        interleaved.forEach((m, idx) => { groups[idx % numGroups].members.push(m); });
+
+      } else {
+        // Selection mode: fill each group by typeComposition slots
+        const byType: Record<string, (typeof members[0] & { role: string })[]> = {};
+        members.forEach((m) => {
+          const t = getMemberType(m.name);
+          if (!byType[t]) byType[t] = [];
+          byType[t].push({ ...m, role: t });
+        });
+        for (let g = 0; g < numGroups; g++) {
+          Object.entries(typeComposition).forEach(([typeKey, count]) => {
+            const pool = byType[typeKey] ?? [];
+            for (let c = 0; c < count && pool.length > 0; c++) {
+              groups[g].members.push(pool.shift()!);
+            }
+          });
+        }
+        // Assign remaining (unmatched type) members
+        const assigned = new Set(groups.flatMap((g) => g.members.map((m) => m.name)));
+        members.filter((m) => !assigned.has(m.name)).forEach((m) => {
+          const smallest = groups.reduce((a, b) => a.members.length <= b.members.length ? a : b);
+          smallest.members.push({ ...m, role: getMemberType(m.name) });
+        });
       }
+
+      localStorage.setItem(`matchedGroups_${room.id}`, JSON.stringify(groups));
+      localStorage.setItem(`matchDone_${room.id}`, 'true');
       router.push('/create/group');
-    }, 3000);
+    };
+
+    const timer = setTimeout(runMatchAndRedirect, 3000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [router]);
   return (
     <div className="min-h-screen bg-[#1A2E44] flex flex-col items-center font-sans overflow-hidden">
       <Navbar />

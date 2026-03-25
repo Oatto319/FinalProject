@@ -18,6 +18,13 @@ interface RoomMember {
   name: string;
   avatarSeed: number;
   gmail: string;
+  role?: string;
+}
+
+interface MatchedGroup {
+  id: number;
+  name: string;
+  members: RoomMember[];
 }
 
 interface CurrentRoom {
@@ -35,6 +42,7 @@ export default function MyTeamPage() {
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
   const [teamMembers, setTeamMembers] = useState<RoomMember[]>([]);
+  const [myGroup, setMyGroup] = useState<MatchedGroup | null>(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isMatched, setIsMatched] = useState(false);
@@ -62,6 +70,16 @@ export default function MyTeamPage() {
         if (latest) members = latest.members ?? [];
       }
       setTeamMembers(members);
+
+      // Load matched group for current user
+      if (matched && currentUser) {
+        const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
+        if (groupsRaw) {
+          const groups: MatchedGroup[] = JSON.parse(groupsRaw);
+          const mine = groups.find((g) => g.members.some((m) => m.name === currentUser.name));
+          if (mine) setMyGroup(mine);
+        }
+      }
 
       // Load saved chat messages or initialize with welcome message
       const chatKey = `chat_${room.id}`;
@@ -150,55 +168,74 @@ export default function MyTeamPage() {
 
           {/* Left Column: Team Management */}
           <div className="lg:col-span-5 flex flex-col gap-6">
-            {!isMatched && (
+            {!isMatched ? (
               <div className="bg-white rounded-2xl p-8 text-center text-gray-400 flex flex-col items-center gap-3">
                 <div className="text-5xl">⏳</div>
                 <p className="font-bold text-gray-500">รอ Host จับกลุ่ม...</p>
                 <p className="text-sm">ทีมจะปรากฏเมื่อ Host กด Match</p>
               </div>
-            )}
-            <div className="flex flex-col gap-3">
-              {!isMatched ? null : teamMembers.length === 0 ? (
-                <div className="bg-white rounded-2xl p-6 text-center text-gray-400">
-                  ไม่พบสมาชิกในทีม
-                </div>
-              ) : (
-                teamMembers.map((member, idx) => {
-                  const isCurrentUser = member.name === user?.name;
-                  return (
-                    <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm relative group">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
-                            <img
-                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`}
-                              alt={member.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          {isCurrentUser && (
-                            <div className="absolute -bottom-1 -right-1 bg-[#2D3E50] text-white rounded-full p-1 border-2 border-white">
-                              <User size={12} fill="currentColor" />
+            ) : (
+              <>
+                {myGroup && (
+                  <div className="bg-[#2D3E50] text-white rounded-2xl px-6 py-3 text-center font-black text-xl">
+                    {myGroup.name}
+                  </div>
+                )}
+                <div className="flex flex-col gap-3">
+                  {(myGroup?.members ?? teamMembers).length === 0 ? (
+                    <div className="bg-white rounded-2xl p-6 text-center text-gray-400">ไม่พบสมาชิกในทีม</div>
+                  ) : (
+                    (myGroup?.members ?? teamMembers).map((member, idx) => {
+                      const isCurrentUser = member.name === user?.name;
+                      const avatarUrl = member.avatarSeed
+                        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}`
+                        : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                      const roleIcons: Record<string, string> = {
+                        'นักวิเคราะห์': '/img/brain.png',
+                        'นักสร้างสรรค์': '/img/idea.png',
+                        'ผู้ปฏิบัติ': '/img/pencil.png',
+                        'ผู้ประสานงาน': '/img/make.png',
+                      };
+                      const roleIcon = member.role ? roleIcons[member.role] : null;
+                      return (
+                        <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isCurrentUser ? 'border-[#7096D1]' : 'border-transparent'}`}>
+                          <div className="flex items-center gap-4">
+                            <div className="relative">
+                              <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
+                                <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                              </div>
+                              {isCurrentUser && (
+                                <div className="absolute -bottom-1 -right-1 bg-[#2D3E50] text-white rounded-full p-1 border-2 border-white">
+                                  <User size={12} fill="currentColor" />
+                                </div>
+                              )}
                             </div>
-                          )}
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-gray-800 text-lg">{member.name}</h4>
+                                {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
+                              </div>
+                              {member.role && (
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
+                                  <p className="text-xs text-gray-500 font-medium">{member.role}</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => alert(`ดูโปรไฟล์: ${member.name}`)}
+                            className="w-12 h-12 rounded-full bg-[#7086D1] flex items-center justify-center text-white text-2xl font-bold hover:bg-[#5A74B1] transition-colors">
+                            ?
+                          </button>
                         </div>
-                        <div>
-                          <h4 className="font-bold text-gray-800 text-lg">
-                            {member.name}{isCurrentUser ? ' (คุณ)' : ''}
-                          </h4>
-                          <p className="text-sm text-gray-400">นักเรียน</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => alert(`ดูโปรไฟล์: ${member.name}`)}
-                        className="w-12 h-12 rounded-full bg-[#7086D1] flex items-center justify-center text-white text-2xl font-bold hover:bg-[#5A74B1] transition-colors">
-                        ?
-                      </button>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
+
 
             <button
               onClick={() => router.push('/join/vote')}
