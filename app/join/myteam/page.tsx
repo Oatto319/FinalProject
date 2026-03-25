@@ -110,7 +110,7 @@ export default function MyTeamPage() {
 
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
-      <Navbar subtitle="นักเรียน" />
+      <Navbar />
 
       {/* Sub-Header Tools */}
       <div className="w-full max-w-7xl px-6 mt-6 flex flex-wrap items-center justify-between gap-4">

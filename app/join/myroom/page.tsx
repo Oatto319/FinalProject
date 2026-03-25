@@ -91,7 +91,7 @@ export default function MyRoomPage() {
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      <Navbar subtitle="นักเรียน" />
+      <Navbar />
 
       {/* Main Content Area */}
       <main className="w-full max-w-6xl mt-8 px-4 pb-12">

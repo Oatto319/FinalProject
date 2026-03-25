@@ -70,7 +70,7 @@ const WaitingRoom = () => {
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
-      <Navbar subtitle="อาจารย์" />
+      <Navbar />
 
       <div className="w-full max-w-5xl mt-8 px-4 pb-12 bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col">
         {/* Header Pink Section */}

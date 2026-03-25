@@ -8,6 +8,7 @@ interface User {
   name: string;
   gender: string;
   avatarSeed: number;
+  role?: string;
 }
 
 interface NavbarProps {
@@ -88,7 +89,7 @@ export default function Navbar({ subtitle }: NavbarProps) {
     ? `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`
     : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed + 100}`;
 
-  const displaySubtitle = subtitle ?? user.gender;
+  const displaySubtitle = subtitle ?? user.role ?? user.gender;
 
   return (
     <>
@@ -104,7 +105,13 @@ export default function Navbar({ subtitle }: NavbarProps) {
               </div>
               <div className="text-left">
                 <h2 className="font-bold text-2xl text-gray-800 leading-tight">{user.name}</h2>
-                <p className="text-sm text-gray-500 font-medium">{displaySubtitle}</p>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                  displaySubtitle === 'host'
+                    ? 'bg-purple-100 text-purple-600'
+                    : 'bg-orange-100 text-orange-500'
+                }`}>
+                  {displaySubtitle}
+                </span>
               </div>
             </button>
 

@@ -77,7 +77,7 @@ const MatchPage = () => {
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
-      <Navbar subtitle="อาจารย์" />
+      <Navbar />
 
       <div className="w-full max-w-6xl px-4 mt-8 pb-12">
         {/* ส่วนหัววิชาสีชมพู */}

@@ -160,7 +160,7 @@ const ProgrammingQuestionnaire = () => {
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
-      <Navbar subtitle="นักเรียน" />
+      <Navbar />
       <div className="w-full max-w-5xl flex items-center justify-between px-4 md:px-8 mt-6 mb-6">
         <button
           onClick={() => router.back()}

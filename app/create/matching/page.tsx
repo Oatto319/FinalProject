@@ -27,7 +27,7 @@ const MatchingPage = () => {
   }, []);
   return (
     <div className="min-h-screen bg-[#1A2E44] flex flex-col items-center font-sans overflow-hidden">
-      <Navbar subtitle="อาจารย์" />
+      <Navbar />
 
       {/* เนื้อหาหลัก: วงกลม Matching (Main Matching Animation) */}
       <div className="flex-1 flex flex-col items-center justify-center relative w-full px-4">

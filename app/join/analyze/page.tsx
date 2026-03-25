@@ -53,7 +53,7 @@ export default function AnalyzePage() {
 
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
-      <Navbar subtitle="นักเรียน" />
+      <Navbar />
 
       {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
