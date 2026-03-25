@@ -123,22 +123,31 @@ export default function MyRoomPage() {
                   รอสมาชิกเข้าร่วม...
                 </div>
               ) : (
-                members.map((member, idx) => (
-                  <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`} alt={member.name} className="w-full h-full object-cover" />
+                members.map((member, idx) => {
+                  const isMe = member.name === user?.name;
+                  const avatarUrl = member.avatarSeed
+                    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}`
+                    : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                  return (
+                    <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isMe ? 'border-[#7096D1]' : 'border-gray-100'}`}>
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
+                          <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-gray-800">{member.name}</h4>
+                            {isMe && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
+                          </div>
+                          <p className="text-xs text-gray-400">นักเรียน</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-gray-800">{member.name}</h4>
-                        <p className="text-xs text-gray-400">นักเรียน</p>
-                      </div>
+                      <button className={`px-6 py-1.5 rounded-xl font-bold text-white text-sm ${readyUsers.includes(member.name) ? 'bg-[#7096D1]' : 'bg-[#C76A6A]'}`}>
+                        {readyUsers.includes(member.name) ? 'Ready' : 'Wait'}
+                      </button>
                     </div>
-                    <button className={`px-6 py-1.5 rounded-xl font-bold text-white text-sm ${readyUsers.includes(member.name) ? 'bg-[#7096D1]' : 'bg-[#C76A6A]'}`}>
-                      {readyUsers.includes(member.name) ? 'Ready' : 'Wait'}
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
@@ -148,7 +157,7 @@ export default function MyRoomPage() {
               <div className="bg-white rounded-[30px] p-8 shadow-sm">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100 bg-blue-50">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room?.hostAvatarSeed ?? 0}`} alt="Host" />
+                    <img src={room?.hostAvatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
