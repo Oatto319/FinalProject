@@ -38,12 +38,6 @@ export default function LoginPage() {
     router.push('/');
   };
 
-  const handleGuestLogin = () => {
-    const guest = { name: 'Guest', gender: 'Other', avatarSeed: 0 };
-    localStorage.setItem('currentUser', JSON.stringify(guest));
-    router.push('/');
-  };
-
   return (
     <div className="min-h-screen bg-[#1E293B] flex items-center justify-center p-4 font-sans">
       {/* Main White Container */}
@@ -113,12 +107,6 @@ export default function LoginPage() {
             Sign in
           </button>
 
-          <button
-            onClick={handleGuestLogin}
-            className="w-full bg-[#D1D5DB] text-[#475569] py-4 rounded-[20px] font-bold text-lg hover:bg-gray-200 transition-all shadow-md active:scale-95"
-          >
-            Guest login
-          </button>
         </div>
       </div>
     </div>

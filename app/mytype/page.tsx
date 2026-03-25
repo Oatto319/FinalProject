@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
+import Navbar from '../components/Navbar';
 
 type MBTIResult = {
   title: string;
@@ -37,21 +38,9 @@ const MyTypePage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] p-4 md:p-8 font-sans flex flex-col items-center">
-      {/* Top Bar */}
-      <div className="w-full max-w-6xl flex items-center gap-3 mb-6">
-        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
-          <img
-            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 'default'}`}
-            alt="User Profile"
-            className="w-full h-full bg-yellow-100"
-          />
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-800 text-sm">{user?.name ?? '...'}</h3>
-          <p className="text-xs text-gray-400">นักเรียน</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
+      <Navbar subtitle="นักเรียน" />
+      <div className="w-full max-w-6xl p-4 md:p-8 flex flex-col items-center">
 
       {/* Main Card Container */}
       <div className="w-full max-w-6xl bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col relative border-b-8 border-gray-300">
@@ -138,6 +127,7 @@ const MyTypePage = () => {
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );
