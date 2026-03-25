@@ -27,6 +27,7 @@ export default function JoinCheckPage() {
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; avatarSeed: number; gmail: string } | null>(null);
   const [room, setRoom] = useState<RoomData | null>(null);
+  const [matchMode, setMatchMode] = useState<string>('');
 
   useEffect(() => {
     const userRaw = localStorage.getItem('currentUser');
@@ -40,6 +41,9 @@ export default function JoinCheckPage() {
         if (rooms[roomId]) setRoom(rooms[roomId]);
       }
     }
+
+    const pendingRaw = localStorage.getItem('pendingRoom');
+    if (pendingRaw) setMatchMode(JSON.parse(pendingRaw).matchMode ?? '');
   }, []);
 
   const handleJoin = () => {
@@ -93,6 +97,11 @@ export default function JoinCheckPage() {
                   <span className="bg-[#8E97B0] text-white text-xs px-2 py-0.5 rounded uppercase font-bold">Host</span>
                 </div>
                 <p className="text-gray-400 text-sm">อาจารย์</p>
+                {matchMode && (
+                  <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
+                    {matchMode === 'auto' ? '⚡ จับคู่อัตโนมัติ' : '🎛 กำหนดเอง'}
+                  </span>
+                )}
               </div>
             </div>
 

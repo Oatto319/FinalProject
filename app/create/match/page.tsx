@@ -29,6 +29,7 @@ const MatchPage = () => {
   const [room, setRoom] = useState<CurrentRoom | null>(null);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
+  const [matchMode, setMatchMode] = useState<string>('');
 
   const loadData = () => {
     const roomRaw = localStorage.getItem('currentRoom');
@@ -49,6 +50,11 @@ const MatchPage = () => {
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (raw) setUser(JSON.parse(raw));
+    const pendingRaw = localStorage.getItem('pendingRoom');
+    if (pendingRaw) {
+      const pending = JSON.parse(pendingRaw);
+      setMatchMode(pending.matchMode ?? '');
+    }
     loadData();
   }, []);
 
@@ -113,7 +119,7 @@ const MatchPage = () => {
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`} alt={member.name} />
+                      <img src={member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt={member.name} />
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-700 leading-tight">{member.name}</h4>
@@ -144,6 +150,11 @@ const MatchPage = () => {
                     <span className="bg-[#94A3B8] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">HOST</span>
                   </div>
                   <p className="text-xs text-gray-400">อาจารย์</p>
+                  {matchMode && (
+                    <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
+                      {matchMode === 'auto' ? '⚡ จับคู่อัตโนมัติ' : '🎛 กำหนดเอง'}
+                    </span>
+                  )}
                 </div>
               </div>
 

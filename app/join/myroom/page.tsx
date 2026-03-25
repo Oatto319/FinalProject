@@ -28,6 +28,7 @@ export default function MyRoomPage() {
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
+  const [matchMode, setMatchMode] = useState<string>('');
 
   const loadData = () => {
     const roomRaw = localStorage.getItem('currentRoom');
@@ -54,6 +55,8 @@ export default function MyRoomPage() {
       const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
       setIsReady(stored.includes(u.name));
     }
+    const pendingRaw = localStorage.getItem('pendingRoom');
+    if (pendingRaw) setMatchMode(JSON.parse(pendingRaw).matchMode ?? '');
     loadData();
   }, []);
 
@@ -165,6 +168,11 @@ export default function MyRoomPage() {
                       <span className="bg-[#8E97B0] text-white text-xs px-2 py-0.5 rounded uppercase font-bold">Host</span>
                     </div>
                     <p className="text-gray-400 text-sm">อาจารย์</p>
+                    {matchMode && (
+                      <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
+                        {matchMode === 'auto' ? '⚡ จับคู่อัตโนมัติ' : '🎛 กำหนดเอง'}
+                      </span>
+                    )}
                   </div>
                 </div>
 
