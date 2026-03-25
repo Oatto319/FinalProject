@@ -86,14 +86,8 @@ export default function MyTeamPage() {
       const savedMessages = localStorage.getItem(chatKey);
       if (savedMessages) {
         setMessages(JSON.parse(savedMessages));
-      } else if (currentUser) {
-        const now = new Date();
-        const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const welcome: ChatMessage[] = [
-          { id: 1, sender: currentUser.name, text: 'เข้าร่วมทีมแล้ว!', time, isMe: true },
-        ];
-        setMessages(welcome);
-        localStorage.setItem(chatKey, JSON.stringify(welcome));
+      } else {
+        setMessages([]);
       }
     }
   }, []);
@@ -275,7 +269,7 @@ export default function MyTeamPage() {
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                         {msg.avatarSeed !== undefined ? (
                           <img
-                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.avatarSeed}`}
+                            src={msg.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${msg.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
                             alt={msg.sender}
                             className="w-full h-full object-cover"
                           />
