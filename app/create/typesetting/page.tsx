@@ -1,123 +1,148 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Settings2, Users2, LayoutGrid, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Plus, Minus } from 'lucide-react';
 
-export default function TypesettingPage() {
+const TYPES = [
+  { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
+  { key: 'นักสร้างสรรค์', label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
+  { key: 'ผู้ปฏิบัติ',    label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
+  { key: 'นักวิเคราะห์',  label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
+];
+
+export default function TypeSelectionPage() {
   const router = useRouter();
-  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [groupSize, setGroupSize] = useState(4);
+  const [counts, setCounts] = useState<Record<string, number>>(
+    Object.fromEntries(TYPES.map((t) => [t.key, 0]))
+  );
+  const [warning, setWarning] = useState('');
 
   useEffect(() => {
-    const raw = localStorage.getItem('currentUser');
-    if (raw) setUser(JSON.parse(raw));
+    const raw = localStorage.getItem('pendingRoom');
+    if (raw) {
+      const room = JSON.parse(raw);
+      if (room.groupSize) setGroupSize(Number(room.groupSize));
+    }
   }, []);
 
-  const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
-  const settingOptions = [
-    {
-      id: 'random',
-      title: 'RANDOM',
-      description: 'สุ่มสมาชิกเข้ากลุ่มโดยอัตโนมัติ เหมาะสำหรับกิจกรรมที่ต้องการความรวดเร็วและให้สมาชิกทำความรู้จักกันใหม่',
-      icon: <LayoutGrid className="w-8 h-8" />
-    },
-    {
-      id: 'skill',
-      title: 'SKILL BASED',
-      description: 'จัดกลุ่มตามทักษะและความสามารถ เพื่อให้ในหนึ่งกลุ่มมีสมาชิกที่มีทักษะหลากหลายครอบคลุมความต้องการของงาน',
-      icon: <Settings2 className="w-8 h-8" />
-    },
-    {
-      id: 'manual',
-      title: 'MANUAL',
-      description: 'อาจารย์เป็นผู้เลือกสมาชิกเข้ากลุ่มด้วยตนเอง เหมาะสำหรับกรณีที่มีการวางแผนกลุ่มไว้ล่วงหน้าแล้ว',
-      icon: <Users2 className="w-8 h-8" />
+  const increment = (key: string) => {
+    if (total >= groupSize) return;
+    setCounts((prev) => ({ ...prev, [key]: prev[key] + 1 }));
+    setWarning('');
+  };
+
+  const decrement = (key: string) => {
+    if (counts[key] <= 0) return;
+    setCounts((prev) => ({ ...prev, [key]: prev[key] - 1 }));
+    setWarning('');
+  };
+
+  const handleCreate = () => {
+    if (total < groupSize) {
+      setWarning(`ยังเลือกไม่ครบ (${total}/${groupSize}) — กด Create อีกครั้งเพื่อดำเนินการต่อ`);
+      if (!warning) return;
     }
-  ];
+    const raw = localStorage.getItem('pendingRoom');
+    const room = raw ? JSON.parse(raw) : {};
+    localStorage.setItem('pendingRoom', JSON.stringify({ ...room, typeComposition: counts }));
+    router.push('/create/match');
+  };
 
   return (
-    <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      {/* Main Content Area */}
-      <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
 
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()} // เพิ่ม onClick
-            className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
-            <ChevronLeft size={28} strokeWidth={2.5} />
-          </button>
+      {/* Decorative icons — corners */}
+      <img src="/img/brain.png"  alt="" className="absolute top-6  left-6  w-28 h-28 object-contain opacity-90 pointer-events-none" />
+      <img src="/img/idea.png"   alt="" className="absolute top-6  right-6 w-28 h-28 object-contain opacity-90 pointer-events-none" />
+      <img src="/img/pencil.png" alt="" className="absolute bottom-6 left-6  w-24 h-24 object-contain opacity-90 pointer-events-none" />
+      <img src="/img/make.png"   alt="" className="absolute bottom-6 right-6 w-24 h-24 object-contain opacity-90 pointer-events-none" />
 
-          {/* Title Section */}
-          <div className="text-center mt-4 mb-12">
-            <h1 className="text-[#2D3E50] text-3xl font-black italic mb-2 tracking-wide uppercase">
-              &ldquo;Typesetting&rdquo;
-            </h1>
-            <p className="text-gray-500 font-bold">เลือกรูปแบบการจัดกลุ่มที่ต้องการ</p>
-          </div>
+      {/* Title */}
+      <h1 className="text-5xl font-black uppercase tracking-tight text-[#2D3E50] mb-8"
+          style={{ fontFamily: 'sans-serif', letterSpacing: '-1px' }}>
+        Type Settings
+      </h1>
 
-          {/* Settings Options Grid */}
-          <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            {settingOptions.map((option) => (
-              <button
-                key={option.id}
-                onClick={() => setSelectedSetting(option.id)}
-                className={`
-                  bg-[#2D3E50] rounded-[35px] p-8 flex flex-col items-center text-center gap-4 shadow-xl
-                  transition-all duration-300 border-4 relative overflow-hidden group
-                  ${selectedSetting === option.id
-                    ? 'border-[#7096D1] scale-105 ring-4 ring-[#7096D1]/20'
-                    : 'border-transparent hover:border-gray-500'}
-                `}
-              >
-                {/* Active Indicator */}
-                {selectedSetting === option.id && (
-                  <div className="absolute top-4 right-4 text-[#7096D1] animate-in zoom-in duration-300">
-                    <CheckCircle2 size={24} fill="currentColor" className="text-white" />
-                  </div>
-                )}
+      {/* Card */}
+      <div className="bg-[#C4C9E2] rounded-[32px] p-8 w-full max-w-lg shadow-lg">
 
-                {/* Icon Circle */}
-                <div className={`
-                  w-20 h-20 rounded-full flex items-center justify-center mb-2 transition-colors
-                  ${selectedSetting === option.id ? 'bg-[#7096D1] text-white' : 'bg-white/10 text-white/60 group-hover:bg-white/20'}
-                `}>
-                  {option.icon}
+        {/* Members count */}
+        <p className="text-center text-2xl font-black text-[#5B5EA6] mb-6">
+          {groupSize} <span className="font-bold">:Members</span>
+        </p>
+
+        {/* Types grid */}
+        <div className="bg-[#E8EAF3] rounded-2xl p-6">
+          <div className="grid grid-cols-4 gap-4">
+            {/* Icons row */}
+            {TYPES.map((t) => (
+              <div key={t.key} className="flex flex-col items-center gap-1">
+                <div className="w-14 h-14 flex items-center justify-center">
+                  <img src={t.icon} alt={t.label} className="w-12 h-12 object-contain" />
                 </div>
+                <span className="text-[10px] font-bold text-[#3D3D6B] text-center leading-tight">
+                  {t.label}
+                </span>
+              </div>
+            ))}
 
-                <h3 className="text-white text-2xl font-black italic tracking-wider">
-                  {option.title}
-                </h3>
+            {/* Plus buttons row */}
+            {TYPES.map((t) => (
+              <div key={t.key + '-plus'} className="flex justify-center">
+                <button
+                  onClick={() => increment(t.key)}
+                  disabled={total >= groupSize}
+                  className="w-10 h-10 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
+                >
+                  <Plus size={20} strokeWidth={3} />
+                </button>
+              </div>
+            ))}
 
-                <p className="text-gray-400 text-sm leading-relaxed font-medium">
-                  {option.description}
-                </p>
-              </button>
+            {/* Count boxes row */}
+            {TYPES.map((t) => (
+              <div key={t.key + '-count'} className="flex justify-center">
+                <button
+                  onClick={() => decrement(t.key)}
+                  className="w-12 h-12 rounded-xl bg-[#8B8FAD] text-white text-xl font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
+                >
+                  {counts[t.key]}
+                </button>
+              </div>
             ))}
           </div>
 
-          {/* Action Button - ปรับให้เหมือนหน้า Create Room (3D Style) */}
-          <div className="w-full flex justify-center pt-4">
-            <button
-              disabled={!selectedSetting}
-              onClick={() => selectedSetting && router.push('/create/match')}
-              className={`
-      w-full max-w-sm py-6 rounded-[25px] font-black text-3xl transition-all transform uppercase tracking-widest
-      ${selectedSetting
-                  ? 'bg-[#7096D1] text-white shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'}
-    `}
-            >
-              CONFIRM
-            </button>
-          </div>
-
-          <div className="mt-8 text-gray-400 text-xs font-bold italic opacity-60">
-            * คุณสามารถกลับมาแก้ไขรูปแบบการจัดกลุ่มได้ในภายหลัง
-          </div>
+          {/* Total indicator */}
+          <p className="text-center text-xs font-semibold text-[#5B5EA6] mt-4">
+            รวม {total} / {groupSize}
+          </p>
         </div>
-      </main>
+
+        {warning && (
+          <p className="text-center text-xs text-orange-600 font-semibold mt-3">{warning}</p>
+        )}
+
+        {/* Bottom buttons */}
+        <div className="flex justify-between items-center mt-6">
+          <button
+            onClick={() => router.back()}
+            className="w-12 h-12 rounded-full bg-[#4A4E6B] text-white flex items-center justify-center shadow hover:bg-[#3A3E58] active:scale-95 transition-all"
+          >
+            <ChevronLeft size={24} strokeWidth={3} />
+          </button>
+
+          <button
+            onClick={handleCreate}
+            className="bg-[#2D3E50] text-white px-10 py-3 rounded-2xl font-bold text-lg shadow hover:bg-[#1E293B] active:scale-95 transition-all"
+          >
+            Create
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
