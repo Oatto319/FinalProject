@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const [gmail, setGmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSignIn = () => {
     setError('');
@@ -72,15 +74,22 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-2 relative">
+          <div className="flex flex-col gap-2 relative mt-4">
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               placeholder="กรอกรหัสผ่าน......"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSignIn()}
-              className="w-full bg-white rounded-full py-4 px-6 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all placeholder:text-gray-300 mt-4"
+              className="w-full bg-white rounded-full py-4 px-6 pr-14 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all placeholder:text-gray-300"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
 
           {error && (
