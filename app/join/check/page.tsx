@@ -85,7 +85,7 @@ export default function JoinCheckPage() {
           <div className="bg-white rounded-[30px] p-8 shadow-sm">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100">
-                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room?.hostAvatarSeed ?? 0}`} alt="Host" />
+                <img src={room?.hostAvatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" />
               </div>
               <div>
                 <div className="flex items-center gap-2">

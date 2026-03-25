@@ -61,7 +61,7 @@ export default function CreateRoomPage() {
     localStorage.setItem('rooms', JSON.stringify(rooms));
     localStorage.setItem('currentRoom', JSON.stringify(roomData));
 
-    router.push('/create/typesetting');
+    router.push('/create/typeselection');
   };
 
   return (
