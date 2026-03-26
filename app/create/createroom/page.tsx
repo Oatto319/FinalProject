@@ -27,10 +27,29 @@ export default function CreateRoomPage() {
   });
 
   const [showError, setShowError] = useState(false);
+  const [sizeWarning, setSizeWarning] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const updated = { ...formData, [name]: value };
+    setFormData(updated);
+
+    // ตรวจสอบจำนวนแบบ real-time
+    const total = parseInt(name === 'totalMembers' ? value : updated.totalMembers);
+    const size = parseInt(name === 'groupSize' ? value : updated.groupSize);
+    if (total > 0 && size > 0) {
+      if (size > total) {
+        setSizeWarning('⚠️ จำนวนกลุ่มละกี่คน มากกว่าจำนวนนักเรียนทั้งหมด');
+      } else if (total % size !== 0) {
+        const groups = Math.floor(total / size);
+        const remainder = total % size;
+        setSizeWarning(`⚠️ จำนวนไม่ลงตัว — จะได้ ${groups} กลุ่มเต็ม และเหลือ ${remainder} คน`);
+      } else {
+        setSizeWarning(`✓ ได้ ${total / size} กลุ่ม กลุ่มละ ${size} คน`);
+      }
+    } else {
+      setSizeWarning('');
+    }
   };
 
   const handleCreate = () => {
@@ -127,6 +146,7 @@ export default function CreateRoomPage() {
                     placeholder="จำนวนนักเรียนทั้งหมด"
                     value={formData.totalMembers}
                     onChange={handleChange}
+                    min={1}
                     className="w-full bg-white rounded-2xl py-5 pl-14 pr-6 text-[#2D3E50] font-bold text-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-300"
                   />
                 </div>
@@ -140,10 +160,16 @@ export default function CreateRoomPage() {
                     placeholder="จำนวนกลุ่มละกี่คน"
                     value={formData.groupSize}
                     onChange={handleChange}
+                    min={1}
                     className="w-full bg-white rounded-2xl py-5 pl-14 pr-6 text-[#2D3E50] font-bold text-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-300"
                   />
                 </div>
               </div>
+              {sizeWarning && (
+                <p className={`text-sm font-bold px-2 ${sizeWarning.startsWith('✓') ? 'text-green-400' : 'text-yellow-300'}`}>
+                  {sizeWarning}
+                </p>
+              )}
             </div>
 
             {/* Create Button */}
