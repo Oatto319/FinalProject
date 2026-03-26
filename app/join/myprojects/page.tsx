@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Users, CheckCircle2, Clock } from 'lucide-react';
+import { ChevronLeft, Users, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface RoomData {
@@ -22,6 +22,9 @@ export default function MyProjectsPage() {
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
   const [joinedRooms, setJoinedRooms] = useState<RoomData[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<RoomData | null>(null);
+  const [deleteInput, setDeleteInput] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -45,6 +48,35 @@ export default function MyProjectsPage() {
     const list: RoomData[] = [...allIds].map((id) => rooms[id]).filter(Boolean);
     setJoinedRooms(list);
   }, []);
+
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return;
+    if (deleteInput !== deleteTarget.title) {
+      setDeleteError('ชื่อห้องไม่ตรง กรุณาพิมพ์ใหม่');
+      return;
+    }
+    // ลบออกจาก rooms
+    const roomsRaw = localStorage.getItem('rooms');
+    if (roomsRaw) {
+      const rooms = JSON.parse(roomsRaw);
+      delete rooms[deleteTarget.id];
+      localStorage.setItem('rooms', JSON.stringify(rooms));
+    }
+    // ลบ keys ที่เกี่ยวข้อง
+    localStorage.removeItem(`matchDone_${deleteTarget.id}`);
+    localStorage.removeItem(`matchedGroups_${deleteTarget.id}`);
+    localStorage.removeItem(`chat_${deleteTarget.id}`);
+    // ลบออกจาก joinedRooms ของ user
+    if (user) {
+      const joinedKey = `joinedRooms_${user.name}`;
+      const ids: string[] = JSON.parse(localStorage.getItem(joinedKey) || '[]');
+      localStorage.setItem(joinedKey, JSON.stringify(ids.filter((id) => id !== deleteTarget.id)));
+    }
+    setJoinedRooms((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+    setDeleteTarget(null);
+    setDeleteInput('');
+    setDeleteError('');
+  };
 
   const handleSelectRoom = (room: RoomData) => {
     localStorage.setItem('currentRoom', JSON.stringify(room));
@@ -95,10 +127,10 @@ export default function MyProjectsPage() {
                 const matched = !!localStorage.getItem(`matchDone_${room.id}`);
                 const isHost = room.hostName === user?.name;
                 return (
-                  <button
+                  <div
                     key={room.id}
                     onClick={() => handleSelectRoom(room)}
-                    className="w-full bg-[#2D3E50] rounded-[25px] p-6 flex items-center justify-between text-left hover:brightness-110 transition-all active:scale-[0.98] shadow-md"
+                    className="w-full bg-[#2D3E50] rounded-[25px] p-6 flex items-center justify-between text-left hover:brightness-110 transition-all active:scale-[0.98] shadow-md cursor-pointer"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
@@ -127,7 +159,7 @@ export default function MyProjectsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex items-center gap-3 flex-shrink-0">
                       {matched ? (
                         <span className="flex items-center gap-1.5 bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1.5 rounded-full">
                           <CheckCircle2 size={13} />
@@ -139,8 +171,16 @@ export default function MyProjectsPage() {
                           รอ Match
                         </span>
                       )}
+                      {isHost && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(room); setDeleteInput(''); setDeleteError(''); }}
+                          className="w-9 h-9 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -148,6 +188,53 @@ export default function MyProjectsPage() {
 
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[30px] w-full max-w-md shadow-2xl p-8 flex flex-col gap-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 size={20} className="text-red-500" />
+              </div>
+              <h2 className="text-xl font-black text-gray-800">ลบห้อง</h2>
+            </div>
+
+            <p className="text-gray-600 text-sm leading-relaxed">
+              การลบห้องนี้จะไม่สามารถย้อนกลับได้ กรุณาพิมพ์ชื่อห้อง{' '}
+              <span className="font-black text-gray-800">&ldquo;{deleteTarget.title}&rdquo;</span>{' '}
+              เพื่อยืนยัน
+            </p>
+
+            <input
+              type="text"
+              value={deleteInput}
+              onChange={(e) => { setDeleteInput(e.target.value); setDeleteError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleDeleteConfirm()}
+              placeholder={deleteTarget.title}
+              autoFocus
+              className="w-full border-2 border-gray-200 rounded-2xl py-3 px-5 text-gray-800 font-medium focus:outline-none focus:border-red-400 transition-colors"
+            />
+            {deleteError && <p className="text-red-500 text-sm font-medium -mt-2">{deleteError}</p>}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setDeleteTarget(null); setDeleteInput(''); setDeleteError(''); }}
+                className="flex-1 py-3 rounded-2xl text-gray-500 font-bold hover:bg-gray-100 transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteInput !== deleteTarget.title}
+                className="flex-1 py-3 rounded-2xl font-bold text-white transition-colors bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                ลบห้อง
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
