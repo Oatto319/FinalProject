@@ -48,7 +48,13 @@ export default function MyProjectsPage() {
 
   const handleSelectRoom = (room: RoomData) => {
     localStorage.setItem('currentRoom', JSON.stringify(room));
-    router.push('/join/myteam');
+    const isHost = room.hostName === user?.name;
+    const matched = !!localStorage.getItem(`matchDone_${room.id}`);
+    if (isHost) {
+      router.push(matched ? '/create/group' : '/create/match');
+    } else {
+      router.push('/join/myteam');
+    }
   };
 
   return (
