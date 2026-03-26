@@ -32,7 +32,7 @@ const App = () => {
           {/* Create Button (Yellow) */}
           <div
             className="relative bg-yellow-400 flex-1 rounded-[30px] flex flex-col items-center justify-center cursor-pointer hover:brightness-95 transition-all"
-            onClick={() => router.push('/create/createroom')} // เพิ่ม onClick
+            onClick={() => router.push('/templates?mode=create')}
           >
             <h1 className="text-5xl font-black text-emerald-900 italic tracking-tighter">Create</h1>
             <p className="text-emerald-800 font-bold text-xl mt-1">สร้างห้อง</p>

@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, CheckCircle2 } from 'lucide-react';
 import Navbar from '../navbar/page';
 
 export default function TemplatesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isCreateMode = searchParams.get('mode') === 'create';
   const [userTypes, setUserTypes] = useState<Record<string, unknown>>({});
   const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
 
@@ -85,7 +87,20 @@ export default function TemplatesPage() {
               return (
                 <div
                   key={index}
-                  onClick={() => item.id === 'programming' && router.push(item.route)}
+                  onClick={() => {
+                    if (isCreateMode) {
+                      const raw = localStorage.getItem('pendingRoom');
+                      const room = raw ? JSON.parse(raw) : {};
+                      localStorage.setItem('pendingRoom', JSON.stringify({
+                        ...room,
+                        template: item.id,
+                        templateLabel: item.title,
+                      }));
+                      router.push('/create/createroom');
+                    } else {
+                      item.id === 'programming' && router.push(item.route);
+                    }
+                  }}
                   className={`${item.bgColor} rounded-[35px] p-6 flex flex-col items-center cursor-pointer hover:scale-[1.02] transition-transform duration-300 shadow-md min-h-[280px] relative`}
                 >
                   {/* Done Badge */}

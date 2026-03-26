@@ -67,7 +67,7 @@ export default function CreateRoomPage() {
       description,
       totalMembers: parseInt(totalMembers),
       groupSize: parseInt(groupSize),
-      template: 'PROGRAMMING',
+      template: (() => { const p = localStorage.getItem('pendingRoom'); return p ? (JSON.parse(p).templateLabel ?? 'PROGRAMMING') : 'PROGRAMMING'; })(),
       hostName: user?.name ?? '',
       hostAvatarSeed: user?.avatarSeed ?? 0,
       members: [] as { name: string; avatarSeed: number; gmail: string }[],
