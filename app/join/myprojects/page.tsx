@@ -29,15 +29,20 @@ export default function MyProjectsPage() {
     const u = JSON.parse(raw);
     setUser(u);
 
+    const roomsRaw = localStorage.getItem('rooms');
+    if (!roomsRaw) return;
+    const rooms: Record<string, RoomData> = JSON.parse(roomsRaw);
+
     const joinedKey = `joinedRooms_${u.name}`;
     const joinedIds: string[] = JSON.parse(localStorage.getItem(joinedKey) || '[]');
-    const roomsRaw = localStorage.getItem('rooms');
-    if (!roomsRaw || joinedIds.length === 0) return;
 
-    const rooms = JSON.parse(roomsRaw);
-    const list: RoomData[] = joinedIds
-      .map((id: string) => rooms[id])
-      .filter(Boolean);
+    // รวมห้องที่ join + ห้องที่เป็น host
+    const allIds = new Set([
+      ...joinedIds,
+      ...Object.keys(rooms).filter((id) => rooms[id].hostName === u.name),
+    ]);
+
+    const list: RoomData[] = [...allIds].map((id) => rooms[id]).filter(Boolean);
     setJoinedRooms(list);
   }, []);
 
@@ -82,6 +87,7 @@ export default function MyProjectsPage() {
             <div className="flex flex-col gap-4">
               {joinedRooms.map((room) => {
                 const matched = !!localStorage.getItem(`matchDone_${room.id}`);
+                const isHost = room.hostName === user?.name;
                 return (
                   <button
                     key={room.id}
@@ -97,8 +103,15 @@ export default function MyProjectsPage() {
                         />
                       </div>
                       <div>
-                        <h2 className="text-white font-bold text-lg leading-tight">{room.title}</h2>
-                        <p className="text-gray-400 text-sm mt-0.5">Host: {room.hostName}</p>
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-white font-bold text-lg leading-tight">{room.title}</h2>
+                          {isHost && (
+                            <span className="bg-[#F8A4A4] text-[#4B3E7A] text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">
+                              HOST
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-400 text-sm mt-0.5">{isHost ? 'คุณเป็นผู้สร้างห้องนี้' : `Host: ${room.hostName}`}</p>
                         <div className="flex items-center gap-3 mt-1.5">
                           <span className="flex items-center gap-1 text-gray-300 text-xs">
                             <Users size={12} />
