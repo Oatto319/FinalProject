@@ -20,11 +20,12 @@ export default function TypeSelectionPage() {
   const [warning, setWarning] = useState('');
 
   useEffect(() => {
-    const raw = localStorage.getItem('pendingRoom');
-    if (raw) {
-      const room = JSON.parse(raw);
-      if (room.groupSize) setGroupSize(Number(room.groupSize));
-    }
+    const pending = localStorage.getItem('pendingRoom');
+    const current = localStorage.getItem('currentRoom');
+    const size =
+      (pending && JSON.parse(pending).groupSize) ||
+      (current && JSON.parse(current).groupSize);
+    if (size) setGroupSize(Number(size));
   }, []);
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
