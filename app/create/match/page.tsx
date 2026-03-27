@@ -42,9 +42,9 @@ const MatchPage = () => {
         const latest: CurrentRoom = rooms[r.id];
         if (latest) setMembers(latest.members ?? []);
       }
+      const stored = JSON.parse(localStorage.getItem(`readyUsers_${r.id}`) || '[]') as string[];
+      setReadyUsers(stored);
     }
-    const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
-    setReadyUsers(stored);
   };
 
   useEffect(() => {
@@ -73,12 +73,7 @@ const MatchPage = () => {
 
   const handleCopy = () => {
     if (!room) return;
-    const el = document.createElement('textarea');
-    el.value = room.id;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
+    navigator.clipboard.writeText(room.id);
   };
 
   return (
@@ -185,7 +180,7 @@ const MatchPage = () => {
                   </div>
                   {/* --- แก้: แสดง readyCount จริงจาก localStorage --- */}
                   <div className="flex-[2] bg-[#7C3AED] flex flex-col items-center justify-center text-white">
-                    <span className="text-6xl font-black leading-none">{readyCount}/{members.length || '?'}</span>
+                    <span className="text-6xl font-black leading-none">{readyCount}/{totalMembers}</span>
                     <span className="text-xs font-bold uppercase mt-2 tracking-widest opacity-80">Waiting...</span>
                   </div>
                 </div>

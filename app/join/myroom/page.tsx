@@ -42,9 +42,9 @@ export default function MyRoomPage() {
         const latest: CurrentRoom = rooms[r.id];
         if (latest) setMembers(latest.members ?? []);
       }
+      const stored = JSON.parse(localStorage.getItem(`readyUsers_${r.id}`) || '[]') as string[];
+      setReadyUsers(stored);
     }
-    const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
-    setReadyUsers(stored);
   };
 
   useEffect(() => {
@@ -52,7 +52,9 @@ export default function MyRoomPage() {
     if (raw) {
       const u = JSON.parse(raw);
       setUser(u);
-      const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
+      const roomRaw = localStorage.getItem('currentRoom');
+      const roomId = roomRaw ? JSON.parse(roomRaw).id : '';
+      const stored = JSON.parse(localStorage.getItem(`readyUsers_${roomId}`) || '[]') as string[];
       setIsReady(stored.includes(u.name));
     }
     const pendingRaw = localStorage.getItem('pendingRoom');
@@ -84,12 +86,7 @@ export default function MyRoomPage() {
 
   const copyToClipboard = () => {
     if (!room) return;
-    const el = document.createElement('textarea');
-    el.value = room.id;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
+    navigator.clipboard.writeText(room.id);
   };
 
   return (
