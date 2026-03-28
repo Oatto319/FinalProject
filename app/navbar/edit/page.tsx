@@ -1,0 +1,134 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
+
+interface User {
+  name: string;
+  gender: string;
+  avatarSeed: number;
+  role?: string;
+  password?: string;
+}
+
+const avatars = Array.from({ length: 15 }, (_, i) => ({
+  id: i + 1,
+  url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 101}`,
+}));
+
+export default function EditProfilePage() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [name, setName] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState(1);
+  const [nameError, setNameError] = useState('');
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) { router.replace('/login'); return; }
+    const u: User = JSON.parse(raw);
+    setUser(u);
+    setName(u.name);
+    setSelectedAvatar(u.avatarSeed || 1);
+  }, [router]);
+
+  const handleSave = () => {
+    if (!name.trim()) { setNameError('กรุณากรอกชื่อ'); return; }
+    if (!user) return;
+
+    const updated: User = { ...user, name: name.trim(), avatarSeed: selectedAvatar };
+    localStorage.setItem('currentUser', JSON.stringify(updated));
+
+    const usersRaw = localStorage.getItem('users');
+    if (usersRaw) {
+      const users: User[] = JSON.parse(usersRaw);
+      const idx = users.findIndex((u) => u.name.toLowerCase() === user.name.toLowerCase());
+      if (idx >= 0) {
+        users[idx] = { ...users[idx], name: updated.name, avatarSeed: updated.avatarSeed };
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+    }
+
+    router.back();
+  };
+
+  if (!user) return null;
+
+  const currentAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedAvatar + 100}`;
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center font-sans">
+      {/* Header */}
+      <div className="w-full bg-white shadow-sm px-6 py-5 flex items-center gap-4">
+        <button
+          onClick={() => router.back()}
+          className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors active:scale-95"
+        >
+          <ChevronLeft size={24} strokeWidth={2.5} />
+        </button>
+        <h1 className="text-xl font-black text-[#2D3E50]">แก้ไขโปรไฟล์</h1>
+      </div>
+
+      <div className="w-full max-w-lg px-4 mt-8 flex flex-col gap-6">
+
+        {/* Preview */}
+        <div className="bg-white rounded-[28px] p-6 flex items-center gap-5 shadow-sm">
+          <div className="w-20 h-20 rounded-full overflow-hidden bg-orange-100 border-4 border-orange-200 flex-shrink-0">
+            <img src={currentAvatarUrl} alt="Preview" className="w-full h-full object-cover" />
+          </div>
+          <div>
+            <p className="text-lg font-black text-[#2D3E50]">{name || user.name}</p>
+            <p className="text-sm text-gray-400">{user.role ?? user.gender}</p>
+          </div>
+        </div>
+
+        {/* Name Input */}
+        <div className="bg-white rounded-[28px] p-6 shadow-sm flex flex-col gap-3">
+          <label className="text-sm font-black text-gray-500 uppercase tracking-wider">ชื่อ</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => { setName(e.target.value); setNameError(''); }}
+            placeholder="กรอกชื่อ..."
+            className="w-full border-2 border-gray-200 rounded-2xl py-4 px-5 text-[#2D3E50] font-bold text-lg focus:outline-none focus:border-blue-400 transition-colors"
+          />
+          {nameError && <p className="text-red-500 text-sm font-medium">{nameError}</p>}
+        </div>
+
+        {/* Avatar Selector */}
+        <div className="bg-white rounded-[28px] p-6 shadow-sm flex flex-col gap-4">
+          <label className="text-sm font-black text-gray-500 uppercase tracking-wider">เลือก Avatar</label>
+          <div className="grid grid-cols-5 gap-3 justify-items-center">
+            {avatars.map((avatar) => (
+              <button
+                key={avatar.id}
+                onClick={() => setSelectedAvatar(avatar.id)}
+                className={`w-14 h-14 rounded-full overflow-hidden border-4 transition-all duration-200 hover:scale-110 active:scale-95 ${selectedAvatar === avatar.id ? 'border-blue-500 shadow-lg scale-105' : 'border-transparent grayscale-[20%]'}`}
+              >
+                <img src={avatar.url} alt={`Avatar ${avatar.id}`} className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 pb-8">
+          <button
+            onClick={() => router.back()}
+            className="flex-1 py-4 rounded-2xl text-gray-500 font-bold bg-white shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={handleSave}
+            className="flex-[2] py-4 rounded-2xl bg-[#2D3E50] text-white font-black text-lg shadow-md hover:bg-[#1E293B] transition-colors active:scale-95"
+          >
+            บันทึก
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
