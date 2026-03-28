@@ -22,6 +22,7 @@ export default function EditProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(1);
+  const [role, setRole] = useState<'user' | 'host'>('user');
   const [nameError, setNameError] = useState('');
 
   useEffect(() => {
@@ -31,13 +32,14 @@ export default function EditProfilePage() {
     setUser(u);
     setName(u.name);
     setSelectedAvatar(u.avatarSeed || 1);
+    setRole((u.role === 'host' ? 'host' : 'user') as 'user' | 'host');
   }, [router]);
 
   const handleSave = () => {
     if (!name.trim()) { setNameError('กรุณากรอกชื่อ'); return; }
     if (!user) return;
 
-    const updated: User = { ...user, name: name.trim(), avatarSeed: selectedAvatar };
+    const updated: User = { ...user, name: name.trim(), avatarSeed: selectedAvatar, role };
     localStorage.setItem('currentUser', JSON.stringify(updated));
 
     const usersRaw = localStorage.getItem('users');
@@ -45,7 +47,7 @@ export default function EditProfilePage() {
       const users: User[] = JSON.parse(usersRaw);
       const idx = users.findIndex((u) => u.name.toLowerCase() === user.name.toLowerCase());
       if (idx >= 0) {
-        users[idx] = { ...users[idx], name: updated.name, avatarSeed: updated.avatarSeed };
+        users[idx] = { ...users[idx], name: updated.name, avatarSeed: updated.avatarSeed, role: updated.role };
         localStorage.setItem('users', JSON.stringify(users));
       }
     }
@@ -79,7 +81,9 @@ export default function EditProfilePage() {
           </div>
           <div>
             <p className="text-lg font-black text-[#2D3E50]">{name || user.name}</p>
-            <p className="text-sm text-gray-400">{user.role ?? user.gender}</p>
+            <span className={`text-xs font-bold px-3 py-1 rounded-full ${role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+              {role === 'host' ? 'host' : 'user'}
+            </span>
           </div>
         </div>
 
@@ -94,6 +98,22 @@ export default function EditProfilePage() {
             className="w-full border-2 border-gray-200 rounded-2xl py-4 px-5 text-[#2D3E50] font-bold text-lg focus:outline-none focus:border-blue-400 transition-colors"
           />
           {nameError && <p className="text-red-500 text-sm font-medium">{nameError}</p>}
+        </div>
+
+        {/* Role */}
+        <div className="bg-white rounded-[28px] p-6 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm font-black text-gray-500 uppercase tracking-wider mb-1">สถานะ</p>
+            <span className={`text-sm font-bold px-3 py-1 rounded-full ${role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+              {role === 'host' ? 'อาจารย์ (Host)' : 'นักเรียน (User)'}
+            </span>
+          </div>
+          <button
+            onClick={() => router.push('/firstpage?from=edit')}
+            className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-colors active:scale-95"
+          >
+            เปลี่ยน
+          </button>
         </div>
 
         {/* Avatar Selector */}

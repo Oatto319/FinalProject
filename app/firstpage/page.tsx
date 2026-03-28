@@ -1,10 +1,12 @@
 "use client";
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const App = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromEdit = searchParams.get('from') === 'edit';
 
   const handleSelect = (role: 'user' | 'host') => {
     const raw = localStorage.getItem('currentUser');
@@ -26,7 +28,7 @@ const App = () => {
         }
       }
     }
-    router.push('/');
+    fromEdit ? router.back() : router.push('/');
   };
 
   return (
