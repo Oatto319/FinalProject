@@ -1,58 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
-interface RoomMember {
-  name: string;
-  avatarSeed: number;
-  gmail: string;
-  role?: string;
-}
+interface RoomMember { name: string; avatarSeed: number; gmail: string; role?: string; }
+interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; }
+interface TransferRequest { id: number; name: string; swapWith: string; fromGroup: string; toGroup: string; reason?: string; }
 
-interface MatchedGroup {
-  id: number;
-  name: string;
-  members: RoomMember[];
-  leaderId?: string;
-}
-
-interface TransferRequest {
-  id: number;
-  name: string;
-  swapWith: string;
-  fromGroup: string;
-  toGroup: string;
-  reason?: string;
-}
-
-const GROUP_COLORS = [
-  'bg-orange-400',
-  'bg-blue-600',
-  'bg-emerald-500',
-  'bg-purple-500',
-  'bg-rose-500',
-  'bg-amber-500',
-  'bg-cyan-500',
-  'bg-indigo-500',
-];
-
-const ROLE_ICONS: Record<string, string> = {
-  'นักวิเคราะห์': '/img/brain.png',
-  'นักสร้างสรรค์': '/img/idea.png',
-  'ผู้ปฏิบัติ': '/img/pencil.png',
-  'ผู้ประสานงาน': '/img/make.png',
-};
+const GROUP_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
+const ROLE_ICONS: Record<string, string> = { 'นักวิเคราะห์': '/img/brain.png', 'นักสร้างสรรค์': '/img/idea.png', 'ผู้ปฏิบัติ': '/img/pencil.png', 'ผู้ประสานงาน': '/img/make.png' };
 
 const GroupResultPage = () => {
-  const router = useRouter();
-  const [showModal, setShowModal] = useState(false);
-  const [selectedReq, setSelectedReq] = useState<TransferRequest | null>(null);
-  const [room, setRoom] = useState<{ id: string; title: string; totalMembers: number; groupSize: number; template?: string } | null>(null);
-  const [groups, setGroups] = useState<MatchedGroup[]>([]);
-  const [transferRequests, setTransferRequests] = useState<TransferRequest[]>([]);
+  const [showModal, setShowModal]             = useState(false);
+  const [selectedReq, setSelectedReq]         = useState<TransferRequest | null>(null);
+  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; totalMembers: number; groupSize: number; template?: string } | null>(null);
+  const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
+  const [transferRequests]                    = useState<TransferRequest[]>([]);
+
+  const getRoomId = (r: typeof room) => r?.roomId ?? r?.id ?? '';
 
   useEffect(() => {
     const roomRaw = localStorage.getItem('currentRoom');
@@ -60,76 +26,50 @@ const GroupResultPage = () => {
     const r = JSON.parse(roomRaw);
     setRoom(r);
 
-    const groupsRaw = localStorage.getItem(`matchedGroups_${r.id}`);
-    if (groupsRaw) setGroups(JSON.parse(groupsRaw));
+    const roomId = r.roomId ?? r.id;
+    fetch(`/api/rooms/${roomId}`)
+      .then((res) => res.json())
+      .then((data) => { if (data.room?.matchedGroups) setGroups(data.room.matchedGroups); });
   }, []);
 
-  const handleOpen = (req: TransferRequest) => {
-    setSelectedReq(req);
-    setShowModal(true);
-  };
-
-  const handleRequest = (id: number) => {
-    setTransferRequests(prev => prev.filter(r => r.id !== id));
-    setShowModal(false);
-    setSelectedReq(null);
-  };
+  const handleRequest = () => { setShowModal(false); setSelectedReq(null); };
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
-
       <div className="w-full max-w-6xl px-4 mt-8 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-        {/* Left Column */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-
-          {/* Template Title Card */}
           <div className="bg-[#F8A4A4] rounded-[32px] p-8 flex items-center justify-center shadow-sm">
-            <h1 className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase">
-              {room?.template ?? 'PROGRAMMING'}
-            </h1>
+            <h1 className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
-
-          {/* Details Card */}
           <div className="bg-white rounded-[32px] p-8 shadow-sm">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <p className="font-bold text-gray-700">{room?.title ?? '...'}</p>
-                <p className="text-sm text-gray-500 italic">
-                  {room ? `จำนวน ${room.totalMembers} คน กลุ่มละ ${room.groupSize} คน` : ''}
-                </p>
+                <p className="text-sm text-gray-500 italic">{room ? `จำนวน ${room.totalMembers} คน กลุ่มละ ${room.groupSize} คน` : ''}</p>
                 <p className="text-sm text-gray-500">จับกลุ่มแล้ว {groups.length} กลุ่ม</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-[#4B3E7A]">ID: {room?.id ?? '...'}</p>
+                <p className="font-bold text-[#4B3E7A]">ID: {room ? getRoomId(room) : '...'}</p>
               </div>
             </div>
           </div>
-
-          {/* Notification Card */}
           <div className="bg-white rounded-[32px] p-6 shadow-sm flex flex-col gap-3 flex-1 min-h-[200px]">
             <div className="flex items-center justify-between">
               <p className="font-bold text-gray-700 text-sm">การแจ้งเตือน</p>
               {transferRequests.length > 0 && (
-                <span className="w-5 h-5 bg-rose-500 text-white text-xs font-black rounded-full flex items-center justify-center">
-                  {transferRequests.length}
-                </span>
+                <span className="w-5 h-5 bg-rose-500 text-white text-xs font-black rounded-full flex items-center justify-center">{transferRequests.length}</span>
               )}
             </div>
             <div className="flex-1 flex items-center justify-center">
               <p className="text-gray-400 font-medium">ไม่มีการแจ้งเตือนใหม่</p>
             </div>
           </div>
-
         </div>
 
-        {/* Right Column: Groups List */}
         <div className="lg:col-span-7 bg-white rounded-[40px] p-6 shadow-sm overflow-hidden flex flex-col gap-8">
           {groups.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center text-gray-400 font-medium">
-              ไม่พบข้อมูลกลุ่ม
-            </div>
+            <div className="flex-1 flex items-center justify-center text-gray-400 font-medium">ไม่พบข้อมูลกลุ่ม</div>
           ) : (
             groups.map((group, idx) => (
               <div key={group.id} className="flex flex-col">
@@ -138,9 +78,7 @@ const GroupResultPage = () => {
                 </div>
                 <div className="bg-gray-100/50 border-2 border-gray-100 rounded-[32px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
-                    const avatarUrl = member.avatarSeed
-                      ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}`
-                      : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                    const avatarUrl = member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
                     const roleIcon = member.role ? ROLE_ICONS[member.role] : null;
                     const isLeader = group.leaderId === member.name;
                     return (
@@ -162,9 +100,7 @@ const GroupResultPage = () => {
                             )}
                           </div>
                         </div>
-                        {roleIcon && (
-                          <img src={roleIcon} alt={member.role} className="w-8 h-8 object-contain opacity-60" />
-                        )}
+                        {roleIcon && <img src={roleIcon} alt={member.role} className="w-8 h-8 object-contain opacity-60" />}
                       </div>
                     );
                   })}
@@ -173,42 +109,26 @@ const GroupResultPage = () => {
             ))
           )}
         </div>
-
       </div>
 
-      {/* Modal */}
       {showModal && selectedReq && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden">
             <div className="bg-rose-500 px-6 py-4 flex items-center justify-between">
               <h2 className="font-black text-xl text-white">คำร้องขอย้ายกลุ่ม</h2>
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all"
-              >
+              <button onClick={() => setShowModal(false)} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all">
                 <X size={18} />
               </button>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div className="flex gap-3">
-                <button
-                  onClick={() => handleRequest(selectedReq.id)}
-                  className="flex-1 bg-rose-300 hover:bg-rose-400 text-white font-black py-3 rounded-2xl transition-all active:scale-95"
-                >
-                  ปฏิเสธ
-                </button>
-                <button
-                  onClick={() => handleRequest(selectedReq.id)}
-                  className="flex-1 bg-green-400 hover:bg-green-500 text-white font-black py-3 rounded-2xl transition-all active:scale-95"
-                >
-                  อนุมัติ
-                </button>
+                <button onClick={handleRequest} className="flex-1 bg-rose-300 hover:bg-rose-400 text-white font-black py-3 rounded-2xl transition-all active:scale-95">ปฏิเสธ</button>
+                <button onClick={handleRequest} className="flex-1 bg-green-400 hover:bg-green-500 text-white font-black py-3 rounded-2xl transition-all active:scale-95">อนุมัติ</button>
               </div>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };

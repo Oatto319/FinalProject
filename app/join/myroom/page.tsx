@@ -4,124 +4,102 @@ import { useState, useEffect } from 'react';
 import { Copy } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
-interface RoomMember {
-  name: string;
-  avatarSeed: number;
-  gmail: string;
-}
-
+interface RoomMember { name: string; avatarSeed: number; gmail: string; }
 interface CurrentRoom {
-  id: string;
-  title: string;
-  description: string;
-  totalMembers: number;
-  groupSize: number;
-  template: string;
-  hostName: string;
-  hostAvatarSeed: number;
-  members: RoomMember[];
+  id: string; roomId?: string; title: string; description: string;
+  totalMembers: number; groupSize: number; template: string;
+  hostName: string; hostAvatarSeed: number; members: RoomMember[];
 }
 
 export default function MyRoomPage() {
-  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
-  const [room, setRoom] = useState<CurrentRoom | null>(null);
-  const [members, setMembers] = useState<RoomMember[]>([]);
-  const [isReady, setIsReady] = useState(false);
+  const [user, setUser]             = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [room, setRoom]             = useState<CurrentRoom | null>(null);
+  const [members, setMembers]       = useState<RoomMember[]>([]);
+  const [isReady, setIsReady]       = useState(false);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
-  const [matchMode, setMatchMode] = useState<string>('');
+  const [matchMode, setMatchMode]   = useState('');
 
-  const loadData = () => {
-    const roomRaw = localStorage.getItem('currentRoom');
-    if (roomRaw) {
-      const r: CurrentRoom = JSON.parse(roomRaw);
-      setRoom(r);
-      // Load latest members from rooms registry
-      const roomsRaw = localStorage.getItem('rooms');
-      if (roomsRaw) {
-        const rooms = JSON.parse(roomsRaw);
-        const latest: CurrentRoom = rooms[r.id];
-        if (latest) setMembers(latest.members ?? []);
-      }
-      const stored = JSON.parse(localStorage.getItem(`readyUsers_${r.id}`) || '[]') as string[];
-      setReadyUsers(stored);
+  const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
+
+  const fetchRoom = async (roomId: string) => {
+    const res = await fetch(`/api/rooms/${roomId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.room) {
+      setMembers(data.room.members ?? []);
+      setReadyUsers(data.room.readyUsers ?? []);
     }
   };
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
-    if (raw) {
-      const u = JSON.parse(raw);
-      setUser(u);
-      const roomRaw = localStorage.getItem('currentRoom');
-      const roomId = roomRaw ? JSON.parse(roomRaw).id : '';
-      const stored = JSON.parse(localStorage.getItem(`readyUsers_${roomId}`) || '[]') as string[];
-      setIsReady(stored.includes(u.name));
-    }
+    if (raw) setUser(JSON.parse(raw));
+
     const pendingRaw = localStorage.getItem('pendingRoom');
     if (pendingRaw) setMatchMode(JSON.parse(pendingRaw).matchMode ?? '');
-    loadData();
+
+    const roomRaw = localStorage.getItem('currentRoom');
+    if (roomRaw) {
+      const r: CurrentRoom = JSON.parse(roomRaw);
+      setRoom(r);
+      fetchRoom(getRoomId(r)).then(() => {
+        // เช็ค ready status ของ user จาก server
+        const userRaw = localStorage.getItem('currentUser');
+        if (!userRaw) return;
+        const u = JSON.parse(userRaw);
+        fetch(`/api/rooms/${getRoomId(r)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.room) setIsReady((data.room.readyUsers ?? []).includes(u.name));
+          });
+      });
+    }
   }, []);
 
   useEffect(() => {
-    window.addEventListener('storage', loadData);
-    const interval = setInterval(loadData, 2000);
-    return () => {
-      window.removeEventListener('storage', loadData);
-      clearInterval(interval);
-    };
-  }, []);
+    if (!room) return;
+    const interval = setInterval(() => fetchRoom(getRoomId(room)), 2000);
+    return () => clearInterval(interval);
+  }, [room]);
 
-  const handleReady = () => {
-    if (!user) return;
+  const handleReady = async () => {
+    if (!user || !room) return;
     const newStatus = !isReady;
     setIsReady(newStatus);
-    const stored = JSON.parse(localStorage.getItem('readyUsers') || '[]') as string[];
-    const updated = newStatus
-      ? stored.includes(user.name) ? stored : [...stored, user.name]
-      : stored.filter((n) => n !== user.name);
-    localStorage.setItem('readyUsers', JSON.stringify(updated));
-    setReadyUsers(updated);
-    window.dispatchEvent(new StorageEvent('storage', { key: 'readyUsers' }));
+    try {
+      const res = await fetch(`/api/rooms/${getRoomId(room)}/ready`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName: user.name, isReady: newStatus }),
+      });
+      const data = await res.json();
+      setReadyUsers(data.readyUsers ?? []);
+    } catch {
+      setIsReady(!newStatus); // rollback
+    }
   };
 
-  const copyToClipboard = () => {
-    if (!room) return;
-    navigator.clipboard.writeText(room.id);
-  };
+  const copyToClipboard = () => { if (room) navigator.clipboard.writeText(getRoomId(room)); };
 
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
-
-      {/* Main Content Area */}
       <main className="w-full max-w-6xl mt-8 px-4 pb-12">
         <div className="bg-white rounded-[40px] overflow-hidden shadow-sm min-h-[700px]">
-
-          {/* Top Banner Section */}
           <div className="bg-[#FFA4A4] p-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 className="text-[#4A4E69] text-5xl font-black tracking-widest uppercase">
-              {room?.template ?? 'PROGRAMMING'}
-            </h1>
+            <h1 className="text-[#4A4E69] text-5xl font-black tracking-widest uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
             <div className="flex items-center gap-3 bg-[#4A4E69]/10 px-6 py-2 rounded-2xl">
-              <span className="text-[#4A4E69] text-4xl font-black">#{room?.id ?? '...'}</span>
-              <button
-                onClick={copyToClipboard}
-                className="bg-white/80 p-2 rounded-full hover:bg-white transition-colors text-[#4A4E69]"
-              >
+              <span className="text-[#4A4E69] text-4xl font-black">#{room ? getRoomId(room) : '...'}</span>
+              <button onClick={copyToClipboard} className="bg-white/80 p-2 rounded-full hover:bg-white transition-colors text-[#4A4E69]">
                 <Copy size={24} />
               </button>
             </div>
           </div>
 
-          {/* Content Columns */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 p-8 bg-gray-200/50 min-h-[600px]">
-
-            {/* Left Column: Member List */}
             <div className="md:col-span-6 flex flex-col gap-3">
               {members.length === 0 ? (
-                <div className="bg-white rounded-2xl p-6 text-center text-gray-400">
-                  รอสมาชิกเข้าร่วม...
-                </div>
+                <div className="bg-white rounded-2xl p-6 text-center text-gray-400">รอสมาชิกเข้าร่วม...</div>
               ) : (
                 members.map((member, idx) => {
                   const isMe = member.name === user?.name;
@@ -151,9 +129,7 @@ export default function MyRoomPage() {
               )}
             </div>
 
-            {/* Right Column: Room Details & Ready Button */}
             <div className="md:col-span-6 flex flex-col gap-6">
-              {/* Room Info Card */}
               <div className="bg-white rounded-[30px] p-8 shadow-sm">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100 bg-blue-50">
@@ -172,7 +148,6 @@ export default function MyRoomPage() {
                     )}
                   </div>
                 </div>
-
                 <div className="space-y-4 text-gray-700">
                   <div className="flex justify-between items-center border-b border-gray-100 pb-2">
                     <span className="font-bold text-lg">{room?.title ?? '...'}</span>
@@ -192,19 +167,15 @@ export default function MyRoomPage() {
                 </div>
               </div>
 
-              {/* READY Button */}
-              <button
-                onClick={handleReady}
+              <button onClick={handleReady}
                 className={`mt-auto w-full py-8 rounded-[30px] font-black text-5xl uppercase tracking-[0.2em] text-white transition-all
                   ${isReady
                     ? 'bg-green-500 shadow-[0_10px_0_0_#15803d] hover:shadow-[0_5px_0_0_#15803d] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
                     : 'bg-[#7096D1] shadow-[0_10px_0_0_#4A6FA5] hover:shadow-[0_5px_0_0_#4A6FA5] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
-                  }`}
-              >
+                  }`}>
                 {isReady ? 'READY ✓' : 'READY'}
               </button>
             </div>
-
           </div>
         </div>
       </main>
