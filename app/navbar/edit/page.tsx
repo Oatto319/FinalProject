@@ -12,34 +12,33 @@ interface User {
   password?: string;
 }
 
-const avatars = Array.from({ length: 15 }, (_, i) => ({
-  id: i + 1,
-  url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 101}`,
-}));
-
 export default function EditProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState(1);
   const [role, setRole] = useState<'user' | 'host'>('user');
   const [nameError, setNameError] = useState('');
 
-  useEffect(() => {
+  const loadUser = () => {
     const raw = localStorage.getItem('currentUser');
     if (!raw) { router.replace('/login'); return; }
     const u: User = JSON.parse(raw);
     setUser(u);
     setName(u.name);
-    setSelectedAvatar(u.avatarSeed || 1);
     setRole((u.role === 'host' ? 'host' : 'user') as 'user' | 'host');
+  };
+
+  useEffect(() => {
+    loadUser();
+    window.addEventListener('focus', loadUser);
+    return () => window.removeEventListener('focus', loadUser);
   }, [router]);
 
   const handleSave = () => {
     if (!name.trim()) { setNameError('กรุณากรอกชื่อ'); return; }
     if (!user) return;
 
-    const updated: User = { ...user, name: name.trim(), avatarSeed: selectedAvatar, role };
+    const updated: User = { ...user, name: name.trim(), role };
     localStorage.setItem('currentUser', JSON.stringify(updated));
 
     const usersRaw = localStorage.getItem('users');
@@ -47,7 +46,7 @@ export default function EditProfilePage() {
       const users: User[] = JSON.parse(usersRaw);
       const idx = users.findIndex((u) => u.name.toLowerCase() === user.name.toLowerCase());
       if (idx >= 0) {
-        users[idx] = { ...users[idx], name: updated.name, avatarSeed: updated.avatarSeed, role: updated.role };
+        users[idx] = { ...users[idx], name: updated.name, role: updated.role };
         localStorage.setItem('users', JSON.stringify(users));
       }
     }
@@ -57,7 +56,7 @@ export default function EditProfilePage() {
 
   if (!user) return null;
 
-  const currentAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedAvatar + 100}`;
+  const currentAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${(user.avatarSeed || 1) + 100}`;
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center font-sans">
@@ -117,19 +116,19 @@ export default function EditProfilePage() {
         </div>
 
         {/* Avatar Selector */}
-        <div className="bg-white rounded-[28px] p-6 shadow-sm flex flex-col gap-4">
-          <label className="text-sm font-black text-gray-500 uppercase tracking-wider">เลือก Avatar</label>
-          <div className="grid grid-cols-5 gap-3 justify-items-center">
-            {avatars.map((avatar) => (
-              <button
-                key={avatar.id}
-                onClick={() => setSelectedAvatar(avatar.id)}
-                className={`w-14 h-14 rounded-full overflow-hidden border-4 transition-all duration-200 hover:scale-110 active:scale-95 ${selectedAvatar === avatar.id ? 'border-blue-500 shadow-lg scale-105' : 'border-transparent grayscale-[20%]'}`}
-              >
-                <img src={avatar.url} alt={`Avatar ${avatar.id}`} className="w-full h-full object-cover" />
-              </button>
-            ))}
+        <div className="bg-white rounded-[28px] p-6 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-4 border-orange-200">
+              <img src={currentAvatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            </div>
+            <p className="text-sm font-black text-gray-500 uppercase tracking-wider">Avatar</p>
           </div>
+          <button
+            onClick={() => router.push('/login/profile?from=edit')}
+            className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-2xl transition-colors active:scale-95"
+          >
+            แก้ไข
+          </button>
         </div>
 
         {/* Actions */}
