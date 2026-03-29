@@ -87,6 +87,7 @@ export default function EditProfilePage() {
               <Pencil size={16} className="text-gray-600" />
             </button>
           </div>
+          <p className="text-base font-bold text-gray-800">{name || user.name}</p>
           <button
             onClick={() => router.push('/login/profile?from=edit')}
             className="text-sm text-[#0969DA] font-semibold hover:underline"
