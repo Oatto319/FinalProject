@@ -8,24 +8,19 @@ const App = () => {
   const searchParams = useSearchParams();
   const fromEdit = searchParams.get('from') === 'edit';
 
-  const handleSelect = (role: 'user' | 'host') => {
+  const handleSelect = async (role: 'user' | 'host') => {
     const raw = localStorage.getItem('currentUser');
     if (raw) {
       const currentUser = JSON.parse(raw);
       const updated = { ...currentUser, role };
       localStorage.setItem('currentUser', JSON.stringify(updated));
 
-      // อัปเดตใน users array ด้วย
-      const usersRaw = localStorage.getItem('users');
-      if (usersRaw) {
-        const users = JSON.parse(usersRaw);
-        const idx = users.findIndex(
-          (u: { name: string }) => u.name.toLowerCase() === currentUser.name.toLowerCase()
-        );
-        if (idx >= 0) {
-          users[idx] = { ...users[idx], role };
-          localStorage.setItem('users', JSON.stringify(users));
-        }
+      if (currentUser.gmail) {
+        await fetch('/api/users', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gmail: currentUser.gmail, role }),
+        });
       }
     }
     fromEdit ? router.back() : router.push('/');

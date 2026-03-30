@@ -122,34 +122,36 @@ const ProgrammingQuestionnaire = () => {
   };
 
   // --- เพิ่ม: ปิด popup แล้วกลับ templates ---
-  const handlePopupClose = () => {
+  const handlePopupClose = async () => {
     if (jobResult) {
       const raw = localStorage.getItem('currentUser');
       if (raw) {
-        const user = JSON.parse(raw);
-        const updatedUser = {
-          ...user,
-          types: {
-            ...user.types,
-            programming: {
-              title: jobResult.title,
-              description: jobResult.description,
-              jobs: jobResult.jobs,
-              icon: jobResult.icon,
-              typeScores: jobResult.typeScores,
-              completedAt: new Date().toISOString(),
-            }
+        const currentUser = JSON.parse(raw);
+        const newTypes = {
+          ...currentUser.types,
+          programming: {
+            title: jobResult.title,
+            description: jobResult.description,
+            jobs: jobResult.jobs,
+            icon: jobResult.icon,
+            typeScores: jobResult.typeScores,
+            completedAt: new Date().toISOString(),
           }
         };
+        const updatedUser = { ...currentUser, types: newTypes };
+
+        // บันทึก localStorage
         localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        const usersRaw = localStorage.getItem('users');
-        if (usersRaw) {
-          const users = JSON.parse(usersRaw);
-          const idx = users.findIndex((u: { name: string }) => u.name === user.name);
-          if (idx >= 0) {
-            users[idx] = { ...users[idx], types: updatedUser.types };
-            localStorage.setItem('users', JSON.stringify(users));
-          }
+
+        // บันทึก MongoDB
+        try {
+          await fetch('/api/users', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ gmail: currentUser.gmail, types: newTypes }),
+          });
+        } catch {
+          console.error('Failed to save MBTI result to DB');
         }
       }
     }

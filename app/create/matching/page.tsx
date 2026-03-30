@@ -29,16 +29,26 @@ const MatchingPage = () => {
 
       const template = (room.template ?? 'programming').toLowerCase();
 
-      // ดึง MBTI type ของแต่ละ member จาก localStorage users (fallback)
-      const usersRaw = localStorage.getItem('users');
-      const allUsers: { name: string; types?: Record<string, { typeScores: { title: string; score: number }[] }> }[] =
-        usersRaw ? JSON.parse(usersRaw) : [];
+      // ดึง MBTI type ของแต่ละ member จาก MongoDB
+      const memberTypeMap: Record<string, string> = {};
+      await Promise.all(
+        members.map(async (m) => {
+          if (!m.gmail) return;
+          try {
+            const res = await fetch(`/api/users?gmail=${encodeURIComponent(m.gmail)}`);
+            const data = await res.json();
+            const scores = data.user?.types?.[template]?.typeScores;
+            if (scores?.length) {
+              memberTypeMap[m.name] = scores.reduce(
+                (a: { title: string; score: number }, b: { title: string; score: number }) => a.score >= b.score ? a : b
+              ).title;
+            }
+          } catch { /* ไม่มี type ใช้ 'ไม่ระบุ' */ }
+        })
+      );
 
-      const getMemberTypeLocal = (memberName: string): string => {
-        const u = allUsers.find((u) => u.name === memberName);
-        if (!u?.types?.[template]?.typeScores?.length) return 'ไม่ระบุ';
-        return u.types[template].typeScores.reduce((a, b) => a.score >= b.score ? a : b).title;
-      };
+      const getMemberTypeLocal = (memberName: string): string =>
+        memberTypeMap[memberName] ?? 'ไม่ระบุ';
 
       const groupSize: number = room.groupSize ?? 4;
       const numGroups = Math.max(1, Math.ceil(members.length / groupSize));

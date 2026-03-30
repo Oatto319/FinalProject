@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
@@ -16,6 +16,7 @@ interface MatchedGroup {
   id: number;
   name: string;
   members: RoomMember[];
+  leaderId?: string;
 }
 
 const ROLE_ICONS: Record<string, string> = {
@@ -31,6 +32,21 @@ export default function VotePage() {
   const [myGroup, setMyGroup] = useState<MatchedGroup | null>(null);
   const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
   const [voted, setVoted] = useState(false);
+  const roomIdRef = useRef<string>('');
+
+  const fetchGroup = async (roomId: string, userName: string) => {
+    const res = await fetch(`/api/rooms/${roomId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.room) return;
+    const room = data.room;
+    if (room.matchedGroups?.length) {
+      const mine: MatchedGroup = room.matchedGroups.find(
+        (g: MatchedGroup) => g.members.some((m) => m.name === userName)
+      );
+      if (mine) setMyGroup(mine);
+    }
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -38,65 +54,51 @@ export default function VotePage() {
     const currentUser = JSON.parse(raw);
     setUser(currentUser);
 
-    const loadGroup = () => {
-      const roomRaw = localStorage.getItem('currentRoom');
-      if (!roomRaw) return;
-      const room = JSON.parse(roomRaw);
-
-      const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
-      if (groupsRaw) {
-        const groups: MatchedGroup[] = JSON.parse(groupsRaw);
-        const mine = groups.find((g) => g.members.some((m) => m.name === currentUser.name));
-        if (mine) { setMyGroup(mine); return; }
-      }
-
-      // Fallback: ใช้สมาชิกทั้งหมดในห้องถ้ายังไม่มี matchedGroups
-      const roomsRaw = localStorage.getItem('rooms');
-      if (roomsRaw) {
-        const rooms = JSON.parse(roomsRaw);
-        const latest = rooms[room.id];
-        if (latest?.members?.length) {
-          setMyGroup({ id: 0, name: 'ทีม', members: latest.members });
-        }
-      }
-    };
-
-    loadGroup();
-    const interval = setInterval(loadGroup, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleVote = () => {
-    if (!selectedMember || !myGroup) return;
     const roomRaw = localStorage.getItem('currentRoom');
     if (!roomRaw) return;
     const room = JSON.parse(roomRaw);
+    const roomId = room.roomId ?? room.id;
+    roomIdRef.current = roomId;
 
-    // บันทึก vote
-    const voteKey = `votes_${room.id}_${myGroup.id}`;
-    const votes = JSON.parse(localStorage.getItem(voteKey) || '{}');
-    votes[user?.name ?? ''] = selectedMember;
-    localStorage.setItem(voteKey, JSON.stringify(votes));
+    fetchGroup(roomId, currentUser.name);
+    const interval = setInterval(() => fetchGroup(roomId, currentUser.name), 2000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // นับคะแนน หา winner
+  const handleVote = async () => {
+    if (!selectedMember || !myGroup || !user || !roomIdRef.current) return;
+
+    // Load current votes from DB
+    const res = await fetch(`/api/rooms/${roomIdRef.current}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const room = data.room;
+
+    const groupKey = String(myGroup.id);
+    const existingVotes: Record<string, string> = room.votes?.[groupKey] ?? {};
+    const updatedVotes = { ...existingVotes, [user.name]: selectedMember };
+
+    // Count winner
     const tally: Record<string, number> = {};
-    Object.values(votes).forEach((name) => {
-      tally[name as string] = (tally[name as string] ?? 0) + 1;
+    Object.values(updatedVotes).forEach((name) => {
+      tally[name] = (tally[name] ?? 0) + 1;
     });
     const winner = Object.entries(tally).reduce((a, b) => b[1] >= a[1] ? b : a)[0];
 
-    // บันทึก leaderId ลง matchedGroups
-    const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
-    if (groupsRaw) {
-      const groups = JSON.parse(groupsRaw);
-      const updated = groups.map((g: { id: number; members: { name: string }[]; leaderId?: string }) => {
-        if (!g.members.some((m) => m.name === winner)) return g;
-        return { ...g, leaderId: winner };
-      });
-      localStorage.setItem(`matchedGroups_${room.id}`, JSON.stringify(updated));
-    }
-    // fallback key สำหรับกรณีไม่มี matchedGroups
-    localStorage.setItem(`groupLeader_${room.id}_${myGroup.id}`, winner);
+    // Update matchedGroups with leaderId
+    const updatedGroups = (room.matchedGroups ?? []).map((g: MatchedGroup) => {
+      if (g.id !== myGroup.id) return g;
+      return { ...g, leaderId: winner };
+    });
+
+    await fetch(`/api/rooms/${roomIdRef.current}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        [`votes.${groupKey}`]: updatedVotes,
+        matchedGroups: updatedGroups,
+      }),
+    });
 
     setVoted(true);
   };

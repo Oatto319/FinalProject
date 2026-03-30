@@ -34,7 +34,21 @@ const MyTypePage = () => {
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
-    if (raw) setUser(JSON.parse(raw));
+    if (!raw) return;
+    const local = JSON.parse(raw);
+    setUser(local);
+
+    // โหลดข้อมูล types ล่าสุดจาก MongoDB
+    fetch(`/api/users?gmail=${encodeURIComponent(local.gmail)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          const updated = { ...local, types: data.user.types };
+          setUser(updated);
+          localStorage.setItem('currentUser', JSON.stringify(updated));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   return (

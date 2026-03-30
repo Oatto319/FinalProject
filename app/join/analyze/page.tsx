@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Sparkles, BrainCircuit } from 'lucide-react';
 import Navbar from '../../navbar/page';
@@ -16,42 +16,50 @@ interface MatchedGroup {
   id: number;
   name: string;
   members: RoomMember[];
+  leaderId?: string;
 }
 
 export default function AnalyzePage() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
-  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; score: number }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; score: number; role?: string }[]>([]);
+  const [roomIdState, setRoomIdState] = useState('');
+  const [matchedGroups, setMatchedGroups] = useState<MatchedGroup[]>([]);
+  const [myGroupId, setMyGroupId] = useState<number | null>(null);
 
   useEffect(() => {
-
-
-    // Load members from matched group of current user
     const userRaw = localStorage.getItem('currentUser');
     const roomRaw = localStorage.getItem('currentRoom');
-    if (userRaw && roomRaw) {
-      const currentUser = JSON.parse(userRaw);
-      const room = JSON.parse(roomRaw);
+    if (!userRaw || !roomRaw) return;
+
+    const currentUser = JSON.parse(userRaw);
+    const room = JSON.parse(roomRaw);
+    const roomId = room.roomId ?? room.id;
+    setRoomIdState(roomId);
+
+    const load = async () => {
+      const res = await fetch(`/api/rooms/${roomId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.room) return;
+      const dbRoom = data.room;
+
+      setMatchedGroups(dbRoom.matchedGroups ?? []);
 
       let members: RoomMember[] = [];
-
-      // ใช้ matchedGroups ก่อน ถ้าไม่มีค่อย fallback ทั้งห้อง
-      const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
-      if (groupsRaw) {
-        const groups: MatchedGroup[] = JSON.parse(groupsRaw);
-        const mine = groups.find((g) => g.members.some((m) => m.name === currentUser.name));
-        if (mine) members = mine.members;
-      }
-      if (members.length === 0) {
-        const roomsRaw = localStorage.getItem('rooms');
-        if (roomsRaw) {
-          const rooms = JSON.parse(roomsRaw);
-          const latest = rooms[room.id];
-          if (latest) members = latest.members ?? [];
+      if (dbRoom.matchedGroups?.length) {
+        const mine: MatchedGroup = dbRoom.matchedGroups.find(
+          (g: MatchedGroup) => g.members.some((m) => m.name === currentUser.name)
+        );
+        if (mine) {
+          members = mine.members;
+          setMyGroupId(mine.id);
         }
       }
+      if (members.length === 0) {
+        members = dbRoom.members ?? [];
+      }
 
-      // Generate a deterministic score per member based on their avatarSeed
       const withScores = members.map((m: RoomMember) => ({
         name: m.name,
         avatarSeed: m.avatarSeed,
@@ -59,25 +67,42 @@ export default function AnalyzePage() {
         score: 75 + (m.avatarSeed % 25),
       }));
       setTeamMembers(withScores);
-    }
+    };
 
-    const timer = setTimeout(() => {
-      setIsAnalyzing(false);
-    }, 2500);
+    load();
+
+    const timer = setTimeout(() => setIsAnalyzing(false), 2500);
     return () => clearTimeout(timer);
   }, []);
 
-  // Find best-fit member (highest score)
   const bestFitIdx = teamMembers.reduce(
     (best, m, idx) => (m.score > (teamMembers[best]?.score ?? 0) ? idx : best),
     0
   );
 
+  const handleConfirm = async () => {
+    if (isAnalyzing) return;
+    const leader = teamMembers[bestFitIdx];
+    if (!leader || !roomIdState) return;
+
+    const updatedGroups = matchedGroups.map((g) => {
+      if (g.id !== myGroupId) return g;
+      return { ...g, leaderId: leader.name };
+    });
+
+    await fetch(`/api/rooms/${roomIdState}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matchedGroups: updatedGroups }),
+    });
+
+    router.push('/join/myteam');
+  };
+
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
       <Navbar />
 
-      {/* Main Content Area */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
         <div className="bg-[#E5E7EB] rounded-[40px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative overflow-hidden">
 
@@ -171,38 +196,13 @@ export default function AnalyzePage() {
 
           {/* Result Action Button */}
           <button
-            onClick={() => {
-              if (isAnalyzing) return;
-              const leader = teamMembers[bestFitIdx];
-              if (leader) {
-                const roomRaw = localStorage.getItem('currentRoom');
-                if (roomRaw) {
-                  const room = JSON.parse(roomRaw);
-                  const groupsRaw = localStorage.getItem(`matchedGroups_${room.id}`);
-                  if (groupsRaw) {
-                    const groups: MatchedGroup[] = JSON.parse(groupsRaw);
-                    const updated = groups.map((g) => {
-                      if (!g.members.some((m) => m.name === leader.name)) return g;
-                      return { ...g, leaderId: leader.name };
-                    });
-                    localStorage.setItem(`matchedGroups_${room.id}`, JSON.stringify(updated));
-                    // หา groupId ของ leader แล้วบันทึก fallback key ด้วย
-                    const leaderGroup = groups.find((g) => g.members.some((m) => m.name === leader.name));
-                    if (leaderGroup) localStorage.setItem(`groupLeader_${room.id}_${leaderGroup.id}`, leader.name);
-                  } else {
-                    // ไม่มี matchedGroups ใช้ fallback key group 0
-                    localStorage.setItem(`groupLeader_${room.id}_0`, leader.name);
-                  }
-                }
-              }
-              router.push('/join/myteam');
-            }}
+            onClick={handleConfirm}
             className={`
-    w-full max-w-sm py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
-    ${isAnalyzing
+              w-full max-w-sm py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
+              ${isAnalyzing
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : 'bg-[#2D3E50] text-white hover:bg-[#1E293B] shadow-[#1A2635]/30'}
-  `}
+            `}
             disabled={isAnalyzing}
           >
             {isAnalyzing ? 'ANALYZING...' : 'CONFIRM LEADER'}

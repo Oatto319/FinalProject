@@ -41,6 +41,7 @@ const RoomSchema = new Schema({
   readyUsers:     { type: [String], default: [] },
   matchDone:      { type: Boolean, default: false },
   matchedGroups:  { type: [MatchedGroupSchema], default: [] },
+  votes:          { type: Schema.Types.Mixed, default: {} },
 }, { timestamps: true });
 
 export const Room = mongoose.models.Room || mongoose.model('Room', RoomSchema);
