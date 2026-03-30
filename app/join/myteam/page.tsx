@@ -12,6 +12,7 @@ interface CurrentRoom {
   id: string; roomId?: string; title: string; totalMembers: number;
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number; members: RoomMember[];
 }
+interface UserProfile { name: string; types?: Record<string, string>; }
 
 export default function MyTeamPage() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export default function MyTeamPage() {
   const [message, setMessage]       = useState('');
   const [messages, setMessages]     = useState<ChatMessage[]>([]);
   const [isMatched, setIsMatched]   = useState(false);
+  const [memberTypes, setMemberTypes] = useState<Record<string, string>>({});
+  const [roomTemplate, setRoomTemplate] = useState('');
   const roomIdRef = useRef<string>('');
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
@@ -33,9 +36,26 @@ export default function MyTeamPage() {
     const room = data.room;
     setIsMatched(!!room.matchDone);
     setTeamMembers(room.members ?? []);
+    setRoomTemplate(room.template ?? '');
     if (room.matchedGroups?.length) {
       const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => m.name === userName));
-      if (mine) setMyGroup(mine);
+      if (mine) {
+        setMyGroup(mine);
+        // fetch MBTI type for each member in the group
+        const template = room.template ?? '';
+        const types: Record<string, string> = {};
+        await Promise.all(mine.members.map(async (member: RoomMember) => {
+          if (!member.gmail) return;
+          const res = await fetch(`/api/users?gmail=${encodeURIComponent(member.gmail)}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          const profile: UserProfile = data.user;
+          if (profile?.types?.[template]) {
+            types[member.name] = profile.types[template];
+          }
+        }));
+        setMemberTypes(types);
+      }
     }
   };
 
@@ -43,7 +63,7 @@ export default function MyTeamPage() {
     const res = await fetch(`/api/rooms/${roomId}/messages`);
     if (!res.ok) return;
     const data = await res.json();
-    setMessages(data.messages ?? []);
+    setMessages((data.messages ?? []).map((m: any) => ({ ...m, id: m._id ?? m.id })));
   };
 
   useEffect(() => {
@@ -135,12 +155,19 @@ export default function MyTeamPage() {
                               <h4 className="font-bold text-gray-800 text-lg">{member.name}</h4>
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
-                            {member.role && (
-                              <div className="flex items-center gap-1 mt-0.5">
-                                {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
-                                <p className="text-xs text-gray-500 font-medium">{member.role}</p>
-                              </div>
-                            )}
+                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                              {member.role && (
+                                <div className="flex items-center gap-1">
+                                  {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
+                                  <p className="text-xs text-gray-500 font-medium">{member.role}</p>
+                                </div>
+                              )}
+                              {memberTypes[member.name] && (
+                                <span className="bg-[#2D3E50] text-white text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide">
+                                  {memberTypes[member.name]}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <button onClick={() => alert(`ดูโปรไฟล์: ${member.name}`)} className="w-12 h-12 rounded-full bg-[#7086D1] flex items-center justify-center text-white text-2xl font-bold hover:bg-[#5A74B1] transition-colors">?</button>
