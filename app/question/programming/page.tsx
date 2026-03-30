@@ -145,13 +145,17 @@ const ProgrammingQuestionnaire = () => {
 
         // บันทึก MongoDB
         try {
-          await fetch('/api/users', {
+          const res = await fetch('/api/users', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ gmail: currentUser.gmail, types: newTypes }),
           });
-        } catch {
-          console.error('Failed to save MBTI result to DB');
+          if (!res.ok) {
+            const err = await res.json();
+            console.error('Failed to save MBTI result to DB:', err);
+          }
+        } catch (e) {
+          console.error('Failed to save MBTI result to DB:', e);
         }
       }
     }

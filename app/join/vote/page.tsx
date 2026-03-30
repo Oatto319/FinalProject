@@ -91,14 +91,21 @@ export default function VotePage() {
       return { ...g, leaderId: winner };
     });
 
-    await fetch(`/api/rooms/${roomIdRef.current}`, {
+    const newVotes = { ...(room.votes ?? {}), [groupKey]: updatedVotes };
+
+    const patchRes = await fetch(`/api/rooms/${roomIdRef.current}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        [`votes.${groupKey}`]: updatedVotes,
+        votes: newVotes,
         matchedGroups: updatedGroups,
       }),
     });
+    if (!patchRes.ok) {
+      const err = await patchRes.json();
+      console.error('Vote save failed:', err);
+      return;
+    }
 
     setVoted(true);
   };
