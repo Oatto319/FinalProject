@@ -60,25 +60,48 @@ export default function MyTeamPage() {
           const templateKey = LABEL_TO_ID[rawTemplate] ?? rawTemplate;
           const allMembers: RoomMember[] = room.members ?? [];
           const types: Record<string, MBTIResult> = {};
+          // ดึง currentUser จาก localStorage เพื่อใช้เป็น fallback ของ gmail และ type
+          const currentUserRaw = localStorage.getItem('currentUser');
+          const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
           await Promise.all(mine.members.map(async (member: RoomMember) => {
-            // gmail fallback จาก room.members ถ้า matchedGroups ไม่มี
-            const gmail = member.gmail || allMembers.find((m) => m.name === member.name)?.gmail || '';
+            // gmail fallback: matchedGroups → room.members → currentUser (กรณีเป็น user ปัจจุบัน)
+            const gmail =
+              member.gmail ||
+              allMembers.find((m) => m.name === member.name)?.gmail ||
+              (member.name === currentUserLocal?.name ? currentUserLocal?.gmail : '') ||
+              '';
             if (!gmail) return;
-            const res = await fetch(`/api/users?gmail=${encodeURIComponent(gmail)}`);
-            if (!res.ok) return;
-            const data = await res.json();
-            const profile: UserProfile = data.user;
-            const typeResult = profile?.types?.[templateKey];
-            if (typeResult) {
-              types[member.name] = {
-                title: typeResult.title,
-                icon: typeResult.icon,
-                description: typeResult.description ?? '',
-                jobs: typeResult.jobs ?? [],
-              };
-            }
+            try {
+              const res = await fetch(`/api/users?gmail=${encodeURIComponent(gmail)}`);
+              if (!res.ok) return;
+              const data = await res.json();
+              const profile: UserProfile = data.user;
+              const typeResult = profile?.types?.[templateKey];
+              if (typeResult) {
+                types[member.name] = {
+                  title: typeResult.title,
+                  icon: typeResult.icon,
+                  description: typeResult.description ?? '',
+                  jobs: typeResult.jobs ?? [],
+                };
+              }
+            } catch { /* ignore network errors */ }
           }));
+          // fallback สุดท้าย: ใช้ type จาก localStorage ของ currentUser ถ้ายังไม่มี
+          if (currentUserLocal?.name && currentUserLocal?.types?.[templateKey] && !types[currentUserLocal.name]) {
+            const t = currentUserLocal.types[templateKey];
+            types[currentUserLocal.name] = {
+              title: t.title,
+              icon: t.icon,
+              description: t.description ?? '',
+              jobs: t.jobs ?? [],
+            };
+          }
           setMemberTypes(types);
+          // ถ้าได้ type ไม่ครบทุกคน ให้ลองใหม่รอบถัดไป
+          if (Object.keys(types).length < mine.members.length) {
+            memberTypesFetchedRef.current = false;
+          }
         }
       }
     }
