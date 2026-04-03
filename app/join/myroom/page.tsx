@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Copy } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
@@ -12,6 +13,7 @@ interface CurrentRoom {
 }
 
 export default function MyRoomPage() {
+  const router = useRouter();
   const [user, setUser]             = useState<{ name: string; avatarSeed: number } | null>(null);
   const [room, setRoom]             = useState<CurrentRoom | null>(null);
   const [members, setMembers]       = useState<RoomMember[]>([]);
@@ -26,6 +28,10 @@ export default function MyRoomPage() {
     if (!res.ok) return;
     const data = await res.json();
     if (data.room) {
+      if (data.room.matchDone) {
+        router.push('/join/myteam');
+        return;
+      }
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
     }
