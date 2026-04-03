@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Edit2, List, Info, Send, User } from 'lucide-react';
+import { Edit2, List, Info, Send, User, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; }
@@ -12,19 +12,32 @@ interface CurrentRoom {
   id: string; roomId?: string; title: string; totalMembers: number;
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number; members: RoomMember[];
 }
-interface UserProfile { name: string; types?: Record<string, string>; }
+interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+interface UserProfile { name: string; types?: Record<string, MBTIResult>; }
 
 export default function MyTeamPage() {
   const router = useRouter();
-  const [user, setUser]             = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [user, setUser]               = useState<{ name: string; avatarSeed: number } | null>(null);
   const [teamMembers, setTeamMembers] = useState<RoomMember[]>([]);
-  const [myGroup, setMyGroup]       = useState<MatchedGroup | null>(null);
-  const [message, setMessage]       = useState('');
-  const [messages, setMessages]     = useState<ChatMessage[]>([]);
-  const [isMatched, setIsMatched]   = useState(false);
-  const [memberTypes, setMemberTypes] = useState<Record<string, string>>({});
+  const [myGroup, setMyGroup]         = useState<MatchedGroup | null>(null);
+  const [message, setMessage]         = useState('');
+  const [messages, setMessages]       = useState<ChatMessage[]>([]);
+  const [isMatched, setIsMatched]     = useState(false);
+  const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [roomTemplate, setRoomTemplate] = useState('');
+  const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
   const roomIdRef = useRef<string>('');
+  const memberTypesFetchedRef = useRef(false);
+
+  // แปลง template label → ID (รองรับ rooms เก่าที่เก็บ label เช่น 'PROGRAMMING')
+  const LABEL_TO_ID: Record<string, string> = {
+    'programming': 'programming',
+    'service': 'service',
+    'customer / service': 'service',
+    'presentation': 'presentation',
+    'design': 'design',
+    'design / creative': 'design',
+  };
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -41,20 +54,32 @@ export default function MyTeamPage() {
       const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => m.name === userName));
       if (mine) {
         setMyGroup(mine);
-        // fetch MBTI type for each member in the group
-        const template = room.template ?? '';
-        const types: Record<string, string> = {};
-        await Promise.all(mine.members.map(async (member: RoomMember) => {
-          if (!member.gmail) return;
-          const res = await fetch(`/api/users?gmail=${encodeURIComponent(member.gmail)}`);
-          if (!res.ok) return;
-          const data = await res.json();
-          const profile: UserProfile = data.user;
-          if (profile?.types?.[template]) {
-            types[member.name] = profile.types[template];
-          }
-        }));
-        setMemberTypes(types);
+        if (!memberTypesFetchedRef.current) {
+          memberTypesFetchedRef.current = true;
+          const rawTemplate = (room.template ?? '').toLowerCase();
+          const templateKey = LABEL_TO_ID[rawTemplate] ?? rawTemplate;
+          const allMembers: RoomMember[] = room.members ?? [];
+          const types: Record<string, MBTIResult> = {};
+          await Promise.all(mine.members.map(async (member: RoomMember) => {
+            // gmail fallback จาก room.members ถ้า matchedGroups ไม่มี
+            const gmail = member.gmail || allMembers.find((m) => m.name === member.name)?.gmail || '';
+            if (!gmail) return;
+            const res = await fetch(`/api/users?gmail=${encodeURIComponent(gmail)}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const profile: UserProfile = data.user;
+            const typeResult = profile?.types?.[templateKey];
+            if (typeResult) {
+              types[member.name] = {
+                title: typeResult.title,
+                icon: typeResult.icon,
+                description: typeResult.description ?? '',
+                jobs: typeResult.jobs ?? [],
+              };
+            }
+          }));
+          setMemberTypes(types);
+        }
       }
     }
   };
@@ -105,6 +130,13 @@ export default function MyTeamPage() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') handleSend(); };
 
+  const roleIcons: Record<string, string> = {
+    'นักวิเคราะห์': '/img/brain.png',
+    'นักสร้างสรรค์': '/img/idea.png',
+    'ผู้ปฏิบัติ': '/img/pencil.png',
+    'ผู้ประสานงาน': '/img/make.png',
+  };
+
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
       <Navbar />
@@ -139,15 +171,24 @@ export default function MyTeamPage() {
                 <div className="flex flex-col gap-3">
                   {(myGroup?.members ?? teamMembers).map((member, idx) => {
                     const isCurrentUser = member.name === user?.name;
-                    const avatarUrl = member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
-                    const roleIcons: Record<string, string> = { 'นักวิเคราะห์': '/img/brain.png', 'นักสร้างสรรค์': '/img/idea.png', 'ผู้ปฏิบัติ': '/img/pencil.png', 'ผู้ประสานงาน': '/img/make.png' };
-                    const roleIcon = member.role ? roleIcons[member.role] : null;
+                    const avatarUrl = member.avatarSeed
+                      ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}`
+                      : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                    const showRole = member.role && member.role !== 'ไม่ระบุ';
+                    const roleIcon = showRole ? roleIcons[member.role!] : null;
+                    const mbtiType = memberTypes[member.name];
                     return (
                       <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isCurrentUser ? 'border-[#7096D1]' : 'border-transparent'}`}>
                         <div className="flex items-center gap-4">
                           <div className="relative">
-                            <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100"><img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" /></div>
-                            {isCurrentUser && <div className="absolute -bottom-1 -right-1 bg-[#2D3E50] text-white rounded-full p-1 border-2 border-white"><User size={12} fill="currentColor" /></div>}
+                            <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
+                              <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                            </div>
+                            {isCurrentUser && (
+                              <div className="absolute -bottom-1 -right-1 bg-[#2D3E50] text-white rounded-full p-1 border-2 border-white">
+                                <User size={12} fill="currentColor" />
+                              </div>
+                            )}
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
@@ -156,21 +197,29 @@ export default function MyTeamPage() {
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {member.role && (
+                              {showRole && (
                                 <div className="flex items-center gap-1">
                                   {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
                                   <p className="text-xs text-gray-500 font-medium">{member.role}</p>
                                 </div>
                               )}
-                              {memberTypes[member.name] && (
-                                <span className="bg-[#2D3E50] text-white text-[10px] px-2 py-0.5 rounded-full font-bold tracking-wide">
-                                  {memberTypes[member.name]}
-                                </span>
+                              {mbtiType ? (
+                                <div className="flex items-center gap-2 bg-[#EDE9FF] px-3 py-1 rounded-xl">
+                                  <img src={mbtiType.icon} alt={mbtiType.title} className="w-7 h-7 object-contain" />
+                                  <span className="text-[#4B3E7A] text-xs font-bold">{mbtiType.title}</span>
+                                </div>
+                              ) : (
+                                <span className="text-[10px] text-gray-300 italic">ยังไม่มีข้อมูล type</span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <button onClick={() => alert(`ดูโปรไฟล์: ${member.name}`)} className="w-12 h-12 rounded-full bg-[#7086D1] flex items-center justify-center text-white text-2xl font-bold hover:bg-[#5A74B1] transition-colors">?</button>
+                        <button
+                          onClick={() => mbtiType ? setPopup({ member, type: mbtiType }) : null}
+                          className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold transition-colors ${mbtiType ? 'bg-[#7086D1] hover:bg-[#5A74B1] cursor-pointer' : 'bg-gray-300 cursor-default'}`}
+                        >
+                          ⓘ
+                        </button>
                       </div>
                     );
                   })}
@@ -199,7 +248,14 @@ export default function MyTeamPage() {
                   <div key={msg.id} className={`flex items-end gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
                     {!isMe && (
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                        <img src={(() => { const seed = msg.avatarSeed ?? (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed; return seed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`; })()} alt={msg.sender} className="w-full h-full object-cover" />
+                        <img
+                          src={(() => {
+                            const seed = msg.avatarSeed ?? (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed;
+                            return seed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                          })()}
+                          alt={msg.sender}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
@@ -212,8 +268,10 @@ export default function MyTeamPage() {
               })}
             </div>
             <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
-              <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder="เริ่มแชท......" className="flex-1 bg-gray-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700" />
+              <input
+                type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={handleKeyDown}
+                placeholder="เริ่มแชท......" className="flex-1 bg-gray-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700"
+              />
               <button onClick={handleSend} className="w-14 h-14 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all">
                 <Send size={28} />
               </button>
@@ -221,6 +279,40 @@ export default function MyTeamPage() {
           </div>
         </div>
       </main>
+
+      {/* MBTI Type Popup */}
+      {popup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setPopup(null)}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <img src={popup.type.icon} alt={popup.type.title} className="w-14 h-14 object-contain" />
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพ</p>
+                  <p className="text-xl font-black text-[#4B3E7A]">{popup.type.title}</p>
+                  <p className="text-sm text-gray-500 font-medium">{popup.member.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setPopup(null)} className="w-9 h-9 rounded-full border-2 border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <X size={18} className="text-gray-600" />
+              </button>
+            </div>
+            {popup.type.description && (
+              <p className="text-gray-500 text-sm leading-relaxed mb-4">{popup.type.description}</p>
+            )}
+            {popup.type.jobs?.length > 0 && (
+              <div>
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
+                <div className="flex flex-wrap gap-2">
+                  {popup.type.jobs.map((job) => (
+                    <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">{job}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

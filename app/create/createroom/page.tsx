@@ -45,7 +45,7 @@ export default function CreateRoomPage() {
     try {
       const roomId = Math.floor(1000000 + Math.random() * 9000000).toString();
       const pendingRaw = localStorage.getItem('pendingRoom');
-      const template = pendingRaw ? (JSON.parse(pendingRaw).templateLabel ?? 'PROGRAMMING') : 'PROGRAMMING';
+      const template = pendingRaw ? (JSON.parse(pendingRaw).template ?? 'programming') : 'programming';
 
       const roomData = {
         roomId,

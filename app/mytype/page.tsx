@@ -30,7 +30,7 @@ const TEMPLATES = [
 
 const MyTypePage = () => {
   const router = useRouter();
-  const [user, setUser] = useState<{ name: string; avatarSeed: number; types?: UserTypes } | null>(null);
+  const [user, setUser] = useState<{ name: string; avatarSeed: number; gmail?: string; types?: UserTypes } | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -38,7 +38,6 @@ const MyTypePage = () => {
     const local = JSON.parse(raw);
     setUser(local);
 
-    // โหลดข้อมูล types ล่าสุดจาก MongoDB
     fetch(`/api/users?gmail=${encodeURIComponent(local.gmail)}`)
       .then((r) => r.json())
       .then((data) => {
