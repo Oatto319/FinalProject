@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-const App = () => {
+const AppContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromEdit = searchParams.get('from') === 'edit';
@@ -93,4 +93,10 @@ const App = () => {
   );
 };
 
-export default App;
+export default function App() {
+  return (
+    <Suspense fallback={null}>
+      <AppContent />
+    </Suspense>
+  );
+}

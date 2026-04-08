@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, CheckCircle2 } from 'lucide-react';
 import Navbar from '../navbar/page';
 
-export default function TemplatesPage() {
+function TemplatesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isCreateMode = searchParams.get('mode') === 'create';
@@ -130,5 +130,13 @@ export default function TemplatesPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function TemplatesPage() {
+  return (
+    <Suspense fallback={null}>
+      <TemplatesContent />
+    </Suspense>
   );
 }
