@@ -12,10 +12,10 @@ const TEMPLATES = [
     bgColor: 'bg-[#FF9B9B]',
     textColor: 'text-[#4A4E69]',
     types: [
-      { label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
-      { label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
-      { label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
-      { label: 'ผู้ประสานงาน',  icon: '/img/make.png' },
+      { label: 'นักวิเคราะห์',    icon: '/img/brain.png' },
+      { label: 'นักคิดสร้างสรรค์', icon: '/img/idea.png' },
+      { label: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png' },
+      { label: 'นักประสานงาน',     icon: '/img/make.png' },
     ],
   },
   {

@@ -4,28 +4,57 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Plus, Minus } from 'lucide-react';
 
-const TYPES = [
-  { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
-  { key: 'นักสร้างสรรค์', label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
-  { key: 'ผู้ปฏิบัติ',    label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
-  { key: 'นักวิเคราะห์',  label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
-];
+const TYPES_BY_TEMPLATE: Record<string, { key: string; label: string; icon: string }[]> = {
+  programming: [
+    { key: 'นักวิเคราะห์',    label: 'นักวิเคราะห์',    icon: '/img/brain.png' },
+    { key: 'นักคิดสร้างสรรค์', label: 'นักคิดสร้างสรรค์', icon: '/img/idea.png' },
+    { key: 'ผู้ปฏิบัติการ',    label: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png' },
+    { key: 'นักประสานงาน',     label: 'นักประสานงาน',     icon: '/img/make.png' },
+  ],
+  service: [
+    { key: 'นักสื่อสาร',    label: 'นักสื่อสาร',    icon: '/img/make.png' },
+    { key: 'นักแก้ปัญหา',  label: 'นักแก้ปัญหา',  icon: '/img/brain.png' },
+    { key: 'ผู้ฟัง',        label: 'ผู้ฟัง',        icon: '/img/idea.png' },
+    { key: 'ผู้ปฏิบัติการ', label: 'ผู้ปฏิบัติการ', icon: '/img/pencil.png' },
+  ],
+  presentation: [
+    { key: 'นักพูด',       label: 'นักพูด',       icon: '/img/idea.png' },
+    { key: 'นักวิจัย',     label: 'นักวิจัย',     icon: '/img/brain.png' },
+    { key: 'นักออกแบบ',    label: 'นักออกแบบ',    icon: '/img/pencil.png' },
+    { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
+  ],
+  design: [
+    { key: 'นักสร้างสรรค์', label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
+    { key: 'นักวิเคราะห์',  label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
+    { key: 'ผู้ปฏิบัติ',    label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
+    { key: 'ผู้ประสานงาน',  label: 'ผู้ประสานงาน',  icon: '/img/make.png' },
+  ],
+};
+
+const DEFAULT_TYPES = TYPES_BY_TEMPLATE.programming;
 
 export default function TypeSelectionPage() {
   const router = useRouter();
   const [groupSize, setGroupSize] = useState(4);
+  const [types, setTypes] = useState(DEFAULT_TYPES);
   const [counts, setCounts] = useState<Record<string, number>>(
-    Object.fromEntries(TYPES.map((t) => [t.key, 0]))
+    Object.fromEntries(DEFAULT_TYPES.map((t) => [t.key, 0]))
   );
   const [warning, setWarning] = useState('');
 
   useEffect(() => {
     const pending = localStorage.getItem('pendingRoom');
     const current = localStorage.getItem('currentRoom');
+    const pendingParsed = pending ? JSON.parse(pending) : null;
     const size =
-      (pending && JSON.parse(pending).groupSize) ||
+      (pendingParsed?.groupSize) ||
       (current && JSON.parse(current).groupSize);
     if (size) setGroupSize(Number(size));
+
+    const template = (pendingParsed?.template ?? 'programming').toLowerCase();
+    const resolvedTypes = TYPES_BY_TEMPLATE[template] ?? DEFAULT_TYPES;
+    setTypes(resolvedTypes);
+    setCounts(Object.fromEntries(resolvedTypes.map((t) => [t.key, 0])));
   }, []);
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -80,7 +109,7 @@ export default function TypeSelectionPage() {
         <div className="bg-[#E8EAF3] rounded-2xl p-6">
           <div className="grid grid-cols-4 gap-4">
             {/* Icons row */}
-            {TYPES.map((t) => (
+            {types.map((t) => (
               <div key={t.key} className="flex flex-col items-center gap-1">
                 <div className="w-14 h-14 flex items-center justify-center">
                   <img src={t.icon} alt={t.label} className="w-12 h-12 object-contain" />
@@ -92,7 +121,7 @@ export default function TypeSelectionPage() {
             ))}
 
             {/* Plus buttons row */}
-            {TYPES.map((t) => (
+            {types.map((t) => (
               <div key={t.key + '-plus'} className="flex justify-center">
                 <button
                   onClick={() => increment(t.key)}
@@ -105,7 +134,7 @@ export default function TypeSelectionPage() {
             ))}
 
             {/* Count boxes row */}
-            {TYPES.map((t) => (
+            {types.map((t) => (
               <div key={t.key + '-count'} className="flex justify-center">
                 <button
                   onClick={() => decrement(t.key)}
