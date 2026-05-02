@@ -27,8 +27,12 @@ export default function MyProjectsPage() {
     setUser(u);
 
     fetch(`/api/myrooms?userName=${encodeURIComponent(u.name)}`)
-      .then((r) => r.json())
-      .then((data) => setJoinedRooms(data.rooms ?? []));
+      .then((r) => {
+        if (!r.ok) throw new Error(`API ${r.status}`);
+        return r.json();
+      })
+      .then((data) => setJoinedRooms(data.rooms ?? []))
+      .catch(() => setJoinedRooms([]));
   }, []);
 
   const handleDeleteConfirm = async () => {
