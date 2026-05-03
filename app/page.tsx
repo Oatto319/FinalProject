@@ -86,13 +86,14 @@ const App = () => {
           </div>
 
           {/* Adjustments Section (Matched with Image style) */}
-          <div className="bg-white rounded-[40px] p-8 shadow-sm flex flex-col justify-center gap-6 flex-grow min-h-[244px]">
+          <div
+            onClick={() => router.push('/templates')}
+            className="bg-white rounded-[40px] p-8 shadow-sm flex flex-col justify-center gap-6 flex-grow min-h-[244px] cursor-pointer hover:brightness-95 transition-all"
+          >
             {/* Red Row */}
             <div className="flex items-center gap-4">
               <div className="flex-grow bg-rose-300 h-16 rounded-2xl"></div>
-              <div
-                onClick={() => router.push('/templates')}
-                className="w-16 h-16 bg-green-100 border-4 border-green-200 rounded-full flex items-center justify-center text-green-500 cursor-pointer hover:bg-green-200 transition-colors">
+              <div className="w-16 h-16 bg-green-100 border-4 border-green-200 rounded-full flex items-center justify-center text-green-500">
                 <Plus size={32} strokeWidth={4} />
               </div>
             </div>
@@ -100,7 +101,7 @@ const App = () => {
             {/* Green Row */}
             <div className="flex items-center gap-4">
               <div className="flex-grow bg-teal-300 h-16 rounded-2xl"></div>
-              <div className="w-16 h-16 bg-rose-100 border-4 border-rose-200 rounded-full flex items-center justify-center text-rose-400 cursor-pointer hover:bg-rose-200 transition-colors">
+              <div className="w-16 h-16 bg-rose-100 border-4 border-rose-200 rounded-full flex items-center justify-center text-rose-400">
                 <Minus size={32} strokeWidth={4} />
               </div>
             </div>
