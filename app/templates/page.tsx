@@ -39,6 +39,7 @@ function TemplatesContent() {
       innerColor: 'bg-[#58C9B9]',
       textColor: 'text-[#FF4D8D]',
       route: '/question/service',
+      comingSoon: true,
     },
     {
       id: 'presentation',
@@ -48,6 +49,7 @@ function TemplatesContent() {
       innerColor: 'bg-[#B4C13D]',
       textColor: 'text-[#2D6A4F]',
       route: '/question/presentation',
+      comingSoon: true,
     },
     {
       id: 'design',
@@ -57,6 +59,7 @@ function TemplatesContent() {
       innerColor: 'bg-[#7B6AD4]',
       textColor: 'text-white',
       route: '/question/design',
+      comingSoon: true,
     },
   ];
 
@@ -84,10 +87,12 @@ function TemplatesContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             {templates.map((item, index) => {
               const done = !!userTypes[item.id];
+              const comingSoon = !!(item as { comingSoon?: boolean }).comingSoon;
               return (
                 <div
                   key={index}
                   onClick={() => {
+                    if (comingSoon) return;
                     if (isCreateMode) {
                       const raw = localStorage.getItem('pendingRoom');
                       const room = raw ? JSON.parse(raw) : {};
@@ -101,10 +106,17 @@ function TemplatesContent() {
                       item.id === 'programming' && router.push(item.route);
                     }
                   }}
-                  className={`${item.bgColor} rounded-[35px] p-6 flex flex-col items-center cursor-pointer hover:scale-[1.02] transition-transform duration-300 shadow-md min-h-[280px] relative`}
+                  className={`${item.bgColor} rounded-[35px] p-6 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative ${comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
                 >
+                  {/* Coming Soon Badge */}
+                  {comingSoon && (
+                    <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/80 backdrop-blur-sm text-gray-600 text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
+                      🔒 Coming Soon
+                    </div>
+                  )}
+
                   {/* Done Badge */}
-                  {done && (
+                  {done && !comingSoon && (
                     <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/80 backdrop-blur-sm text-green-600 text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
                       <CheckCircle2 size={14} strokeWidth={2.5} />
                       เสร็จแล้ว
