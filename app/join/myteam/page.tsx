@@ -13,7 +13,7 @@ interface CurrentRoom {
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number; members: RoomMember[];
 }
 interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
-interface UserProfile { name: string; types?: Record<string, MBTIResult>; }
+interface UserProfile { name: string; role?: string; types?: Record<string, MBTIResult>; }
 
 export default function MyTeamPage() {
   const router = useRouter();
@@ -24,9 +24,12 @@ export default function MyTeamPage() {
   const [messages, setMessages]       = useState<ChatMessage[]>([]);
   const [isMatched, setIsMatched]     = useState(false);
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
+  const [memberRoles, setMemberRoles] = useState<Record<string, string>>({});
   const [roomTemplate, setRoomTemplate] = useState('');
   const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
   const [roomDeleted, setRoomDeleted] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingName, setEditingName]     = useState('');
   const roomIdRef = useRef<string>('');
   const groupIdRef = useRef<number | null>(null);
   const memberTypesFetchedRef = useRef(false);
@@ -67,6 +70,7 @@ export default function MyTeamPage() {
           const templateKey = LABEL_TO_ID[rawTemplate] ?? rawTemplate;
           const allMembers: RoomMember[] = room.members ?? [];
           const types: Record<string, MBTIResult> = {};
+          const roles: Record<string, string> = {};
           // ดึง currentUser จาก localStorage เพื่อใช้เป็น fallback ของ gmail และ type
           const currentUserRaw = localStorage.getItem('currentUser');
           const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
@@ -83,6 +87,7 @@ export default function MyTeamPage() {
               if (!res.ok) return;
               const data = await res.json();
               const profile: UserProfile = data.user;
+              if (profile?.role) roles[member.name] = profile.role;
               const typeResult = profile?.types?.[templateKey];
               if (typeResult) {
                 types[member.name] = {
@@ -104,6 +109,10 @@ export default function MyTeamPage() {
               jobs: t.jobs ?? [],
             };
           }
+          if (currentUserLocal?.name && currentUserLocal?.role && !roles[currentUserLocal.name]) {
+            roles[currentUserLocal.name] = currentUserLocal.role;
+          }
+          setMemberRoles(roles);
           setMemberTypes(types);
           // ถ้าได้ type ไม่ครบทุกคน ให้ลองใหม่รอบถัดไป
           if (Object.keys(types).length < mine.members.length) {
@@ -161,6 +170,22 @@ export default function MyTeamPage() {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') handleSend(); };
 
+  const handleSaveName = async () => {
+    if (!editingName.trim() || !myGroup || !roomIdRef.current) return;
+    const res = await fetch(`/api/rooms/${roomIdRef.current}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const groups: MatchedGroup[] = data.room?.matchedGroups ?? [];
+    const updated = groups.map((g) => g.id === myGroup.id ? { ...g, name: editingName.trim() } : g);
+    await fetch(`/api/rooms/${roomIdRef.current}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ matchedGroups: updated }),
+    });
+    setMyGroup((prev) => prev ? { ...prev, name: editingName.trim() } : prev);
+    setIsEditingName(false);
+  };
+
   const roleIcons: Record<string, string> = {
     'นักวิเคราะห์': '/img/brain.png',
     'นักสร้างสรรค์': '/img/idea.png',
@@ -174,7 +199,7 @@ export default function MyTeamPage() {
       <div className="w-full max-w-7xl px-6 mt-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button className="bg-[#FF9142] text-white px-8 py-3 rounded-t-2xl font-bold text-xl shadow-lg">{myGroup?.name ?? 'My team'}</button>
-          <button onClick={() => alert('แก้ไขชื่อทีม')} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Edit2 size={20} /></button>
+          <button onClick={() => { setEditingName(myGroup?.name ?? ''); setIsEditingName(true); }} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Edit2 size={20} /></button>
         </div>
         <div className="flex items-center gap-4">
           <div className="bg-[#7096D1] text-white px-10 py-3 rounded-full font-bold text-xl flex items-center gap-2 shadow-inner">{myGroup ? myGroup.members.length : teamMembers.length} :Members</div>
@@ -231,23 +256,21 @@ export default function MyTeamPage() {
                                   <p className="text-xs text-gray-500 font-medium">{member.role}</p>
                                 </div>
                               )}
-                              {mbtiType ? (
-                                <div className="flex items-center gap-2 bg-[#EDE9FF] px-3 py-1 rounded-xl">
-                                  <img src={mbtiType.icon} alt={mbtiType.title} className="w-7 h-7 object-contain" />
-                                  <span className="text-[#4B3E7A] text-xs font-bold">{mbtiType.title}</span>
-                                </div>
-                              ) : (
-                                <span className="text-[10px] text-gray-300 italic">ยังไม่มีข้อมูล type</span>
-                              )}
+                              {memberRoles[member.name] ? (
+                                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${memberRoles[member.name] === 'host' ? 'bg-[#FF9142]/15 text-[#FF9142]' : 'bg-[#7096D1]/15 text-[#7096D1]'}`}>
+                                  {memberRoles[member.name] === 'host' ? 'Host' : 'User'}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
                         </div>
-                        <button
-                          onClick={() => mbtiType ? setPopup({ member, type: mbtiType }) : null}
-                          className={`w-12 h-12 rounded-full flex items-center justify-center text-white text-xl font-bold transition-colors ${mbtiType ? 'bg-[#7086D1] hover:bg-[#5A74B1] cursor-pointer' : 'bg-gray-300 cursor-default'}`}
-                        >
-                          ⓘ
-                        </button>
+                        {mbtiType ? (
+                          <button onClick={() => setPopup({ member, type: mbtiType })} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
+                            <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
+                          </button>
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0" />
+                        )}
                       </div>
                     );
                   })}
@@ -319,6 +342,27 @@ export default function MyTeamPage() {
               className="w-full bg-[#2D3E50] text-white py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
               กลับหน้าหลัก
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Team Name Modal */}
+      {isEditingName && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setIsEditingName(false)}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-black text-gray-800 mb-4">แก้ไขชื่อทีม</h2>
+            <input
+              type="text"
+              value={editingName}
+              onChange={(e) => setEditingName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-gray-800 font-bold text-lg focus:outline-none focus:border-[#7096D1]"
+              autoFocus
+            />
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setIsEditingName(false)} className="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all">ยกเลิก</button>
+              <button onClick={handleSaveName} className="flex-1 py-3 rounded-2xl bg-[#FF9142] text-white font-bold hover:brightness-95 transition-all active:scale-95">บันทึก</button>
+            </div>
           </div>
         </div>
       )}
