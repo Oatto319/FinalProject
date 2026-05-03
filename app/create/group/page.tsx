@@ -17,19 +17,62 @@ const GroupResultPage = () => {
   const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; totalMembers: number; groupSize: number; template?: string } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
   const [transferRequests]                    = useState<TransferRequest[]>([]);
+  const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, { title: string; icon: string }>>({});
 
   const getRoomId = (r: typeof room) => r?.roomId ?? r?.id ?? '';
 
   useEffect(() => {
-    const roomRaw = localStorage.getItem('currentRoom');
-    if (!roomRaw) return;
-    const r = JSON.parse(roomRaw);
-    setRoom(r);
+    const load = async () => {
+      const roomRaw = localStorage.getItem('currentRoom');
+      if (!roomRaw) return;
+      const r = JSON.parse(roomRaw);
+      setRoom(r);
 
-    const roomId = r.roomId ?? r.id;
-    fetch(`/api/rooms/${roomId}`)
-      .then((res) => res.json())
-      .then((data) => { if (data.room?.matchedGroups) setGroups(data.room.matchedGroups); });
+      const roomId = r.roomId ?? r.id;
+      const res = await fetch(`/api/rooms/${roomId}`);
+      const data = await res.json();
+      if (!data.room?.matchedGroups) return;
+      setGroups(data.room.matchedGroups);
+
+      const template = (r.template ?? 'programming').toLowerCase();
+
+      // สร้าง map name→gmail จาก room.members (มี gmail ครบกว่า matchedGroups)
+      const gmailByName: Record<string, string> = {};
+      (data.room.members ?? []).forEach((m: { name: string; gmail?: string }) => {
+        if (m.gmail) gmailByName[m.name] = m.gmail;
+      });
+
+      const seen = new Set<string>();
+      const allMembers: { name: string; gmail: string }[] = [];
+      data.room.matchedGroups.forEach((g: MatchedGroup) => {
+        g.members.forEach((m: RoomMember) => {
+          const gmail = m.gmail || gmailByName[m.name] || '';
+          if (gmail && !seen.has(m.name)) {
+            seen.add(m.name);
+            allMembers.push({ name: m.name, gmail });
+          }
+        });
+      });
+
+      const overrides: Record<string, { title: string; icon: string }> = {};
+      await Promise.all(
+        allMembers.map(async ({ name, gmail }) => {
+          try {
+            const ur = await fetch(`/api/users?gmail=${encodeURIComponent(gmail)}`);
+            const ud = await ur.json();
+            const types: Record<string, { title?: string; icon?: string; typeScores?: { title: string; score: number }[] }> = ud.user?.types ?? {};
+            let found: { title?: string; icon?: string; typeScores?: { title: string; score: number }[] } | undefined = types[template];
+            if (!found?.title) found = Object.values(types).find((t) => t?.title);
+            if (found?.title) {
+              const icon = found.icon || ROLE_ICONS[found.title] || '';
+              overrides[name] = { title: found.title, icon };
+            }
+          } catch {}
+        })
+      );
+      setMemberTypeOverrides(overrides);
+    };
+    load();
   }, []);
 
   const handleRequest = () => { setShowModal(false); setSelectedReq(null); };
@@ -79,8 +122,10 @@ const GroupResultPage = () => {
                 <div className="bg-gray-100/50 border-2 border-gray-100 rounded-[32px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
-                    const roleIcon = member.role ? ROLE_ICONS[member.role] : null;
-                    const isLeader = group.leaderId === member.name;
+                    const typeOverride = memberTypeOverrides[member.name];
+                    const roleTitle = typeOverride?.title ?? (member.role !== 'ไม่ระบุ' ? member.role : undefined);
+                    const roleIcon  = typeOverride?.icon ?? (roleTitle ? ROLE_ICONS[roleTitle] ?? null : null);
+                    const isLeader  = group.leaderId === member.name;
                     return (
                       <div key={mIdx} className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border-2 border-transparent hover:border-yellow-400 transition-all">
                         <div className="flex items-center gap-4">
@@ -92,15 +137,15 @@ const GroupResultPage = () => {
                               {isLeader && <span className="text-lg">👑</span>}
                               <h4 className="font-bold text-gray-700 text-sm leading-tight">{member.name}</h4>
                             </div>
-                            {member.role && (
+                            {roleTitle && (
                               <div className="flex items-center gap-1 mt-0.5">
-                                {roleIcon && <img src={roleIcon} alt={member.role} className="w-3 h-3 object-contain" />}
-                                <p className="text-[10px] text-gray-400">{member.role}</p>
+                                {roleIcon && <img src={roleIcon} alt={roleTitle} className="w-3 h-3 object-contain" />}
+                                <p className="text-[10px] text-gray-400">{roleTitle}</p>
                               </div>
                             )}
                           </div>
                         </div>
-                        {roleIcon && <img src={roleIcon} alt={member.role} className="w-8 h-8 object-contain opacity-60" />}
+                        {roleIcon && <img src={roleIcon} alt={roleTitle} className="w-8 h-8 object-contain opacity-60" />}
                       </div>
                     );
                   })}

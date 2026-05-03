@@ -37,13 +37,14 @@ const MatchingPage = () => {
           try {
             const res = await fetch(`/api/users?gmail=${encodeURIComponent(m.gmail)}`);
             const data = await res.json();
-            const scores = data.user?.types?.[template]?.typeScores;
-            if (scores?.length) {
-              memberTypeMap[m.name] = scores.reduce(
-                (a: { title: string; score: number }, b: { title: string; score: number }) => a.score >= b.score ? a : b
-              ).title;
+            const types: Record<string, { title?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
+            let typeTitle = types[template]?.title;
+            if (!typeTitle) {
+              const fallback = Object.values(types).find((t) => t?.title);
+              typeTitle = fallback?.title;
             }
-          } catch { /* ไม่มี type ใช้ 'ไม่ระบุ' */ }
+            if (typeTitle) memberTypeMap[m.name] = typeTitle;
+          } catch { /* ไม่มี type */ }
         })
       );
 

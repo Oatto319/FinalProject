@@ -20,12 +20,17 @@ export default function MyRoomPage() {
   const [isReady, setIsReady]       = useState(false);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
   const [matchMode, setMatchMode]   = useState('');
+  const [roomDeleted, setRoomDeleted] = useState(false);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
   const fetchRoom = async (roomId: string) => {
     const res = await fetch(`/api/rooms/${roomId}`);
-    if (!res.ok) return;
+    if (!res.ok) {
+      setRoomDeleted(true);
+      localStorage.removeItem('currentRoom');
+      return;
+    }
     const data = await res.json();
     if (data.room) {
       if (data.room.matchDone) {
@@ -185,6 +190,20 @@ export default function MyRoomPage() {
           </div>
         </div>
       </main>
+
+      {roomDeleted && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[30px] w-full max-w-sm p-8 flex flex-col items-center gap-5 shadow-2xl">
+            <div className="text-5xl">🗑️</div>
+            <h2 className="text-xl font-black text-gray-800 text-center">ห้องนี้ถูกลบแล้ว</h2>
+            <p className="text-gray-500 text-sm text-center">ผู้สร้างห้องได้ลบห้องนี้ออกไปแล้ว</p>
+            <button onClick={() => router.push('/')}
+              className="w-full bg-[#2D3E50] text-white py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
+              กลับหน้าหลัก
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
