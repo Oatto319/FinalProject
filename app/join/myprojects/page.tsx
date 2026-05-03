@@ -50,7 +50,7 @@ export default function MyProjectsPage() {
     if (isHost) {
       router.push(room.matchDone ? '/create/group' : '/create/match');
     } else {
-      router.push('/join/myteam');
+      router.push(room.matchDone ? '/join/myteam' : '/join/myroom');
     }
   };
 
