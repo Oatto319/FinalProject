@@ -51,7 +51,7 @@ export default function Navbar({ subtitle }: NavbarProps) {
 
   return (
     <header className="w-full flex items-center justify-between bg-white p-6 shadow-sm">
-      <div className="max-w-5xl mx-auto w-full flex items-center justify-between">
+      <div className="w-full flex items-center justify-between">
         <div className="relative flex items-center gap-4">
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}

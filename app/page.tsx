@@ -21,14 +21,14 @@ const App = () => {
   if (!ready) return null;
 
   return (
-    <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
+    <div className="h-screen bg-gray-300 font-sans flex flex-col overflow-hidden">
       <Navbar />
 
-      {/* Main Content Grid - เพิ่ม mt-8 เพื่อเลื่อนระยะลงมาจาก App Bar */}
-      <main className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 px-4 pb-8">
+      <main className="flex-1 min-h-0 px-4 py-4 flex justify-center">
+        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
 
         {/* Left Section: Create, Join, Team (Keeping Original Design) */}
-        <div className="bg-white rounded-[40px] p-6 shadow-sm flex flex-col gap-4 min-h-[500px]">
+        <div className="bg-white rounded-[40px] px-6 py-10 shadow-sm flex flex-col gap-6">
           {/* Create Button (Yellow) */}
           <button
             className="flex-1 w-full bg-yellow-400 rounded-[30px] font-black italic tracking-tighter shadow-[0_8px_0_0_#A16207] hover:shadow-[0_4px_0_0_#A16207] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
@@ -58,12 +58,12 @@ const App = () => {
         </div>
 
         {/* Right Section */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 h-full">
 
           {/* My Type Card (Keeping Original Design) */}
           <div
             onClick={() => router.push('/mytype')}
-            className="bg-white rounded-[40px] p-8 shadow-sm relative h-[240px] flex items-center justify-center overflow-hidden cursor-pointer hover:brightness-95 transition-all"
+            className="bg-white rounded-[40px] p-8 shadow-sm relative flex-1 flex items-center justify-center overflow-hidden cursor-pointer hover:brightness-95 transition-all"
           >
             {/* Decorative Icons */}
             <div className="absolute top-6 left-6 w-14 h-14 bg-indigo-900 rounded-full flex items-center justify-center text-pink-500">
@@ -88,7 +88,7 @@ const App = () => {
           {/* Adjustments Section (Matched with Image style) */}
           <div
             onClick={() => router.push('/templates')}
-            className="bg-white rounded-[40px] p-8 shadow-sm flex flex-col justify-center gap-6 flex-grow min-h-[244px] cursor-pointer hover:brightness-95 transition-all"
+            className="bg-white rounded-[40px] p-8 shadow-sm flex flex-col justify-center gap-6 flex-1 cursor-pointer hover:brightness-95 transition-all"
           >
             {/* Red Row */}
             <div className="flex items-center gap-4">
@@ -107,6 +107,7 @@ const App = () => {
             </div>
           </div>
 
+        </div>
         </div>
       </main>
 
