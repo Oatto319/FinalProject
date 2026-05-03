@@ -49,6 +49,7 @@ export const Room = mongoose.models.Room || mongoose.model('Room', RoomSchema);
 // ─── Message ─────────────────────────────────────────────
 const MessageSchema = new Schema({
   roomId:     { type: String, required: true },
+  groupId:    { type: Number, required: true },
   sender:     { type: String, required: true },
   text:       { type: String, required: true },
   time:       { type: String, required: true },

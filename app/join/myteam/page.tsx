@@ -28,6 +28,7 @@ export default function MyTeamPage() {
   const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
   const [roomDeleted, setRoomDeleted] = useState(false);
   const roomIdRef = useRef<string>('');
+  const groupIdRef = useRef<number | null>(null);
   const memberTypesFetchedRef = useRef(false);
 
   // แปลง template label → ID (รองรับ rooms เก่าที่เก็บ label เช่น 'PROGRAMMING')
@@ -59,6 +60,7 @@ export default function MyTeamPage() {
       const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => m.name === userName));
       if (mine) {
         setMyGroup(mine);
+        groupIdRef.current = mine.id;
         if (!memberTypesFetchedRef.current) {
           memberTypesFetchedRef.current = true;
           const rawTemplate = (room.template ?? '').toLowerCase();
@@ -113,7 +115,8 @@ export default function MyTeamPage() {
   };
 
   const fetchMessages = async (roomId: string) => {
-    const res = await fetch(`/api/rooms/${roomId}/messages`);
+    if (groupIdRef.current === null) return;
+    const res = await fetch(`/api/rooms/${roomId}/messages?groupId=${groupIdRef.current}`);
     if (!res.ok) return;
     const data = await res.json();
     setMessages((data.messages ?? []).map((m: any) => ({ ...m, id: m._id ?? m.id })));
@@ -152,7 +155,7 @@ export default function MyTeamPage() {
     await fetch(`/api/rooms/${roomIdRef.current}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sender: user.name, text: optimistic.text, time, avatarSeed: user.avatarSeed }),
+      body: JSON.stringify({ sender: user.name, text: optimistic.text, time, avatarSeed: user.avatarSeed, groupId: groupIdRef.current ?? 0 }),
     });
   };
 
