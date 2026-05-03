@@ -61,7 +61,10 @@ const App = () => {
         <div className="flex flex-col gap-4">
 
           {/* My Type Card (Keeping Original Design) */}
-          <div className="bg-white rounded-[40px] p-8 shadow-sm relative h-[240px] flex items-center justify-center overflow-hidden">
+          <div
+            onClick={() => router.push('/mytype')}
+            className="bg-white rounded-[40px] p-8 shadow-sm relative h-[240px] flex items-center justify-center overflow-hidden cursor-pointer hover:brightness-95 transition-all"
+          >
             {/* Decorative Icons */}
             <div className="absolute top-6 left-6 w-14 h-14 bg-indigo-900 rounded-full flex items-center justify-center text-pink-500">
               <Brain size={32} fill="currentColor" />
@@ -77,10 +80,7 @@ const App = () => {
             </div>
 
             {/* Central Circle */}
-            <div
-              onClick={() => router.push('/mytype')}
-              className="w-44 h-44 bg-teal-200 rounded-full flex items-center justify-center shadow-inner border-4 border-white z-10 cursor-pointer hover:bg-teal-300 transition-colors"
-            >
+            <div className="w-44 h-44 bg-teal-200 rounded-full flex items-center justify-center shadow-inner border-4 border-white z-10">
               <h2 className="text-3xl font-black text-indigo-900 tracking-tighter">MY TYPE</h2>
             </div>
           </div>
