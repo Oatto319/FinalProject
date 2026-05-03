@@ -30,30 +30,31 @@ const App = () => {
         {/* Left Section: Create, Join, Team (Keeping Original Design) */}
         <div className="bg-white rounded-[40px] p-6 shadow-sm flex flex-col gap-4 min-h-[500px]">
           {/* Create Button (Yellow) */}
-          <div
-            className="relative bg-yellow-400 flex-1 rounded-[30px] flex flex-col items-center justify-center cursor-pointer hover:brightness-95 transition-all"
+          <button
+            className="flex-1 w-full bg-yellow-400 rounded-[30px] font-black italic tracking-tighter shadow-[0_8px_0_0_#A16207] hover:shadow-[0_4px_0_0_#A16207] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/templates?mode=create')}
           >
-            <h1 className="text-5xl font-black text-emerald-900 italic tracking-tighter">Create</h1>
-            <p className="text-emerald-800 font-bold text-xl mt-1">สร้างห้อง</p>
-          </div>
+            <h1 className="text-5xl text-emerald-900">Create</h1>
+            <p className="text-emerald-800 font-bold text-xl not-italic tracking-normal">สร้างห้อง</p>
+          </button>
 
           {/* Join Button (Blue) */}
-          <div
-            className="relative bg-sky-400 flex-1 rounded-[30px] flex flex-col items-center justify-center cursor-pointer hover:brightness-95 transition-all"
+          <button
+            className="flex-1 w-full bg-sky-400 rounded-[30px] font-black italic tracking-tighter shadow-[0_8px_0_0_#0369A1] hover:shadow-[0_4px_0_0_#0369A1] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/roomid')}
           >
-            <h1 className="text-5xl font-black text-orange-600 italic tracking-tighter">Join</h1>
-            <p className="text-orange-700 font-bold text-xl mt-1">เข้าร่วมด้วยรหัส</p>
-          </div>
+            <h1 className="text-5xl text-orange-600">Join</h1>
+            <p className="text-orange-700 font-bold text-xl not-italic tracking-normal">เข้าร่วมด้วยรหัส</p>
+          </button>
 
           {/* Team Button (Purple) */}
-          <div
+          <button
+            className="flex-1 w-full bg-indigo-500 rounded-[30px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3730A3] hover:shadow-[0_4px_0_0_#3730A3] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/myprojects')}
-            className="relative bg-indigo-500 flex-1 rounded-[30px] flex flex-col items-center justify-center cursor-pointer hover:brightness-95 transition-all">
-            <h1 className="text-5xl font-black text-white italic tracking-tighter">Team</h1>
-            <p className="text-indigo-100 font-bold text-xl mt-1">ทีมของฉัน</p>
-          </div>
+          >
+            <h1 className="text-5xl text-white">Team</h1>
+            <p className="text-indigo-100 font-bold text-xl not-italic tracking-normal">ทีมของฉัน</p>
+          </button>
         </div>
 
         {/* Right Section */}
