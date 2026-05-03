@@ -245,7 +245,6 @@ export default function MyTeamPage() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              {myGroup?.leaderId === member.name && <span className="text-lg">👑</span>}
                               <h4 className="font-bold text-gray-800 text-lg">{member.name}</h4>
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
@@ -264,13 +263,16 @@ export default function MyTeamPage() {
                             </div>
                           </div>
                         </div>
-                        {mbtiType ? (
-                          <button onClick={() => setPopup({ member, type: mbtiType })} className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
-                            <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
-                          </button>
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0" />
-                        )}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {myGroup?.leaderId === member.name && <span className="text-4xl leading-none">👑</span>}
+                          {mbtiType ? (
+                            <button onClick={() => setPopup({ member, type: mbtiType })} className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
+                              <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
+                            </button>
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-100" />
+                          )}
+                        </div>
                       </div>
                     );
                   })}
