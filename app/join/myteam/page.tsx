@@ -173,7 +173,7 @@ export default function MyTeamPage() {
       <Navbar />
       <div className="w-full max-w-7xl px-6 mt-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button className="bg-[#FF9142] text-white px-8 py-3 rounded-t-2xl font-bold text-xl shadow-lg">My team</button>
+          <button className="bg-[#FF9142] text-white px-8 py-3 rounded-t-2xl font-bold text-xl shadow-lg">{myGroup?.name ?? 'My team'}</button>
           <button onClick={() => alert('แก้ไขชื่อทีม')} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Edit2 size={20} /></button>
         </div>
         <div className="flex items-center gap-4">
@@ -196,9 +196,6 @@ export default function MyTeamPage() {
               </div>
             ) : (
               <>
-                {myGroup && (
-                  <div className="bg-[#2D3E50] text-white rounded-2xl px-6 py-3 text-center font-black text-xl">{myGroup.name}</div>
-                )}
                 <div className="flex flex-col gap-3">
                   {(myGroup?.members ?? teamMembers).map((member, idx) => {
                     const isCurrentUser = member.name === user?.name;
