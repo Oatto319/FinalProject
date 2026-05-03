@@ -81,9 +81,12 @@ export default function MyTeamPage() {
               allMembers.find((m) => m.name === member.name)?.gmail ||
               (member.name === currentUserLocal?.name ? currentUserLocal?.gmail : '') ||
               '';
-            if (!gmail) return;
             try {
-              const res = await fetch(`/api/users?gmail=${encodeURIComponent(gmail)}`);
+              // ถ้าหา gmail ไม่ได้ ให้ fallback ค้นหาด้วย name แทน
+              const url = gmail
+                ? `/api/users?gmail=${encodeURIComponent(gmail)}`
+                : `/api/users?name=${encodeURIComponent(member.name)}`;
+              const res = await fetch(url);
               if (!res.ok) return;
               const data = await res.json();
               const profile: UserProfile = data.user;
@@ -112,6 +115,28 @@ export default function MyTeamPage() {
           if (currentUserLocal?.name && currentUserLocal?.role && !roles[currentUserLocal.name]) {
             roles[currentUserLocal.name] = currentUserLocal.role;
           }
+          // fallback: ถ้ายังไม่มี type ให้ใช้ icon จาก member.role (MBTI title จาก matching)
+          const roleToIcon: Record<string, string> = {
+            'นักวิเคราะห์': '/img/brain.png',
+            'นักคิดสร้างสรรค์': '/img/idea.png',
+            'ผู้ปฏิบัติการ': '/img/pencil.png',
+            'นักประสานงาน': '/img/make.png',
+            'นักสื่อสาร': '/img/make.png',
+            'นักแก้ปัญหา': '/img/brain.png',
+            'ผู้ฟัง': '/img/idea.png',
+            'นักพูด': '/img/idea.png',
+            'นักวิจัย': '/img/brain.png',
+            'นักออกแบบ': '/img/pencil.png',
+            'ผู้ประสานงาน': '/img/make.png',
+            'นักสร้างสรรค์': '/img/idea.png',
+            'ผู้ปฏิบัติ': '/img/pencil.png',
+          };
+          mine.members.forEach((member: RoomMember) => {
+            if (!types[member.name] && member.role && member.role !== 'ไม่ระบุ') {
+              const icon = roleToIcon[member.role];
+              if (icon) types[member.name] = { title: member.role, icon, description: '', jobs: [] };
+            }
+          });
           setMemberRoles(roles);
           setMemberTypes(types);
           // ถ้าได้ type ไม่ครบทุกคน ให้ลองใหม่รอบถัดไป
@@ -188,9 +213,18 @@ export default function MyTeamPage() {
 
   const roleIcons: Record<string, string> = {
     'นักวิเคราะห์': '/img/brain.png',
+    'นักคิดสร้างสรรค์': '/img/idea.png',
+    'ผู้ปฏิบัติการ': '/img/pencil.png',
+    'นักประสานงาน': '/img/make.png',
+    'นักสื่อสาร': '/img/make.png',
+    'นักแก้ปัญหา': '/img/brain.png',
+    'ผู้ฟัง': '/img/idea.png',
+    'นักพูด': '/img/idea.png',
+    'นักวิจัย': '/img/brain.png',
+    'นักออกแบบ': '/img/pencil.png',
+    'ผู้ประสานงาน': '/img/make.png',
     'นักสร้างสรรค์': '/img/idea.png',
     'ผู้ปฏิบัติ': '/img/pencil.png',
-    'ผู้ประสานงาน': '/img/make.png',
   };
 
   return (

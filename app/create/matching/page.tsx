@@ -33,9 +33,12 @@ const MatchingPage = () => {
       const memberTypeMap: Record<string, string> = {};
       await Promise.all(
         members.map(async (m) => {
-          if (!m.gmail) return;
           try {
-            const res = await fetch(`/api/users?gmail=${encodeURIComponent(m.gmail)}`);
+            // ถ้าไม่มี gmail ให้ fallback ค้นหาด้วย name แทน
+            const url = m.gmail
+              ? `/api/users?gmail=${encodeURIComponent(m.gmail)}`
+              : `/api/users?name=${encodeURIComponent(m.name)}`;
+            const res = await fetch(url);
             const data = await res.json();
             const types: Record<string, { title?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
             let typeTitle = types[template]?.title;

@@ -4,15 +4,19 @@ import { User } from '@/lib/models';
 
 // GET /api/users?gmail=xxx&password=xxx  → login
 // GET /api/users?gmail=xxx              → check duplicate
+// GET /api/users?name=xxx               → lookup by name (fallback)
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
   const gmail    = searchParams.get('gmail')?.toLowerCase();
   const password = searchParams.get('password');
+  const name     = searchParams.get('name');
 
-  if (!gmail) return NextResponse.json({ error: 'gmail required' }, { status: 400 });
+  if (!gmail && !name) return NextResponse.json({ error: 'gmail or name required' }, { status: 400 });
 
-  const user = await User.findOne({ gmail });
+  const user = gmail
+    ? await User.findOne({ gmail })
+    : await User.findOne({ name });
   if (!user) return NextResponse.json({ user: null });
 
   if (password !== undefined) {
