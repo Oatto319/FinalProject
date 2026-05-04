@@ -29,12 +29,12 @@ export default function EnterRoomIdPage() {
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
+        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
           <div className="w-full flex justify-center -mt-20 mb-6 relative z-10">
             <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[400px] h-auto object-contain drop-shadow-xl"
               onError={(e) => { e.currentTarget.src = 'https://img.freepik.com/free-vector/team-holding-jigsaw-puzzle-pieces_74855-6962.jpg'; }} />
           </div>
-          <div className="w-full max-w-[500px] bg-[#2D3E50] rounded-[30px] p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
+          <div className="w-full max-w-[500px] bg-[#2D3E50] rounded-[20px] p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
             <label className="text-white text-xl font-bold italic">&quot;Enter the room ID&quot;</label>
             <input type="text" placeholder="เช่น 1234567" value={roomId}
               onChange={(e) => { setRoomId(e.target.value); setError(''); }}

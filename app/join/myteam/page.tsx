@@ -262,18 +262,18 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
 
             <div className="w-full bg-[#7096D1] text-white py-4 rounded-2xl font-bold text-xl text-center select-none">&quot;Choose a team leader&quot;</div>
             <div className="grid grid-cols-2 gap-4 mt-auto">
-              <div onClick={() => router.push('/join/vote')} className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
+              <div onClick={() => router.push('/join/vote')} className="bg-white rounded-[20px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
                 <span className="font-bold text-gray-700">Vote</span>
                 <div className="w-24 h-24 flex items-center justify-center"><img src="https://cdn-icons-png.flaticon.com/512/3050/3050525.png" alt="Vote Icon" className="w-full h-full object-contain" /></div>
               </div>
-              <div onClick={() => router.push('/join/analyze')} className="bg-white rounded-[30px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
+              <div onClick={() => router.push('/join/analyze')} className="bg-white rounded-[20px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
                 <span className="font-bold text-gray-700">Analyze</span>
                 <div className="w-24 h-24 flex items-center justify-center"><img src="https://cdn-icons-png.flaticon.com/512/2620/2620703.png" alt="Analyze Icon" className="w-full h-full object-contain" /></div>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-7 bg-white rounded-[30px] flex flex-col overflow-hidden shadow-inner">
+          <div className="lg:col-span-7 bg-white rounded-[20px] flex flex-col overflow-hidden shadow-inner">
             <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6">
               {messages.map((msg) => {
                 const isMe = msg.sender === user?.name;
@@ -293,7 +293,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     )}
                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
                       {!isMe && <span className="text-xs text-gray-400 mb-1 px-1">{msg.sender}</span>}
-                      <div className={`px-5 py-3 rounded-3xl font-medium text-lg shadow-sm ${isMe ? 'bg-[#7096D1] text-white rounded-br-none' : 'bg-gray-600 text-white rounded-bl-none'}`}>{msg.text}</div>
+                      <div className={`px-5 py-3 rounded-2xl font-medium text-lg shadow-sm ${isMe ? 'bg-[#7096D1] text-white rounded-br-none' : 'bg-gray-600 text-white rounded-bl-none'}`}>{msg.text}</div>
                       <span className="text-[10px] text-gray-400 mt-1 px-1">{msg.time}</span>
                     </div>
                   </div>
@@ -316,7 +316,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
       {/* Room Deleted Modal */}
       {roomDeleted && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[30px] w-full max-w-sm p-8 flex flex-col items-center gap-5 shadow-2xl">
+          <div className="bg-white rounded-[20px] w-full max-w-sm p-8 flex flex-col items-center gap-5 shadow-2xl">
             <div className="text-5xl">🗑️</div>
             <h2 className="text-xl font-black text-gray-800 text-center">ห้องนี้ถูกลบแล้ว</h2>
             <p className="text-gray-500 text-sm text-center">ผู้สร้างห้องได้ลบห้องนี้ออกไปแล้ว</p>
@@ -331,7 +331,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
       {/* Edit Team Name Modal */}
       {isEditingName && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setIsEditingName(false)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-black text-gray-800 mb-4">แก้ไขชื่อทีม</h2>
             <input
               type="text"
@@ -352,7 +352,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
       {/* MBTI Type Popup */}
       {popup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setPopup(null)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <img src={popup.type.icon} alt={popup.type.title} className="w-14 h-14 object-contain" />

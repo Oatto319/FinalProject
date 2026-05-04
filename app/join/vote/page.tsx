@@ -117,7 +117,7 @@ export default function VotePage() {
       <Navbar />
 
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-[#E5E7EB] rounded-[40px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative">
+        <div className="bg-[#E5E7EB] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative">
 
           {/* Back Button */}
           <button
@@ -173,7 +173,7 @@ export default function VotePage() {
                       key={member.name}
                       onClick={() => setSelectedMember(member.name)}
                       className={`
-                        bg-white rounded-[30px] p-6 flex flex-col items-center gap-3 shadow-sm
+                        bg-white rounded-[20px] p-6 flex flex-col items-center gap-3 shadow-sm
                         transition-all duration-200 border-4 outline-none
                         ${selectedMember === member.name
                           ? 'border-[#7096D1] scale-105 shadow-xl'

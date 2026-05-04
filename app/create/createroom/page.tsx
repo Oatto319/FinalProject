@@ -80,12 +80,12 @@ export default function CreateRoomPage() {
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <main className="w-full max-w-5xl mt-12 px-4 pb-12">
-        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
+        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
           <button onClick={() => router.push('/')}
             className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
-          <div className="w-full max-w-2xl bg-[#2D3E50] rounded-[40px] p-10 shadow-2xl space-y-8 mt-4">
+          <div className="w-full max-w-2xl bg-[#2D3E50] rounded-[24px] p-10 shadow-2xl space-y-8 mt-4">
             <h1 className="text-white text-3xl font-black italic text-center mb-8 tracking-wide">&ldquo;Create your room&rdquo;</h1>
             <div className="space-y-6">
               <div className="relative">

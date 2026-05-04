@@ -68,7 +68,7 @@ function TemplatesContent() {
       <Navbar />
       {/* Main Content */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center">
+        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center">
 
           {/* --- เพิ่ม: ปุ่ม Back --- */}
           <div className="w-full flex items-center mb-6">
@@ -106,7 +106,7 @@ function TemplatesContent() {
                       item.id === 'programming' && router.push(item.route);
                     }
                   }}
-                  className={`${item.bgColor} rounded-[35px] p-6 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
+                  className={`${item.bgColor} rounded-[22px] p-6 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
                 >
                   {/* Coming Soon Badge — ซ่อนใน create mode */}
                   {comingSoon && !isCreateMode && (

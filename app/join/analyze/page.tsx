@@ -104,7 +104,7 @@ export default function AnalyzePage() {
       <Navbar />
 
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-[#E5E7EB] rounded-[40px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative overflow-hidden">
+        <div className="bg-[#E5E7EB] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative overflow-hidden">
 
           {/* Back Button */}
           <button
@@ -144,7 +144,7 @@ export default function AnalyzePage() {
                   <div
                     key={idx}
                     className={`
-                      bg-white rounded-[35px] p-6 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
+                      bg-white rounded-[22px] p-6 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
                       transition-all duration-500 border-4
                       ${isBest ? 'border-yellow-400 scale-105 shadow-2xl' : 'border-transparent'}
                     `}

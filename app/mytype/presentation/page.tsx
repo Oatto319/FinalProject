@@ -48,7 +48,7 @@ const PresentationTypePage = () => {
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
       <div className="w-full max-w-3xl p-4 md:p-8 flex flex-col items-center">
-        <div className="w-full bg-white rounded-[40px] shadow-xl overflow-hidden border-b-8 border-gray-300">
+        <div className="w-full bg-white rounded-[24px] shadow-xl overflow-hidden border-b-8 border-gray-300">
 
           <div className="flex justify-between items-center p-6 pb-0">
             <button

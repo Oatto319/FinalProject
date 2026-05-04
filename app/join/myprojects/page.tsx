@@ -58,7 +58,7 @@ export default function MyProjectsPage() {
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col min-h-[600px] relative">
+        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col min-h-[600px] relative">
           <button onClick={() => router.push('/')}
             className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
             <ChevronLeft size={28} strokeWidth={2.5} />
@@ -123,7 +123,7 @@ export default function MyProjectsPage() {
 
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[30px] w-full max-w-md shadow-2xl p-8 flex flex-col gap-5">
+          <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl p-8 flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center"><Trash2 size={20} className="text-red-500" /></div>
               <h2 className="text-xl font-black text-gray-800">ลบห้อง</h2>

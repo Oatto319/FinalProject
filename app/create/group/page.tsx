@@ -82,10 +82,10 @@ const GroupResultPage = () => {
       <Navbar />
       <div className="w-full max-w-6xl px-4 mt-8 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="bg-[#F8A4A4] rounded-[32px] p-8 flex items-center justify-center shadow-sm">
+          <div className="bg-[#F8A4A4] rounded-[20px] p-8 flex items-center justify-center shadow-sm">
             <h1 className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
-          <div className="bg-white rounded-[32px] p-8 shadow-sm">
+          <div className="bg-white rounded-[20px] p-8 shadow-sm">
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <p className="font-bold text-gray-700">{room?.title ?? '...'}</p>
@@ -97,7 +97,7 @@ const GroupResultPage = () => {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-[32px] p-6 shadow-sm flex flex-col gap-3 flex-1 min-h-[200px]">
+          <div className="bg-white rounded-[20px] p-6 shadow-sm flex flex-col gap-3 flex-1 min-h-[200px]">
             <div className="flex items-center justify-between">
               <p className="font-bold text-gray-700 text-sm">การแจ้งเตือน</p>
               {transferRequests.length > 0 && (
@@ -110,7 +110,7 @@ const GroupResultPage = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-7 bg-white rounded-[40px] p-6 shadow-sm overflow-hidden flex flex-col gap-8">
+        <div className="lg:col-span-7 bg-white rounded-[24px] p-6 shadow-sm overflow-hidden flex flex-col gap-8">
           {groups.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-gray-400 font-medium">ไม่พบข้อมูลกลุ่ม</div>
           ) : (
@@ -119,7 +119,7 @@ const GroupResultPage = () => {
                 <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-8 py-2 rounded-t-2xl rounded-br-2xl font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
                   {group.name}
                 </div>
-                <div className="bg-gray-100/50 border-2 border-gray-100 rounded-[32px] p-4 flex flex-col gap-3">
+                <div className="bg-gray-100/50 border-2 border-gray-100 rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
                     const typeOverride = memberTypeOverrides[member.name];
@@ -158,7 +158,7 @@ const GroupResultPage = () => {
 
       {showModal && selectedReq && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl overflow-hidden">
             <div className="bg-rose-500 px-6 py-4 flex items-center justify-between">
               <h2 className="font-black text-xl text-white">คำร้องขอย้ายกลุ่ม</h2>
               <button onClick={() => setShowModal(false)} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all">

@@ -41,7 +41,7 @@ export default function TypeSelectionPage() {
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <main className="w-full max-w-3xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[520px] relative">
+        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[520px] relative">
 
           {/* Back */}
           <button
@@ -66,7 +66,7 @@ export default function TypeSelectionPage() {
                 key={mode.id}
                 onClick={() => setSelected(mode.id)}
                 className={`
-                  bg-[#2D3E50] rounded-[30px] p-8 flex flex-col items-center text-center gap-4 shadow-xl
+                  bg-[#2D3E50] rounded-[20px] p-8 flex flex-col items-center text-center gap-4 shadow-xl
                   transition-all duration-300 border-4 relative group
                   ${selected === mode.id
                     ? 'border-[#7096D1] scale-105 ring-4 ring-[#7096D1]/20'

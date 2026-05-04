@@ -100,7 +100,7 @@ export default function SelectTemplatesPage() {
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[40px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
+        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
 
           {/* Back */}
           <button

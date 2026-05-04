@@ -97,7 +97,7 @@ const MatchPage = () => {
           </div>
 
           <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-[32px] p-8 shadow-sm">
+            <div className="bg-white rounded-[20px] p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
                   <img src={user?.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" />
@@ -132,7 +132,7 @@ const MatchPage = () => {
 
             <div className="flex-1 flex flex-col justify-end">
               {!isAllReady ? (
-                <div className="bg-white rounded-[32px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
+                <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
                   <div className="flex-[3] flex items-center justify-center">
                     <span className="text-[#4B3E7A] text-6xl font-black italic tracking-tighter uppercase opacity-30 select-none">READY</span>
                   </div>
@@ -144,8 +144,8 @@ const MatchPage = () => {
               ) : (
                 <button onClick={() => router.push('/create/matching')}
                   className="w-full relative group transition-transform active:scale-95">
-                  <div className="absolute inset-0 bg-[#D97706] rounded-[32px] translate-y-2 group-active:translate-y-1"></div>
-                  <div className="relative bg-[#FF8A00] hover:bg-[#FF9D2E] text-white py-10 rounded-[32px] flex items-center justify-center transition-all border-b-4 border-white/20">
+                  <div className="absolute inset-0 bg-[#D97706] rounded-[20px] translate-y-2 group-active:translate-y-1"></div>
+                  <div className="relative bg-[#FF8A00] hover:bg-[#FF9D2E] text-white py-10 rounded-[20px] flex items-center justify-center transition-all border-b-4 border-white/20">
                     <h1 className="text-7xl font-black italic tracking-tighter uppercase drop-shadow-md">MATCH</h1>
                   </div>
                 </button>

@@ -96,7 +96,7 @@ export default function MyRoomPage() {
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
       <main className="w-full max-w-6xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[40px] overflow-hidden shadow-sm min-h-[700px]">
+        <div className="bg-white rounded-[24px] overflow-hidden shadow-sm min-h-[700px]">
           <div className="bg-[#FFA4A4] p-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 className="text-[#4A4E69] text-5xl font-black tracking-widest uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
             <div className="flex items-center gap-3 bg-[#4A4E69]/10 px-6 py-2 rounded-2xl">
@@ -141,7 +141,7 @@ export default function MyRoomPage() {
             </div>
 
             <div className="md:col-span-6 flex flex-col gap-6">
-              <div className="bg-white rounded-[30px] p-8 shadow-sm">
+              <div className="bg-white rounded-[20px] p-8 shadow-sm">
                 <div className="flex items-center gap-4 mb-8">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100 bg-blue-50">
                     <img src={room?.hostAvatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" />
@@ -179,7 +179,7 @@ export default function MyRoomPage() {
               </div>
 
               <button onClick={handleReady}
-                className={`mt-auto w-full py-8 rounded-[30px] font-black text-5xl uppercase tracking-[0.2em] text-white transition-all
+                className={`mt-auto w-full py-8 rounded-[20px] font-black text-5xl uppercase tracking-[0.2em] text-white transition-all
                   ${isReady
                     ? 'bg-green-500 shadow-[0_10px_0_0_#15803d] hover:shadow-[0_5px_0_0_#15803d] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
                     : 'bg-[#7096D1] shadow-[0_10px_0_0_#4A6FA5] hover:shadow-[0_5px_0_0_#4A6FA5] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
@@ -193,7 +193,7 @@ export default function MyRoomPage() {
 
       {roomDeleted && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[30px] w-full max-w-sm p-8 flex flex-col items-center gap-5 shadow-2xl">
+          <div className="bg-white rounded-[20px] w-full max-w-sm p-8 flex flex-col items-center gap-5 shadow-2xl">
             <div className="text-5xl">🗑️</div>
             <h2 className="text-xl font-black text-gray-800 text-center">ห้องนี้ถูกลบแล้ว</h2>
             <p className="text-gray-500 text-sm text-center">ผู้สร้างห้องได้ลบห้องนี้ออกไปแล้ว</p>

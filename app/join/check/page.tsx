@@ -56,7 +56,7 @@ export default function JoinCheckPage() {
       <Navbar />
       <main className="w-full max-w-6xl mt-8 px-4 grid grid-cols-1 md:grid-cols-12 gap-6 pb-12">
         <div className="md:col-span-5 flex flex-col gap-6">
-          <div className="bg-white rounded-[30px] p-8 shadow-sm">
+          <div className="bg-white rounded-[20px] p-8 shadow-sm">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100">
                 <img src={room?.hostAvatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" />
@@ -91,7 +91,7 @@ export default function JoinCheckPage() {
         </div>
 
         <div className="md:col-span-7 flex flex-col gap-4">
-          <div className="bg-[#FFA4A4] rounded-[30px] p-6 text-center shadow-sm">
+          <div className="bg-[#FFA4A4] rounded-[20px] p-6 text-center shadow-sm">
             <h1 className="text-[#4A4E69] text-5xl font-black tracking-widest uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
           <div className="flex flex-col gap-3">

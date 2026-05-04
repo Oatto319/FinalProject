@@ -76,7 +76,7 @@ function ProfilePageInner() {
           {fromEdit ? '"เลือก Avatar ใหม่"' : '"Choose your avatar"'}
         </h1>
       </div>
-      <div className="bg-white w-full max-w-[900px] rounded-[40px] p-8 md:p-12 shadow-sm border border-gray-100">
+      <div className="bg-white w-full max-w-[900px] rounded-[24px] p-8 md:p-12 shadow-sm border border-gray-100">
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-6 md:gap-10 justify-items-center">
           {avatars.map((avatar) => (
             <div key={avatar.id} onClick={() => setSelectedAvatar(avatar.id)}

@@ -146,7 +146,7 @@ const PresentationQuestionnaire = () => {
         </div>
       </div>
 
-      <div className="w-full max-w-5xl bg-white rounded-[40px] shadow-xl p-8 md:p-16 flex flex-col gap-12 border-b-8 border-gray-300">
+      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-xl p-8 md:p-16 flex flex-col gap-12 border-b-8 border-gray-300">
         {questions.map((q, idx) => (
           <div key={q.id} className="flex flex-col items-center gap-8">
             <h3 className="text-[#1A2E44] text-xl md:text-2xl font-black text-center leading-relaxed">"{q.text}"</h3>
@@ -181,7 +181,7 @@ const PresentationQuestionnaire = () => {
 
       {showPopup && jobResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[40px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
+          <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
             <img src={jobResult.icon} alt={jobResult.title} className="w-24 h-24 object-contain" />
             <div className="text-center w-full">
               <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>

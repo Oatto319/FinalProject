@@ -56,7 +56,7 @@ const MyTypePage = () => {
       <div className="w-full max-w-6xl p-4 md:p-8 flex flex-col items-center">
 
       {/* Main Card Container */}
-      <div className="w-full max-w-6xl bg-white rounded-[40px] shadow-xl overflow-hidden flex flex-col relative border-b-8 border-gray-300">
+      <div className="w-full max-w-6xl bg-white rounded-[24px] shadow-xl overflow-hidden flex flex-col relative border-b-8 border-gray-300">
 
         {/* Header Label */}
         <div className="flex justify-between items-center p-6 pb-0">
@@ -76,7 +76,7 @@ const MyTypePage = () => {
           {TEMPLATES.map((tmpl) => {
             const result = user?.types?.[tmpl.id as keyof UserTypes];
             return (
-              <div key={tmpl.id} className="flex flex-col rounded-[32px] overflow-hidden shadow-sm border border-gray-100">
+              <div key={tmpl.id} className="flex flex-col rounded-[20px] overflow-hidden shadow-sm border border-gray-100">
                 {/* Template Title Header */}
                 <div className={`${tmpl.color} py-3 px-6 text-center`}>
                   <h2 className={`${tmpl.textColor} text-xl font-black tracking-tight uppercase`}>

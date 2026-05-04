@@ -98,7 +98,7 @@ export default function TypeSelectionPage() {
       </h1>
 
       {/* Card */}
-      <div className="bg-[#C4C9E2] rounded-[32px] p-8 w-full max-w-lg shadow-lg">
+      <div className="bg-[#C4C9E2] rounded-[20px] p-8 w-full max-w-lg shadow-lg">
 
         {/* Members count */}
         <p className="text-center text-2xl font-black text-[#5B5EA6] mb-6">
