@@ -13,7 +13,6 @@ interface CurrentRoom {
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number; members: RoomMember[];
 }
 interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
-interface UserProfile { name: string; role?: string; types?: Record<string, MBTIResult>; }
 
 export default function MyTeamPage() {
   const router = useRouter();
@@ -25,24 +24,13 @@ export default function MyTeamPage() {
   const [isMatched, setIsMatched]     = useState(false);
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [memberRoles, setMemberRoles] = useState<Record<string, string>>({});
-  const [roomTemplate, setRoomTemplate] = useState('');
-  const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
+const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
   const [roomDeleted, setRoomDeleted] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName]     = useState('');
   const roomIdRef = useRef<string>('');
   const groupIdRef = useRef<number | null>(null);
   const memberTypesFetchedRef = useRef(false);
-
-  // แปลง template label → ID (รองรับ rooms เก่าที่เก็บ label เช่น 'PROGRAMMING')
-  const LABEL_TO_ID: Record<string, string> = {
-    'programming': 'programming',
-    'service': 'service',
-    'customer / service': 'service',
-    'presentation': 'presentation',
-    'design': 'design',
-    'design / creative': 'design',
-  };
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -58,7 +46,6 @@ export default function MyTeamPage() {
     const room = data.room;
     setIsMatched(!!room.matchDone);
     setTeamMembers(room.members ?? []);
-    setRoomTemplate(room.template ?? '');
     if (room.matchedGroups?.length) {
       const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => m.name === userName));
       if (mine) {
@@ -66,80 +53,39 @@ export default function MyTeamPage() {
         groupIdRef.current = mine.id;
         if (!memberTypesFetchedRef.current) {
           memberTypesFetchedRef.current = true;
-          const rawTemplate = (room.template ?? '').toLowerCase();
-          const templateKey = LABEL_TO_ID[rawTemplate] ?? rawTemplate;
-          const allMembers: RoomMember[] = room.members ?? [];
-          const types: Record<string, MBTIResult> = {};
-          const roles: Record<string, string> = {};
-          // ดึง currentUser จาก localStorage เพื่อใช้เป็น fallback ของ gmail และ type
           const currentUserRaw = localStorage.getItem('currentUser');
           const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
-          await Promise.all(mine.members.map(async (member: RoomMember) => {
-            // gmail fallback: matchedGroups → room.members → currentUser (กรณีเป็น user ปัจจุบัน)
-            const gmail =
-              member.gmail ||
-              allMembers.find((m) => m.name === member.name)?.gmail ||
-              (member.name === currentUserLocal?.name ? currentUserLocal?.gmail : '') ||
-              '';
-            try {
-              // ถ้าหา gmail ไม่ได้ ให้ fallback ค้นหาด้วย name แทน
-              const url = gmail
-                ? `/api/users?gmail=${encodeURIComponent(gmail)}`
-                : `/api/users?name=${encodeURIComponent(member.name)}`;
-              const res = await fetch(url);
-              if (!res.ok) return;
-              const data = await res.json();
-              const profile: UserProfile = data.user;
-              if (profile?.role) roles[member.name] = profile.role;
-              const typeResult = profile?.types?.[templateKey];
-              if (typeResult) {
-                types[member.name] = {
-                  title: typeResult.title,
-                  icon: typeResult.icon,
-                  description: typeResult.description ?? '',
-                  jobs: typeResult.jobs ?? [],
-                };
-              }
-            } catch { /* ignore network errors */ }
-          }));
-          // fallback สุดท้าย: ใช้ type จาก localStorage ของ currentUser ถ้ายังไม่มี
-          if (currentUserLocal?.name && currentUserLocal?.types?.[templateKey] && !types[currentUserLocal.name]) {
-            const t = currentUserLocal.types[templateKey];
-            types[currentUserLocal.name] = {
-              title: t.title,
-              icon: t.icon,
-              description: t.description ?? '',
-              jobs: t.jobs ?? [],
+
+          // ดึง type ของทุกคนในกลุ่มด้วย 1 API call (server query)
+          const typesRes = await fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`);
+          const types: Record<string, MBTIResult> = typesRes.ok ? (await typesRes.json()).types ?? {} : {};
+
+          // fallback: ถ้า currentUser ยังไม่มี type ให้ดู localStorage
+          if (currentUserLocal?.name && !types[currentUserLocal.name]) {
+            const rawTemplate = (room.template ?? '').toLowerCase();
+            const LABEL_TO_ID_LOCAL: Record<string, string> = {
+              'programming': 'programming', 'service': 'service',
+              'customer / service': 'service', 'presentation': 'presentation',
+              'design': 'design', 'design / creative': 'design',
             };
+            const templateKey = LABEL_TO_ID_LOCAL[rawTemplate] ?? rawTemplate;
+            const localTypes = currentUserLocal.types ?? {};
+            const localType = localTypes[templateKey]
+              ?? Object.values(localTypes).find((t: unknown) => (t as { icon?: string })?.icon);
+            if (localType) {
+              const t = localType as { title: string; icon: string; description?: string; jobs?: string[] };
+              types[currentUserLocal.name] = { title: t.title, icon: t.icon, description: t.description ?? '', jobs: t.jobs ?? [] };
+            }
           }
-          if (currentUserLocal?.name && currentUserLocal?.role && !roles[currentUserLocal.name]) {
+
+          const roles: Record<string, string> = {};
+          if (currentUserLocal?.name && currentUserLocal?.role) {
             roles[currentUserLocal.name] = currentUserLocal.role;
           }
-          // fallback: ถ้ายังไม่มี type ให้ใช้ icon จาก member.role (MBTI title จาก matching)
-          const roleToIcon: Record<string, string> = {
-            'นักวิเคราะห์': '/img/brain.png',
-            'นักคิดสร้างสรรค์': '/img/idea.png',
-            'ผู้ปฏิบัติการ': '/img/pencil.png',
-            'นักประสานงาน': '/img/make.png',
-            'นักสื่อสาร': '/img/make.png',
-            'นักแก้ปัญหา': '/img/brain.png',
-            'ผู้ฟัง': '/img/idea.png',
-            'นักพูด': '/img/idea.png',
-            'นักวิจัย': '/img/brain.png',
-            'นักออกแบบ': '/img/pencil.png',
-            'ผู้ประสานงาน': '/img/make.png',
-            'นักสร้างสรรค์': '/img/idea.png',
-            'ผู้ปฏิบัติ': '/img/pencil.png',
-          };
-          mine.members.forEach((member: RoomMember) => {
-            if (!types[member.name] && member.role && member.role !== 'ไม่ระบุ') {
-              const icon = roleToIcon[member.role];
-              if (icon) types[member.name] = { title: member.role, icon, description: '', jobs: [] };
-            }
-          });
+
           setMemberRoles(roles);
           setMemberTypes(types);
-          // ถ้าได้ type ไม่ครบทุกคน ให้ลองใหม่รอบถัดไป
+          // retry ถ้ายังได้ type ไม่ครบ (บางคนอาจยังไม่ได้ทำแบบทดสอบ)
           if (Object.keys(types).length < mine.members.length) {
             memberTypesFetchedRef.current = false;
           }
