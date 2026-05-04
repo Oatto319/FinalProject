@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Users, BookOpen, AlignLeft } from 'lucide-react';
+import { ChevronLeft, ArrowRight, ChevronDown } from 'lucide-react';
 
 interface CurrentUser {
   name: string;
@@ -14,6 +14,7 @@ export default function CreateRoomPage() {
   const router = useRouter();
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [formData, setFormData] = useState({ title: '', description: '', totalMembers: '', groupSize: '' });
+  const [step, setStep] = useState(1);
   const [showError, setShowError] = useState(false);
   const [sizeWarning, setSizeWarning] = useState('');
   const [loading, setLoading] = useState(false);
@@ -77,58 +78,127 @@ export default function CreateRoomPage() {
     }
   };
 
+  const handleNext = () => {
+    if (!formData.title || !formData.description) { setShowError(true); return; }
+    setShowError(false);
+    setStep(2);
+  };
+
   return (
-    <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      <main className="w-full max-w-5xl mt-12 px-4 pb-12">
-        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
-          <button onClick={() => router.push('/')}
-            className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
-            <ChevronLeft size={28} strokeWidth={2.5} />
-          </button>
-          <div className="w-full max-w-2xl bg-[#2D3E50] rounded-[24px] p-10 shadow-2xl space-y-8 mt-4">
-            <h1 className="text-white text-3xl font-black italic text-center mb-8 tracking-wide">&ldquo;Create your room&rdquo;</h1>
-            <div className="space-y-6">
-              <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><BookOpen size={24} /></div>
-                <input type="text" name="title" placeholder="ชื่อกิจกรรม" value={formData.title} onChange={handleChange}
-                  className="w-full bg-white rounded-2xl py-5 pl-14 pr-6 text-[#2D3E50] font-bold text-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-300" />
+    <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center justify-center px-4 py-12">
+
+      <h1 className="text-white font-black uppercase tracking-widest text-6xl mb-8">CREATE</h1>
+
+      <div className="w-full max-w-lg bg-[#f0f2f8] rounded-[24px] p-6 shadow-2xl">
+
+        {step === 1 ? (
+          <>
+            <div className="flex flex-col gap-4">
+              {/* Room Name */}
+              <div className="bg-[#1D324B] rounded-[20px] p-5">
+                <p className="text-white font-bold text-base mb-3">&ldquo;To name the room&rdquo;</p>
+                <input
+                  type="text" name="title" value={formData.title} onChange={handleChange}
+                  placeholder="ชื่อกิจกรรม"
+                  className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                />
               </div>
-              <div className="relative">
-                <div className="absolute left-4 top-6 text-gray-400"><AlignLeft size={24} /></div>
-                <textarea name="description" placeholder="รายละเอียดกิจกรรม / รายละเอียดห้อง" value={formData.description} onChange={handleChange} rows={3}
-                  className="w-full bg-white rounded-2xl py-5 pl-14 pr-6 text-[#2D3E50] font-bold text-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-300 resize-none" />
+
+              {/* Description */}
+              <div className="bg-[#1D324B] rounded-[20px] p-5">
+                <p className="text-white font-bold text-base mb-3">&ldquo;Describe the activity&rdquo;</p>
+                <textarea
+                  name="description" value={formData.description} onChange={handleChange}
+                  placeholder="รายละเอียดกิจกรรม / กำหนดส่งงาน" rows={2}
+                  className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 resize-none transition-all"
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Users size={24} /></div>
-                  <input type="number" name="totalMembers" placeholder="จำนวนนักเรียนทั้งหมด" value={formData.totalMembers} onChange={handleChange} min={1}
-                    className="w-full bg-white rounded-2xl py-5 pl-14 pr-6 text-[#2D3E50] font-bold text-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-300" />
-                </div>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><Users size={24} /></div>
-                  <input type="number" name="groupSize" placeholder="จำนวนกลุ่มละกี่คน" value={formData.groupSize} onChange={handleChange} min={1}
-                    className="w-full bg-white rounded-2xl py-5 pl-14 pr-6 text-[#2D3E50] font-bold text-xl focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all placeholder:text-gray-300" />
-                </div>
-              </div>
-              {sizeWarning && (
-                <p className={`text-sm font-bold px-2 ${sizeWarning.startsWith('✓') ? 'text-green-400' : 'text-yellow-300'}`}>{sizeWarning}</p>
-              )}
             </div>
-            <div className="pt-4">
-              <button onClick={handleCreate} disabled={loading}
-                className="w-full bg-[#7096D1] text-white py-6 rounded-[25px] font-black text-3xl shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] transition-all active:shadow-none active:translate-y-[8px] uppercase tracking-widest disabled:opacity-60">
-                {loading ? 'กำลังสร้าง...' : 'CREATE'}
+
+            {showError && (
+              <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกชื่อและรายละเอียด</p>
+            )}
+
+            <div className="flex items-center justify-between mt-6">
+              <button
+                onClick={() => router.push('/')}
+                className="w-14 h-14 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-400 transition-all active:scale-90"
+              >
+                <ChevronLeft size={28} strokeWidth={2.5} />
+              </button>
+              <button
+                onClick={handleNext}
+                className="flex items-center gap-3 bg-[#1D324B] text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95"
+              >
+                Next
+                <span className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <ArrowRight size={18} />
+                </span>
               </button>
             </div>
-          </div>
-          <div className="mt-8 text-sm font-medium italic">
-            {showError
-              ? <p className="text-red-500 font-bold opacity-90">⚠️ กรุณากรอกข้อมูลให้ครบทุกช่องก่อนกดสร้างห้อง</p>
-              : <p className="text-gray-400 opacity-60">* ตรวจสอบข้อมูลให้ครบถ้วนก่อนกดสร้างห้อง</p>
-            }
-          </div>
-        </div>
-      </main>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-col gap-4">
+              {/* Total Members */}
+              <div className="bg-[#1D324B] rounded-[20px] p-5">
+                <p className="text-white font-bold text-base mb-3">&ldquo;Maximum people?&rdquo;</p>
+                <div className="relative">
+                  <input
+                    type="number" name="totalMembers" value={formData.totalMembers} onChange={handleChange}
+                    placeholder="30" min={1}
+                    className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 pointer-events-none">
+                    <ChevronDown size={20} strokeWidth={2.5} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Group Size */}
+              <div className="bg-[#1D324B] rounded-[20px] p-5">
+                <p className="text-white font-bold text-base mb-3">&ldquo;How many people per group?&rdquo;</p>
+                <div className="relative">
+                  <input
+                    type="number" name="groupSize" value={formData.groupSize} onChange={handleChange}
+                    placeholder="3" min={1}
+                    className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 pointer-events-none">
+                    <ChevronDown size={20} strokeWidth={2.5} />
+                  </div>
+                </div>
+                {sizeWarning && (
+                  <p className={`text-sm font-bold mt-3 ${sizeWarning.startsWith('✓') ? 'text-green-400' : 'text-yellow-300'}`}>
+                    {sizeWarning}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {showError && (
+              <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกจำนวนให้ครบ</p>
+            )}
+
+            <div className="flex items-center justify-between mt-6">
+              <button
+                onClick={() => { setStep(1); setShowError(false); }}
+                className="w-14 h-14 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-400 transition-all active:scale-90"
+              >
+                <ChevronLeft size={28} strokeWidth={2.5} />
+              </button>
+              <button
+                onClick={handleCreate} disabled={loading}
+                className="bg-[#1D324B] text-white px-10 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95 disabled:opacity-60"
+              >
+                {loading ? 'กำลังสร้าง...' : 'Create'}
+              </button>
+            </div>
+          </>
+        )}
+
+      </div>
+
     </div>
   );
 }

@@ -27,7 +27,7 @@ const App = () => {
       <main className="flex-1 min-h-0 px-4 py-4 flex justify-center">
         <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
 
-        {/* Left Section: Create, Join, Team (Keeping Original Design) */}
+        {/* Left Section: Create, Join, Team */}
         <div className="bg-white rounded-[24px] px-6 py-10 shadow-sm flex flex-col gap-6">
           {/* Create Button (Yellow) */}
           <button
