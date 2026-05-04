@@ -54,56 +54,65 @@ export default function EditProfilePage() {
   const currentAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${(user.avatarSeed || 1) + 100}`;
 
   return (
-    <div className="min-h-screen bg-[#F6F8FA] font-sans">
-      <div className="w-full bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-3">
-        <button onClick={() => router.back()} className="w-9 h-9 rounded-md flex items-center justify-center hover:bg-gray-100 transition-colors active:scale-95">
-          <ChevronLeft size={22} strokeWidth={2} className="text-gray-600" />
-        </button>
-        <h1 className="text-base font-semibold text-gray-800">Edit profile</h1>
-      </div>
+    <div className="min-h-screen bg-gray-200 font-sans flex items-start justify-center p-6 pt-10">
+      <div className="w-full max-w-4xl grid grid-cols-[320px_1fr] gap-4">
 
-      <div className="max-w-4xl mx-auto px-4 py-10 flex flex-col md:flex-row gap-8 items-start">
-        <div className="flex flex-col items-center gap-3 md:w-[260px] flex-shrink-0">
-          <div className="relative group">
-            <div className="w-[220px] h-[220px] rounded-full overflow-hidden bg-orange-50 border-4 border-white shadow-md ring-1 ring-gray-200">
+        {/* Left Card — Avatar + Name + Save */}
+        <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5">
+          <div className="relative">
+            <div className="w-48 h-48 rounded-full overflow-hidden bg-blue-100">
               <img src={currentAvatarUrl} alt="Profile" className="w-full h-full object-cover" />
             </div>
-            <button onClick={() => router.push('/login/profile?from=edit')} className="absolute bottom-3 right-3 w-10 h-10 bg-white border border-gray-300 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors active:scale-95">
+            <button
+              onClick={() => router.push('/login/profile?from=edit')}
+              className="absolute bottom-2 right-2 w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow hover:bg-gray-50 transition-colors active:scale-95"
+            >
               <Pencil size={16} className="text-gray-600" />
             </button>
           </div>
-          <p className="text-base font-bold text-gray-800">{name || user.name}</p>
-          <button onClick={() => router.push('/login/profile?from=edit')} className="text-sm text-[#0969DA] font-semibold hover:underline">Edit avatar</button>
+
+          <p className="text-lg font-bold text-gray-800">{name || user.name}</p>
+
+          <button
+            onClick={handleSave} disabled={loading}
+            className="px-10 py-3 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-colors active:scale-95 disabled:opacity-60"
+          >
+            {loading ? 'Saving...' : 'save'}
+          </button>
         </div>
 
-        <div className="flex-1 flex flex-col gap-5 w-full">
+        {/* Right Card — Edit Fields */}
+        <div className="bg-white rounded-[24px] p-8 flex flex-col gap-6">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-800">Name</label>
-            <input type="text" value={name} onChange={(e) => { setName(e.target.value); setNameError(''); }} placeholder="Your name"
-              className="w-full border border-gray-300 rounded-md py-2 px-3 text-gray-800 text-sm focus:outline-none focus:border-[#0969DA] focus:ring-2 focus:ring-[#0969DA]/20 transition-all" />
+            <label className="text-sm font-semibold text-gray-700">Name</label>
+            <input
+              type="text" value={name}
+              onChange={(e) => { setName(e.target.value); setNameError(''); }}
+              placeholder="Your name"
+              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-gray-800 text-sm focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all"
+            />
             {nameError && <p className="text-red-500 text-xs">{nameError}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold text-gray-800">Role</label>
-            <div className="flex items-center justify-between border border-gray-300 rounded-md py-2 px-3 bg-white">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+            <label className="text-sm font-semibold text-gray-700">Role</label>
+            <div className="flex items-center justify-between border border-gray-200 rounded-xl py-3 px-4 bg-white">
+              <span className={`text-xs font-bold px-3 py-1 rounded-full ${role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
                 {role === 'host' ? 'อาจารย์ (Host)' : 'นักเรียน (User)'}
               </span>
-              <button onClick={() => router.push('/firstpage?from=edit')} className="text-sm text-[#0969DA] font-semibold hover:underline">Change</button>
+              <button onClick={() => router.push('/firstpage?from=edit')} className="text-sm text-blue-500 font-semibold hover:underline">
+                Change
+              </button>
             </div>
           </div>
 
-          <div className="border-t border-gray-200" />
-
-          <div className="flex items-center gap-3">
-            <button onClick={handleSave} disabled={loading}
-              className="px-5 py-2 bg-[#2DA44E] hover:bg-[#2C974B] active:bg-[#298E46] text-white font-semibold text-sm rounded-md transition-colors active:scale-95 shadow-sm disabled:opacity-60">
-              {loading ? 'กำลังบันทึก...' : 'Save profile'}
+          <div className="mt-auto">
+            <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+              Cancel
             </button>
-            <button onClick={() => router.back()} className="px-5 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold text-sm rounded-md transition-colors active:scale-95">Cancel</button>
           </div>
         </div>
+
       </div>
     </div>
   );
