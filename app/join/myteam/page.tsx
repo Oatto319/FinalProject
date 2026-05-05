@@ -176,7 +176,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   return (
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
       <Navbar />
-      <div className="w-full max-w-7xl px-6 mt-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="w-full max-w-7xl px-6 mt-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button className="bg-[#FF9142] text-white px-8 py-3 rounded-t-2xl font-bold text-xl shadow-lg">{myGroup?.name ?? 'My team'}</button>
           <button onClick={() => { setEditingName(myGroup?.name ?? ''); setIsEditingName(true); }} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Edit2 size={20} /></button>

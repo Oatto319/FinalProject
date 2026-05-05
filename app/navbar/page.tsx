@@ -50,19 +50,19 @@ export default function Navbar({ subtitle }: NavbarProps) {
   const displaySubtitle = subtitle ?? user.role ?? user.gender;
 
   return (
-    <header className="w-full flex items-center justify-between bg-white p-6 shadow-sm">
+    <header className="w-full flex items-center justify-between bg-white px-4 py-3 shadow-sm">
       <div className="w-full flex items-center justify-between">
-        <div className="relative flex items-center gap-4">
+        <div className="relative flex items-center gap-3">
           <button
             onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v); }}
-            className="flex items-center gap-4 hover:opacity-80 transition-opacity cursor-pointer"
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
           >
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
               <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
             </div>
             <div className="text-left">
-              <h2 className="font-bold text-2xl text-gray-800 leading-tight">{user.name}</h2>
-              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+              <h2 className="font-bold text-base text-gray-800 leading-tight">{user.name}</h2>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                 displaySubtitle === 'host'
                   ? 'bg-purple-100 text-purple-600'
                   : 'bg-orange-100 text-orange-500'
@@ -103,8 +103,8 @@ export default function Navbar({ subtitle }: NavbarProps) {
           )}
         </div>
 
-        <button className="bg-green-500 p-4 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">
-          <LucideMessageCircle fill="currentColor" size={32} />
+        <button className="bg-green-500 p-2.5 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">
+          <LucideMessageCircle fill="currentColor" size={22} />
         </button>
       </div>
     </header>

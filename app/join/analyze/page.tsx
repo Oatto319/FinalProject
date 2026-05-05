@@ -103,7 +103,7 @@ export default function AnalyzePage() {
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
       <Navbar />
 
-      <main className="w-full max-w-5xl mt-8 px-4 pb-12">
+      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
         <div className="bg-[#E5E7EB] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative overflow-hidden">
 
           {/* Back Button */}
@@ -209,7 +209,7 @@ export default function AnalyzePage() {
           </button>
 
           {/* Helper Legend */}
-          <div className="mt-8 flex gap-6 text-gray-500 text-xs font-bold italic opacity-60">
+          <div className="mt-4 flex gap-6 text-gray-500 text-xs font-bold italic opacity-60">
             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-400"></div> Competency</span>
             <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-400"></div> Best Fit</span>
           </div>

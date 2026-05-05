@@ -95,7 +95,7 @@ export default function MyRoomPage() {
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
-      <main className="w-full max-w-6xl mt-8 px-4 pb-12">
+      <main className="w-full max-w-6xl mt-4 px-4 pb-12">
         <div className="bg-white rounded-[24px] overflow-hidden shadow-sm min-h-[700px]">
           <div className="bg-[#FFA4A4] p-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <h1 className="text-[#4A4E69] text-5xl font-black tracking-widest uppercase">{room?.template ?? 'PROGRAMMING'}</h1>

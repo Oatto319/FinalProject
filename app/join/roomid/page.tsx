@@ -30,7 +30,7 @@ export default function EnterRoomIdPage() {
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
-      <main className="w-full max-w-5xl mt-8 px-4 pb-12">
+      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
         <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
           <div className="w-full flex justify-center -mt-20 mb-6 relative z-10">
             <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[400px] h-auto object-contain drop-shadow-xl"

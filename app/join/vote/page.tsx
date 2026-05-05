@@ -116,7 +116,7 @@ export default function VotePage() {
     <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
       <Navbar />
 
-      <main className="w-full max-w-5xl mt-8 px-4 pb-12">
+      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
         <div className="bg-[#E5E7EB] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative">
 
           {/* Back Button */}

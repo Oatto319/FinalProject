@@ -65,7 +65,7 @@ function TemplatesContent() {
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
       {/* Main Content */}
-      <main className="w-full max-w-5xl mt-8 px-4 pb-12">
+      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
         <div className="bg-white rounded-[24px] p-8 md:p-10 shadow-sm flex flex-col items-center relative">
 
           <button
@@ -119,7 +119,7 @@ function TemplatesContent() {
                   )}
 
                   {/* Title Section */}
-                  <h2 className={`text-2xl md:text-3xl font-black mt-8 mb-3 tracking-wider ${item.textColor} text-center uppercase`}>
+                  <h2 className={`text-2xl md:text-3xl font-black mt-4 mb-3 tracking-wider ${item.textColor} text-center uppercase`}>
                     {item.title}
                   </h2>
 

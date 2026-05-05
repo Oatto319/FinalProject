@@ -58,7 +58,7 @@ const WaitingRoom = () => {
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
-      <div className="w-full max-w-5xl mt-8 px-4 pb-12 bg-white rounded-[24px] shadow-xl overflow-hidden flex flex-col">
+      <div className="w-full max-w-5xl mt-4 px-4 pb-12 bg-white rounded-[24px] shadow-xl overflow-hidden flex flex-col">
         <div className="bg-[#F8A4A4] p-6 md:px-10 flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter">{room?.template ?? 'PROGRAMMING'}</h1>
           <div className="flex items-center gap-3 bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl">

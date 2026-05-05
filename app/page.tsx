@@ -21,17 +21,17 @@ const App = () => {
   if (!ready) return null;
 
   return (
-    <div className="h-screen bg-gray-300 font-sans flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-gray-300 font-sans flex flex-col">
       <Navbar />
 
-      <main className="flex-1 min-h-0 px-4 py-4 flex justify-center">
-        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
+      <main className="px-4 py-4 flex justify-center">
+        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Left Section: Create, Join, Team */}
         <div className="bg-white rounded-[24px] px-6 py-10 shadow-sm flex flex-col gap-6">
           {/* Create Button (Yellow) */}
           <button
-            className="flex-1 w-full bg-yellow-400 rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#A16207] hover:shadow-[0_4px_0_0_#A16207] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
+            className="h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/templates?mode=create')}
           >
             <h1 className="text-5xl text-emerald-900">Create</h1>
@@ -40,7 +40,7 @@ const App = () => {
 
           {/* Join Button (Blue) */}
           <button
-            className="flex-1 w-full bg-sky-400 rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#0369A1] hover:shadow-[0_4px_0_0_#0369A1] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
+            className="h-36 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/roomid')}
           >
             <h1 className="text-5xl text-orange-600">Join</h1>
@@ -49,7 +49,7 @@ const App = () => {
 
           {/* Team Button (Purple) */}
           <button
-            className="flex-1 w-full bg-indigo-500 rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3730A3] hover:shadow-[0_4px_0_0_#3730A3] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
+            className="h-36 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/myprojects')}
           >
             <h1 className="text-5xl text-white">Team</h1>
@@ -63,7 +63,7 @@ const App = () => {
           {/* My Type Card (Keeping Original Design) */}
           <div
             onClick={() => router.push('/mytype')}
-            className="bg-white rounded-[24px] p-8 shadow-sm relative flex-1 flex items-center justify-center overflow-hidden cursor-pointer hover:brightness-95 transition-all"
+            className="bg-white rounded-[24px] p-8 shadow-sm relative flex items-center justify-center overflow-hidden cursor-pointer hover:brightness-95 transition-all h-64"
           >
             {/* Decorative Icons */}
             <div className="absolute top-6 left-6 w-14 h-14 bg-indigo-900 rounded-full flex items-center justify-center text-pink-500">

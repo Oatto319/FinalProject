@@ -57,7 +57,7 @@ export default function MyProjectsPage() {
   return (
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
-      <main className="w-full max-w-5xl mt-8 px-4 pb-12">
+      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
         <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col min-h-[600px] relative">
           <button onClick={() => router.push('/')}
             className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">

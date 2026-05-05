@@ -53,7 +53,7 @@ const MyTypePage = () => {
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
-      <div className="w-full max-w-6xl p-4 md:p-8 flex flex-col items-center">
+      <div className="w-full max-w-6xl px-4 py-4 flex flex-col items-center">
 
       {/* Main Card Container + Back Button */}
       <div className="w-full max-w-6xl flex items-start gap-3">

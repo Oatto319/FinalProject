@@ -80,7 +80,7 @@ const GroupResultPage = () => {
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
-      <div className="w-full max-w-6xl px-4 mt-8 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="w-full max-w-6xl px-4 mt-4 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 flex flex-col gap-6">
           <div className="bg-[#F8A4A4] rounded-[20px] p-8 flex items-center justify-center shadow-sm">
             <h1 className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
