@@ -39,7 +39,7 @@ export default function EnterRoomIdPage() {
           <div className="w-full max-w-[500px] bg-[#2D3E50] rounded-[20px] p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
             <label className="text-white text-xl font-bold italic">&quot;Enter the room ID&quot;</label>
             <input type="text" placeholder="เช่น 1234567" value={roomId}
-              onChange={(e) => { setRoomId(e.target.value); setError(''); }}
+              onChange={(e) => { setRoomId(e.target.value.replace(/\D/g, '')); setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleNext()}
               className="w-full bg-white rounded-xl py-4 px-6 text-[#2D3E50] font-bold text-2xl text-center focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all tracking-[0.2em]" />
             {error && <p className="text-red-300 text-sm font-bold">{error}</p>}
