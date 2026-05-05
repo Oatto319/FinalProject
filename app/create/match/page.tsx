@@ -14,7 +14,7 @@ interface CurrentRoom {
 
 const MatchPage = () => {
   const router = useRouter();
-  const [user, setUser]             = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [user, setUser]             = useState<{ name: string; avatarSeed: number; role?: string } | null>(null);
   const [room, setRoom]             = useState<CurrentRoom | null>(null);
   const [members, setMembers]       = useState<RoomMember[]>([]);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
@@ -104,10 +104,12 @@ const MatchPage = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-gray-800">{user?.name ?? '...'}</h3>
+                    <p className="font-bold text-gray-800">{user?.name ?? '...'}</p>
                     <span className="bg-[#94A3B8] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">HOST</span>
                   </div>
-                  <p className="text-xs text-gray-400">อาจารย์</p>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user?.role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+                    {user?.role ?? 'host'}
+                  </span>
                   {matchMode && (
                     <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
                       {matchMode === 'auto' ? '⚡ จับคู่อัตโนมัติ' : '🎛 กำหนดเอง'}
