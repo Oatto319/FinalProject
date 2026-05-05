@@ -2,19 +2,26 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Users, CheckCircle2, Clock, Trash2 } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface RoomData {
   roomId: string; title: string; description: string; totalMembers: number;
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number;
-  members: { name: string; avatarSeed: number; gmail: string }[];
+  hostRole?: string; members: { name: string; avatarSeed: number; gmail: string }[];
   matchDone?: boolean; createdAt?: string;
 }
 
+const TEMPLATE_COLORS: Record<string, string> = {
+  programming: '#FFAAAA',
+  service: '#71EFB8',
+  presentation: '#EAFF48',
+  design: '#8C71EF',
+};
+
 export default function MyProjectsPage() {
   const router = useRouter();
-  const [user, setUser]             = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [user, setUser]             = useState<{ name: string; avatarSeed: number; role?: string } | null>(null);
   const [joinedRooms, setJoinedRooms] = useState<RoomData[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<RoomData | null>(null);
   const [deleteInput, setDeleteInput]   = useState('');
@@ -58,66 +65,91 @@ export default function MyProjectsPage() {
     <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
       <Navbar />
       <main className="w-full max-w-5xl mt-4 px-4 pb-12">
-        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col min-h-[600px] relative">
-          <button onClick={() => router.push('/')}
-            className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90">
-            <ChevronLeft size={28} strokeWidth={2.5} />
-          </button>
-          <div className="flex flex-col items-center mb-10 mt-4">
-            <p className="text-gray-400 text-sm mt-1">ห้องที่เคยเข้าร่วม</p>
-          </div>
+        <div className="flex items-start gap-3">
 
-          {joinedRooms.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 gap-4 text-gray-400">
-              <div className="text-6xl">📭</div>
-              <p className="font-bold text-lg">ยังไม่มีห้องที่เข้าร่วม</p>
-              <p className="text-sm">กด Join เพื่อเข้าร่วมห้องแรกของคุณ</p>
-              <button onClick={() => router.push('/join/roomid')}
-                className="mt-4 bg-[#2D3E50] text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
-                Join ห้องใหม่
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {joinedRooms.map((room) => {
-                const isHost = room.hostName === user?.name;
-                return (
-                  <div key={room.roomId} onClick={() => handleSelectRoom(room)}
-                    className="w-full bg-[#2D3E50] rounded-[25px] p-6 flex items-center justify-between text-left hover:brightness-110 transition-all active:scale-[0.98] shadow-md cursor-pointer">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}`} alt={room.hostName} className="w-full h-full object-cover" />
+          {/* Back Button */}
+          <button onClick={() => router.push('/')}
+            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+            <ChevronLeft size={24} strokeWidth={2.5} />
+          </button>
+
+          <div className="flex-1">
+            {joinedRooms.length === 0 ? (
+              <div className="bg-white rounded-[24px] p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400">
+                <div className="text-6xl">📭</div>
+                <p className="font-bold text-lg">ยังไม่มีห้องที่เข้าร่วม</p>
+                <p className="text-sm">กด Join เพื่อเข้าร่วมห้องแรกของคุณ</p>
+                <button onClick={() => router.push('/join/roomid')}
+                  className="mt-2 bg-[#2D3E50] text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
+                  Join ห้องใหม่
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {joinedRooms.map((room) => {
+                  const isHost = room.hostName === user?.name;
+                  const templateColor = TEMPLATE_COLORS[room.template] ?? '#D1D5DB';
+                  return (
+                    <div key={room.roomId} onClick={() => handleSelectRoom(room)}
+                      className="bg-white rounded-[20px] shadow-sm overflow-hidden cursor-pointer hover:brightness-95 transition-all active:scale-[0.98]">
+
+                      {/* Template header */}
+                      <div className="px-5 py-3" style={{ backgroundColor: templateColor }}>
+                        <span className="text-xs font-black uppercase tracking-widest text-white/80">{room.template}</span>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-white font-bold text-lg leading-tight">{room.title}</p>
-                          {isHost && <span className="bg-[#F8A4A4] text-[#4B3E7A] text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">HOST</span>}
+
+                      {/* Card body */}
+                      <div className="p-5">
+                        {/* Host profile */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
+                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}`} alt={room.hostName} className="w-full h-full object-cover" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-gray-800 leading-tight">{room.hostName}</p>
+                              {isHost && <span className="bg-[#94A3B8] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">HOST</span>}
+                            </div>
+                            {(() => {
+                              const role = isHost ? (user?.role ?? room.hostRole ?? 'host') : (room.hostRole ?? 'host');
+                              return (
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+                                  {role}
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </div>
-                        <p className="text-gray-400 text-sm mt-0.5">{isHost ? 'คุณเป็นผู้สร้างห้องนี้' : `Host: ${room.hostName}`}</p>
-                        <div className="flex items-center gap-3 mt-1.5">
-                          <span className="flex items-center gap-1 text-gray-300 text-xs"><Users size={12} />{room.members.length}/{room.totalMembers}</span>
-                          <span className="text-gray-500 text-xs">ID: {room.roomId}</span>
+
+                        {/* Room info */}
+                        <p className="font-bold text-gray-800 text-base mb-1">{room.title}</p>
+                        <p className="text-gray-500 text-sm mb-3 leading-relaxed">{room.description}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-gray-400">{room.totalMembers} คน · กลุ่มละ {room.groupSize} คน</p>
+                          <p className="text-xl font-black text-[#4B3E7A]">{room.members.length}/{room.totalMembers}</p>
+                        </div>
+
+                        {/* Status + Delete */}
+                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                          {room.matchDone ? (
+                            <span className="flex items-center gap-1 text-green-500 text-xs font-bold"><CheckCircle2 size={12} />จับกลุ่มแล้ว</span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-yellow-500 text-xs font-bold"><Clock size={12} />รอ Match</span>
+                          )}
+                          {isHost ? (
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(room); setDeleteInput(''); setDeleteError(''); }}
+                              className="flex items-center gap-1.5 text-red-400 text-xs font-bold hover:text-red-600 transition-colors">
+                              <Trash2 size={13} /> ลบห้อง
+                            </button>
+                          ) : <span />}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      {room.matchDone ? (
-                        <span className="flex items-center gap-1.5 bg-green-500/20 text-green-400 text-xs font-bold px-3 py-1.5 rounded-full"><CheckCircle2 size={13} />จับกลุ่มแล้ว</span>
-                      ) : (
-                        <span className="flex items-center gap-1.5 bg-yellow-500/20 text-yellow-400 text-xs font-bold px-3 py-1.5 rounded-full"><Clock size={13} />รอ Match</span>
-                      )}
-                      {isHost && (
-                        <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(room); setDeleteInput(''); setDeleteError(''); }}
-                          className="w-9 h-9 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors">
-                          <Trash2 size={15} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 
