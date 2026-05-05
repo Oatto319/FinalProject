@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Navbar from '../navbar/page';
 
 type MBTIResult = {
@@ -55,21 +55,18 @@ const MyTypePage = () => {
       <Navbar />
       <div className="w-full max-w-6xl p-4 md:p-8 flex flex-col items-center">
 
-      {/* Main Card Container */}
-      <div className="w-full max-w-6xl bg-white rounded-[24px] shadow-xl overflow-hidden flex flex-col relative border-b-8 border-gray-300">
+      {/* Main Card Container + Back Button */}
+      <div className="w-full max-w-6xl flex items-start gap-3">
 
-        {/* Header Label */}
-        <div className="flex justify-between items-center p-6 pb-0">
-          <div className="bg-[#A7F3D0] px-10 py-3 rounded-tl-3xl rounded-br-3xl shadow-sm">
-            <h1 className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter">MY TYPE</h1>
-          </div>
-          <button
-            onClick={() => router.back()}
-            className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100 transition-colors"
-          >
-            <X size={24} strokeWidth={3} className="text-gray-800" />
-          </button>
-        </div>
+        {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="mt-2 flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow hover:bg-gray-50 transition-colors active:scale-90"
+        >
+          <ChevronLeft size={24} strokeWidth={2.5} className="text-gray-700" />
+        </button>
+
+      <div className="flex-1 bg-white rounded-[24px] shadow-xl overflow-hidden flex flex-col relative border-b-8 border-gray-300">
 
         {/* Content Grid */}
         <div className="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -140,6 +137,7 @@ const MyTypePage = () => {
             );
           })}
         </div>
+      </div>
       </div>
       </div>
     </div>

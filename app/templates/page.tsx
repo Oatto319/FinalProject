@@ -68,16 +68,16 @@ function TemplatesContent() {
       <Navbar />
       {/* Main Content */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center">
+        <div className="flex items-start gap-3">
 
-          {/* --- เพิ่ม: ปุ่ม Back --- */}
-          <div className="w-full flex items-center mb-6">
-            <button
-              onClick={() => router.push('/')}
-              className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-colors active:scale-95">
-              <ChevronLeft size={28} strokeWidth={2.5} />
-            </button>
-          </div>
+          {/* ปุ่ม Back ข้างซ้าย */}
+          <button
+            onClick={() => router.push('/')}
+            className="mt-2 flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-700 shadow hover:bg-gray-100 transition-colors active:scale-95">
+            <ChevronLeft size={24} strokeWidth={2.5} />
+          </button>
+
+        <div className="flex-1 bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center">
 
           <h1 className="text-2xl md:text-3xl font-bold text-[#2D3142] mb-10 text-center">
             "Choose Templates"
@@ -139,6 +139,7 @@ function TemplatesContent() {
             })}
           </div>
 
+        </div>
         </div>
       </main>
     </div>
