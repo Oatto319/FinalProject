@@ -61,7 +61,7 @@ export default function Navbar({ subtitle }: NavbarProps) {
               <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
             </div>
             <div className="text-left">
-              <h2 className="font-bold text-base text-gray-800 leading-tight">{user.name}</h2>
+              <p className="font-bold text-base text-gray-800 leading-tight">{user.name}</p>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                 displaySubtitle === 'host'
                   ? 'bg-purple-100 text-purple-600'

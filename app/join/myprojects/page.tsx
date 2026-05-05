@@ -90,7 +90,7 @@ export default function MyProjectsPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h2 className="text-white font-bold text-lg leading-tight">{room.title}</h2>
+                          <p className="text-white font-bold text-lg leading-tight">{room.title}</p>
                           {isHost && <span className="bg-[#F8A4A4] text-[#4B3E7A] text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wide">HOST</span>}
                         </div>
                         <p className="text-gray-400 text-sm mt-0.5">{isHost ? 'คุณเป็นผู้สร้างห้องนี้' : `Host: ${room.hostName}`}</p>
@@ -126,7 +126,7 @@ export default function MyProjectsPage() {
           <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl p-8 flex flex-col gap-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center"><Trash2 size={20} className="text-red-500" /></div>
-              <h2 className="text-xl font-black text-gray-800">ลบห้อง</h2>
+              <p className="text-xl font-black text-gray-800">ลบห้อง</p>
             </div>
             <p className="text-gray-600 text-sm leading-relaxed">
               การลบห้องนี้จะไม่สามารถย้อนกลับได้ กรุณาพิมพ์ชื่อห้อง{' '}

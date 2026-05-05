@@ -116,7 +116,7 @@ const MatchPage = () => {
                 </div>
               </div>
               <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-800">{room?.title ?? '...'}</h2>
+                <p className="text-xl font-bold text-gray-800">{room?.title ?? '...'}</p>
                 <div className="grid grid-cols-2 gap-y-4 text-sm font-medium">
                   <div className="text-gray-500">
                     <p>{room?.description ?? ''}</p>
