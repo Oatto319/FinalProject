@@ -8,6 +8,7 @@ interface CurrentUser {
   name: string;
   gender: string;
   avatarSeed: number;
+  role?: string;
 }
 
 export default function CreateRoomPage() {
@@ -57,6 +58,7 @@ export default function CreateRoomPage() {
         template,
         hostName: user?.name ?? '',
         hostAvatarSeed: user?.avatarSeed ?? 0,
+        hostRole: user?.role ?? 'host',
         members: [],
       };
 

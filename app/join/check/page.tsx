@@ -9,7 +9,7 @@ interface RoomMember { name: string; avatarSeed: number; gmail: string; }
 interface RoomData {
   roomId: string; title: string; description: string; totalMembers: number;
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number;
-  members: RoomMember[];
+  hostRole?: string; members: RoomMember[];
 }
 
 export default function JoinCheckPage() {
@@ -66,7 +66,9 @@ export default function JoinCheckPage() {
                   <span className="font-bold text-lg text-gray-700">{room?.hostName ?? '...'}</span>
                   <span className="bg-[#8E97B0] text-white text-xs px-2 py-0.5 rounded uppercase font-bold">Host</span>
                 </div>
-                <p className="text-gray-400 text-sm">อาจารย์</p>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${room?.hostRole === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+                  {room?.hostRole ?? 'host'}
+                </span>
               </div>
             </div>
             {room ? (

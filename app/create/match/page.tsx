@@ -19,6 +19,7 @@ const MatchPage = () => {
   const [members, setMembers]       = useState<RoomMember[]>([]);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
   const [matchMode, setMatchMode]   = useState('');
+  const [copied, setCopied]         = useState(false);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -56,7 +57,12 @@ const MatchPage = () => {
   const totalMembers = room?.totalMembers ?? members.length;
   const isAllReady   = members.length > 0 && readyCount >= members.length;
 
-  const handleCopy = () => { if (room) navigator.clipboard.writeText(getRoomId(room)); };
+  const handleCopy = () => {
+    if (!room) return;
+    navigator.clipboard.writeText(getRoomId(room));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
@@ -64,12 +70,22 @@ const MatchPage = () => {
       <div className="w-full max-w-6xl px-4 mt-4 pb-12">
         <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
-          <div className="flex items-center gap-4 bg-white/20 px-6 py-2 rounded-2xl backdrop-blur-sm">
-            <span className="text-[#4B3E7A] text-2xl md:text-3xl font-black">#{room ? getRoomId(room) : '...'}</span>
-            <button onClick={handleCopy} className="w-10 h-10 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm">
-              <Copy className="text-sky-500" size={20} />
-            </button>
-          </div>
+          <button
+            onClick={handleCopy}
+            className={`flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 ${
+              copied
+                ? 'bg-green-400 text-white'
+                : 'bg-white text-[#4B3E7A] hover:bg-white/90'
+            }`}
+          >
+            <span className="text-xl font-black tracking-wider">#{room ? getRoomId(room) : '...'}</span>
+            <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full transition-all ${
+              copied ? 'bg-white/30 text-white' : 'bg-[#4B3E7A]/10 text-[#4B3E7A]'
+            }`}>
+              <Copy size={13} />
+              {copied ? 'Copied!' : 'Copy'}
+            </span>
+          </button>
         </div>
 
         <div className="bg-[#D1D5DB]/40 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-b-[40px] border-b-8 border-gray-300 shadow-inner">
@@ -84,7 +100,7 @@ const MatchPage = () => {
                       <img src={member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt={member.name} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-700 leading-tight">{member.name}</h4>
+                      <p className="font-bold text-gray-700 leading-tight">{member.name}</p>
                       <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
                     </div>
                   </div>
