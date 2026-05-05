@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Pencil } from 'lucide-react';
+import { Pencil, LogOut } from 'lucide-react';
 
 interface User { name: string; gender: string; avatarSeed: number; role?: string; password?: string; gmail?: string; }
 
@@ -28,6 +28,11 @@ export default function EditProfilePage() {
     window.addEventListener('focus', loadUser);
     return () => window.removeEventListener('focus', loadUser);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
+    router.push('/login');
+  };
 
   const handleSave = async () => {
     if (!name.trim()) { setNameError('กรุณากรอกชื่อ'); return; }
@@ -106,9 +111,13 @@ export default function EditProfilePage() {
             </div>
           </div>
 
-          <div className="mt-auto">
+          <div className="mt-auto flex items-center justify-between">
             <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
               Cancel
+            </button>
+            <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-red-500 font-semibold hover:text-red-700 transition-colors">
+              <LogOut size={16} />
+              ออกจากระบบ
             </button>
           </div>
         </div>

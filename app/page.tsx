@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Brain, Lightbulb, Settings, Pencil, Plus, Minus } from 'lucide-react';
 import Navbar from './navbar/page';
 
 const App = () => {
@@ -34,7 +33,7 @@ const App = () => {
             className="h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/templates?mode=create')}
           >
-            <h1 className="text-5xl text-[#A88200]">Create</h1>
+            <h1 className="text-5xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)]">Create</h1>
             <p className="text-[#A88200] font-bold text-xl not-italic tracking-normal">สร้างห้อง</p>
           </button>
 
@@ -43,7 +42,7 @@ const App = () => {
             className="h-36 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/roomid')}
           >
-            <h1 className="text-5xl text-[#2D85A0]">Join</h1>
+            <h1 className="text-5xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)]">Join</h1>
             <p className="text-[#2D85A0] font-bold text-xl not-italic tracking-normal">เข้าร่วมด้วยรหัส</p>
           </button>
 
@@ -52,59 +51,30 @@ const App = () => {
             className="h-36 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/myprojects')}
           >
-            <h1 className="text-5xl text-[#4D34B8]">Team</h1>
+            <h1 className="text-5xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)]">Team</h1>
             <p className="text-[#4D34B8] font-bold text-xl not-italic tracking-normal">ทีมของฉัน</p>
           </button>
         </div>
 
         {/* Right Section */}
-        <div className="flex flex-col gap-4 h-full">
+        <div className="flex flex-col gap-4 h-full overflow-hidden pb-2">
 
-          {/* My Type Card (Keeping Original Design) */}
+          {/* My Type Button */}
           <div
             onClick={() => router.push('/mytype')}
-            className="bg-white rounded-[24px] p-8 shadow-sm relative flex items-center justify-center overflow-hidden cursor-pointer hover:brightness-95 transition-all h-64"
+            className="bg-[#7ECECA] rounded-[20px] h-64 cursor-pointer shadow-[0_8px_0_0_#4AABAB] hover:shadow-[0_4px_0_0_#4AABAB] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex items-center justify-center gap-6 p-8"
           >
-            {/* Decorative Icons */}
-            <div className="absolute top-6 left-6 w-14 h-14 bg-indigo-900 rounded-full flex items-center justify-center text-pink-500">
-              <Brain size={32} fill="currentColor" />
-            </div>
-            <div className="absolute top-10 right-6 w-12 h-12 bg-indigo-900 rounded-full flex items-center justify-center text-yellow-400">
-              <Lightbulb size={28} fill="currentColor" />
-            </div>
-            <div className="absolute bottom-8 left-16 w-10 h-10 bg-rose-400 rounded-full flex items-center justify-center text-white">
-              <Pencil size={20} />
-            </div>
-            <div className="absolute bottom-12 right-12 w-8 h-8 bg-sky-500 rounded-full flex items-center justify-center text-white border-2 border-white">
-              <Settings size={16} />
-            </div>
-
-            {/* Central Circle */}
-            <div className="w-44 h-44 bg-teal-200 rounded-full flex items-center justify-center shadow-inner border-4 border-white z-10">
-              <h2 className="text-3xl font-black text-indigo-900 tracking-tighter">MY TYPE</h2>
-            </div>
+            <h1 className="text-5xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(74,171,171,0.5)]">My Type</h1>
+            <img src="/img/brain.png" alt="My Type" className="h-48 w-auto object-contain drop-shadow-lg" />
           </div>
 
-          {/* Adjustments Section (Matched with Image style) */}
+          {/* Quiz Button */}
           <div
             onClick={() => router.push('/templates')}
-            className="bg-white rounded-[24px] p-8 shadow-sm flex flex-col justify-center gap-6 flex-1 cursor-pointer hover:brightness-95 transition-all"
+            className="bg-[#FFAAAA] rounded-[20px] flex-1 cursor-pointer shadow-[0_8px_0_0_#D87878] hover:shadow-[0_4px_0_0_#D87878] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex items-center justify-center gap-6 p-8"
           >
-            {/* Red Row */}
-            <div className="flex items-center gap-4">
-              <div className="flex-grow bg-rose-300 h-16 rounded-2xl"></div>
-              <div className="w-16 h-16 bg-green-100 border-4 border-green-200 rounded-full flex items-center justify-center text-green-500">
-                <Plus size={32} strokeWidth={4} />
-              </div>
-            </div>
-
-            {/* Green Row */}
-            <div className="flex items-center gap-4">
-              <div className="flex-grow bg-teal-300 h-16 rounded-2xl"></div>
-              <div className="w-16 h-16 bg-rose-100 border-4 border-rose-200 rounded-full flex items-center justify-center text-rose-400">
-                <Minus size={32} strokeWidth={4} />
-              </div>
-            </div>
+            <h1 className="text-5xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(216,120,120,0.5)]">Quiz</h1>
+            <img src="/img/quiz.png" alt="Quiz" className="h-48 w-auto object-contain drop-shadow-lg" />
           </div>
 
         </div>
