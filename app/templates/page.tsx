@@ -10,13 +10,11 @@ function TemplatesContent() {
   const searchParams = useSearchParams();
   const isCreateMode = searchParams.get('mode') === 'create';
   const [userTypes, setUserTypes] = useState<Record<string, unknown>>({});
-  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (raw) {
       const parsed = JSON.parse(raw);
-      setUser(parsed);
       setUserTypes(parsed.types ?? {});
     }
   }, []);
@@ -26,18 +24,18 @@ function TemplatesContent() {
       id: 'programming',
       title: 'PROGRAMMING',
       description: 'จับกลุ่มคนทำงานสายเทคนิคที่ต้องทำงานร่วมกันจริงจัง เช่น Dev ทีมโปรเจกต์ เพื่อให้สไตล์การคิดและการแก้ปัญหาเข้ากันได้',
-      bgColor: 'bg-[#FF9B9B]',
-      innerColor: 'bg-[#E37A7A]',
-      textColor: 'text-[#4A4E69]',
+      bgColor: 'bg-[#FFAAAA]',
+      innerColor: 'bg-[#D87878]',
+      textColor: 'text-[#4F437B]',
       route: '/question/programming',
     },
     {
       id: 'service',
       title: 'CUSTOMER / SERVICE',
       description: 'จับกลุ่มงานที่ต้องติดต่อสื่อสารกับผู้คน เช่น HR, Sales, Customer Service ที่ต้องใช้ทักษะความเข้าใจผู้อื่นสูง',
-      bgColor: 'bg-[#76EAD7]',
-      innerColor: 'bg-[#58C9B9]',
-      textColor: 'text-[#FF4D8D]',
+      bgColor: 'bg-[#71EFB8]',
+      innerColor: 'bg-[#5CC095]',
+      textColor: 'text-[#FF4573]',
       route: '/question/service',
       comingSoon: true,
     },
@@ -45,9 +43,9 @@ function TemplatesContent() {
       id: 'presentation',
       title: 'PRESENTATION',
       description: 'จับกลุ่มงานที่ต้องสื่อสารต่อหน้าคนอื่น ต้องการคนที่กล้าแสดงออกและจัดลำดับเนื้อหาได้ดี',
-      bgColor: 'bg-[#D4E24D]',
-      innerColor: 'bg-[#B4C13D]',
-      textColor: 'text-[#2D6A4F]',
+      bgColor: 'bg-[#EAFF48]',
+      innerColor: 'bg-[#B2C334]',
+      textColor: 'text-[#21871C]',
       route: '/question/presentation',
       comingSoon: true,
     },
@@ -55,8 +53,8 @@ function TemplatesContent() {
       id: 'design',
       title: 'DESIGN / CREATIVE',
       description: 'จับกลุ่มงานที่ต้องใช้ความคิดสร้างสรรค์ เช่น ออกแบบ UI, โปสเตอร์ หรือคอนเทนต์',
-      bgColor: 'bg-[#9D8BFF]',
-      innerColor: 'bg-[#7B6AD4]',
+      bgColor: 'bg-[#8C71EF]',
+      innerColor: 'bg-[#6D58B9]',
       textColor: 'text-white',
       route: '/question/design',
       comingSoon: true,
@@ -68,19 +66,16 @@ function TemplatesContent() {
       <Navbar />
       {/* Main Content */}
       <main className="w-full max-w-5xl mt-8 px-4 pb-12">
-        <div className="flex items-start gap-3">
+        <div className="bg-white rounded-[24px] p-8 md:p-10 shadow-sm flex flex-col items-center relative">
 
-          {/* ปุ่ม Back ข้างซ้าย */}
           <button
             onClick={() => router.push('/')}
-            className="mt-2 flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-700 shadow hover:bg-gray-100 transition-colors active:scale-95">
+            className="absolute top-6 left-6 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-colors active:scale-95">
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
 
-        <div className="flex-1 bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center">
-
-          <h1 className="text-2xl md:text-3xl font-bold text-[#2D3142] mb-10 text-center">
-            "Choose Templates"
+          <h1 className="text-2xl md:text-3xl font-bold text-[#2D3142] mb-8 text-center">
+            &ldquo;Choose Templates&rdquo;
           </h1>
 
           {/* Templates Grid */}
@@ -106,7 +101,7 @@ function TemplatesContent() {
                       item.id === 'programming' && router.push(item.route);
                     }
                   }}
-                  className={`${item.bgColor} rounded-[22px] p-6 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
+                  className={`${item.bgColor} rounded-[22px] p-2 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative mx-6 ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
                 >
                   {/* Coming Soon Badge — ซ่อนใน create mode */}
                   {comingSoon && !isCreateMode && (
@@ -124,12 +119,12 @@ function TemplatesContent() {
                   )}
 
                   {/* Title Section */}
-                  <h2 className={`text-2xl md:text-3xl font-black mb-6 tracking-wider ${item.textColor} text-center uppercase`}>
+                  <h2 className={`text-2xl md:text-3xl font-black mt-8 mb-3 tracking-wider ${item.textColor} text-center uppercase`}>
                     {item.title}
                   </h2>
 
                   {/* Description Box Section */}
-                  <div className={`${item.innerColor} rounded-[25px] p-5 flex-grow flex items-center justify-center`}>
+                  <div className={`${item.innerColor} rounded-[22px] p-4 mx-2 mb-0 mt-5 flex-grow w-full flex items-center justify-center`}>
                     <p className="text-white text-base md:text-lg leading-relaxed text-center font-medium">
                       {item.description}
                     </p>
@@ -139,7 +134,6 @@ function TemplatesContent() {
             })}
           </div>
 
-        </div>
         </div>
       </main>
     </div>
