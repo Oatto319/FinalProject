@@ -22,10 +22,10 @@ type UserTypes = {
 };
 
 const TEMPLATES = [
-  { id: 'programming',  label: 'PROGRAMMING',       color: 'bg-[#F8A4A4]', textColor: 'text-[#4B3E7A]', route: '/question/programming' },
-  { id: 'service',      label: 'CUSTOMER / SERVICE', color: 'bg-[#A7F3D0]', textColor: 'text-[#FF4D8D]', route: '/question/service' },
-  { id: 'presentation', label: 'PRESENTATION',       color: 'bg-[#E2F37C]', textColor: 'text-[#22C55E]', route: '/question/presentation' },
-  { id: 'design',       label: 'DESIGN / CREATIVE',  color: 'bg-[#C7D2FE]', textColor: 'text-[#818CF8]', route: '/question/design' },
+  { id: 'programming',  label: 'PROGRAMMING',       color: 'bg-[#FFAAAA]', textColor: 'text-[#4F437B]', route: '/question/programming' },
+  { id: 'service',      label: 'CUSTOMER / SERVICE', color: 'bg-[#71EFB8]', textColor: 'text-[#FF4573]', route: '/question/service' },
+  { id: 'presentation', label: 'PRESENTATION',       color: 'bg-[#EAFF48]', textColor: 'text-[#21871C]', route: '/question/presentation' },
+  { id: 'design',       label: 'DESIGN / CREATIVE',  color: 'bg-[#8C71EF]', textColor: 'text-white',     route: '/question/design' },
 ];
 
 const MyTypePage = () => {
