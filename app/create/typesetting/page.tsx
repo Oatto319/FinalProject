@@ -160,7 +160,7 @@ export default function TypeSelectionPage() {
         <div className="flex justify-between items-center mt-6">
           <button
             onClick={() => router.back()}
-            className="w-12 h-12 rounded-full bg-[#4A4E6B] text-white flex items-center justify-center shadow hover:bg-[#3A3E58] active:scale-95 transition-all"
+            className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
           >
             <ChevronLeft size={24} strokeWidth={3} />
           </button>

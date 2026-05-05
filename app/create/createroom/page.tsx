@@ -124,7 +124,7 @@ export default function CreateRoomPage() {
             <div className="flex items-center justify-between mt-6">
               <button
                 onClick={() => router.push('/')}
-                className="w-14 h-14 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-400 transition-all active:scale-90"
+                className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
               >
                 <ChevronLeft size={28} strokeWidth={2.5} />
               </button>
@@ -185,7 +185,7 @@ export default function CreateRoomPage() {
             <div className="flex items-center justify-between mt-6">
               <button
                 onClick={() => { setStep(1); setShowError(false); }}
-                className="w-14 h-14 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-400 transition-all active:scale-90"
+                className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
               >
                 <ChevronLeft size={28} strokeWidth={2.5} />
               </button>

@@ -53,7 +53,7 @@ const ProgrammingTypePage = () => {
           <div className="flex justify-between items-center p-6 pb-0">
             <button
               onClick={() => router.back()}
-              className="w-10 h-10 rounded-full border-2 border-gray-800 flex items-center justify-center hover:bg-gray-100 transition-colors"
+              className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
             >
               <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-800" />
             </button>

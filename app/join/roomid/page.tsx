@@ -45,7 +45,7 @@ export default function EnterRoomIdPage() {
             {error && <p className="text-red-300 text-sm font-bold">{error}</p>}
           </div>
           <div className="w-full max-w-[500px] flex justify-between items-center">
-            <button className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-300 transition-all active:scale-90" onClick={() => router.back()}>
+            <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all" onClick={() => router.back()}>
               <ChevronLeft size={32} strokeWidth={2.5} />
             </button>
             <button onClick={handleNext} disabled={loading}

@@ -66,17 +66,19 @@ function TemplatesContent() {
       <Navbar />
       {/* Main Content */}
       <main className="w-full max-w-5xl mt-4 px-4 pb-12">
-        <div className="bg-white rounded-[24px] p-8 md:p-10 shadow-sm flex flex-col items-center relative">
+        <div className="flex items-start gap-3">
 
           <button
             onClick={() => router.push('/')}
-            className="absolute top-6 left-6 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-colors active:scale-95">
+            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-[#2D3142] mb-8 text-center">
+        <div className="flex-1 bg-white rounded-[24px] p-8 md:p-10 shadow-sm flex flex-col items-center">
+
+          <p className="text-2xl md:text-3xl font-bold text-[#2D3142] mb-8 text-center">
             &ldquo;Choose Templates&rdquo;
-          </h1>
+          </p>
 
           {/* Templates Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
@@ -134,6 +136,7 @@ function TemplatesContent() {
             })}
           </div>
 
+        </div>
         </div>
       </main>
     </div>

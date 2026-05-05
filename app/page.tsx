@@ -34,8 +34,8 @@ const App = () => {
             className="h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/templates?mode=create')}
           >
-            <h1 className="text-5xl text-emerald-900">Create</h1>
-            <p className="text-emerald-800 font-bold text-xl not-italic tracking-normal">สร้างห้อง</p>
+            <h1 className="text-5xl text-[#A88200]">Create</h1>
+            <p className="text-[#A88200] font-bold text-xl not-italic tracking-normal">สร้างห้อง</p>
           </button>
 
           {/* Join Button (Blue) */}
@@ -43,8 +43,8 @@ const App = () => {
             className="h-36 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/roomid')}
           >
-            <h1 className="text-5xl text-orange-600">Join</h1>
-            <p className="text-orange-700 font-bold text-xl not-italic tracking-normal">เข้าร่วมด้วยรหัส</p>
+            <h1 className="text-5xl text-[#2D85A0]">Join</h1>
+            <p className="text-[#2D85A0] font-bold text-xl not-italic tracking-normal">เข้าร่วมด้วยรหัส</p>
           </button>
 
           {/* Team Button (Purple) */}
@@ -52,8 +52,8 @@ const App = () => {
             className="h-36 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
             onClick={() => router.push('/join/myprojects')}
           >
-            <h1 className="text-5xl text-white">Team</h1>
-            <p className="text-indigo-100 font-bold text-xl not-italic tracking-normal">ทีมของฉัน</p>
+            <h1 className="text-5xl text-[#4D34B8]">Team</h1>
+            <p className="text-[#4D34B8] font-bold text-xl not-italic tracking-normal">ทีมของฉัน</p>
           </button>
         </div>
 

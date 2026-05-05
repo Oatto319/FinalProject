@@ -46,7 +46,7 @@ export default function TypeSelectionPage() {
           {/* Back */}
           <button
             onClick={() => router.back()}
-            className="absolute left-8 top-8 w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 hover:bg-gray-200 transition-all active:scale-90"
+            className="absolute left-8 top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
           >
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
