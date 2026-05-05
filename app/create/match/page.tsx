@@ -72,15 +72,11 @@ const MatchPage = () => {
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           <button
             onClick={handleCopy}
-            className={`flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 ${
-              copied
-                ? 'bg-green-400 text-white'
-                : 'bg-white text-[#4B3E7A] hover:bg-white/90'
-            }`}
+            className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white text-[#4B3E7A] hover:bg-white/90"
           >
             <span className="text-xl font-black tracking-wider">#{room ? getRoomId(room) : '...'}</span>
             <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full transition-all ${
-              copied ? 'bg-white/30 text-white' : 'bg-[#4B3E7A]/10 text-[#4B3E7A]'
+              copied ? 'bg-green-400 text-white' : 'bg-[#4B3E7A]/10 text-[#4B3E7A]'
             }`}>
               <Copy size={13} />
               {copied ? 'Copied!' : 'Copy'}
