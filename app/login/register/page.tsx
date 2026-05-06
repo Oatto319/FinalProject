@@ -44,8 +44,8 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[#1E293B] flex flex-col items-center justify-center p-4 font-sans">
       <div className="text-center mb-8">
-        <h1 className="text-white text-5xl md:text-6xl font-black tracking-tighter uppercase mb-2">WHO ARE YOU?</h1>
-        <p className="text-gray-400 text-lg">เลือกประเภทผู้ใช้งานเพื่อเข้าสู่ระบบ</p>
+        <h1 className="text-white text-5xl md:text-6xl font-black tracking-tighter uppercase mb-2" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>WHO ARE YOU?</h1>
+        <p className="text-gray-400 text-sm">เลือกประเภทผู้ใช้งานเพื่อเข้าสู่ระบบ</p>
       </div>
       <div className="bg-white w-full max-w-[600px] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col gap-6">
         <div className="bg-[#2D3E50] rounded-[25px] p-6 flex flex-col gap-4">

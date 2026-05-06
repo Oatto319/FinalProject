@@ -34,7 +34,7 @@ const App = () => {
             onClick={() => router.push('/templates?mode=create')}
           >
             <h1 className="text-5xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)]">Create</h1>
-            <p className="text-[#A88200] font-bold text-xl not-italic tracking-normal">สร้างห้อง</p>
+            <p className="text-[#A88200] font-bold text-sm not-italic tracking-normal">สร้างห้อง</p>
           </button>
 
           {/* Join Button (Blue) */}
@@ -43,7 +43,7 @@ const App = () => {
             onClick={() => router.push('/join/roomid')}
           >
             <h1 className="text-5xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)]">Join</h1>
-            <p className="text-[#2D85A0] font-bold text-xl not-italic tracking-normal">เข้าร่วมด้วยรหัส</p>
+            <p className="text-[#2D85A0] font-bold text-sm not-italic tracking-normal">เข้าร่วมด้วยรหัส</p>
           </button>
 
           {/* Team Button (Purple) */}
@@ -52,7 +52,7 @@ const App = () => {
             onClick={() => router.push('/join/myprojects')}
           >
             <h1 className="text-5xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)]">Team</h1>
-            <p className="text-[#4D34B8] font-bold text-xl not-italic tracking-normal">ทีมของฉัน</p>
+            <p className="text-[#4D34B8] font-bold text-sm not-italic tracking-normal">ทีมของฉัน</p>
           </button>
         </div>
 

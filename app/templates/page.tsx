@@ -27,6 +27,7 @@ function TemplatesContent() {
       bgColor: 'bg-[#FFAAAA]',
       innerColor: 'bg-[#D87878]',
       textColor: 'text-[#4F437B]',
+      shadowColor: 'rgba(79,67,123,0.4)',
       route: '/question/programming',
     },
     {
@@ -36,6 +37,7 @@ function TemplatesContent() {
       bgColor: 'bg-[#71EFB8]',
       innerColor: 'bg-[#5CC095]',
       textColor: 'text-[#FF4573]',
+      shadowColor: 'rgba(255,69,115,0.4)',
       route: '/question/service',
       comingSoon: true,
     },
@@ -46,6 +48,7 @@ function TemplatesContent() {
       bgColor: 'bg-[#EAFF48]',
       innerColor: 'bg-[#B2C334]',
       textColor: 'text-[#21871C]',
+      shadowColor: 'rgba(33,135,28,0.4)',
       route: '/question/presentation',
       comingSoon: true,
     },
@@ -56,6 +59,7 @@ function TemplatesContent() {
       bgColor: 'bg-[#8C71EF]',
       innerColor: 'bg-[#6D58B9]',
       textColor: 'text-white',
+      shadowColor: 'rgba(109,88,185,0.5)',
       route: '/question/design',
       comingSoon: true,
     },
@@ -121,7 +125,8 @@ function TemplatesContent() {
                   )}
 
                   {/* Title Section */}
-                  <h2 className={`text-2xl md:text-3xl font-black mt-4 mb-3 tracking-wider ${item.textColor} text-center uppercase`}>
+                  <h2 className={`text-2xl md:text-3xl font-black mt-4 mb-3 tracking-wider ${item.textColor} text-center uppercase`}
+                    style={{ textShadow: `0 3px 0 ${item.shadowColor}` }}>
                     {item.title}
                   </h2>
 

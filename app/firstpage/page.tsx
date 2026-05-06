@@ -30,10 +30,10 @@ const AppContent = () => {
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#E5E7EB] p-4 font-sans text-[#2D3748]">
       {/* ส่วนหัวข้อหลัก */}
       <div className="mb-10 text-center">
-        <h1 className="text-5xl font-black tracking-tighter text-[#1A202C] md:text-6xl">
+        <h1 className="text-5xl font-black tracking-tighter text-[#1A202C] md:text-6xl" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>
           WHO ARE YOU?
         </h1>
-        <p className="mt-2 text-lg font-medium text-gray-600">
+        <p className="mt-2 text-sm font-medium text-gray-600">
           เลือกประเภทผู้ใช้งานเพื่อเข้าสู่ระบบ
         </p>
       </div>
@@ -43,12 +43,12 @@ const AppContent = () => {
         {/* Card: USER */}
         <button
           onClick={() => handleSelect('user')}
-          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80"
+          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80 min-h-[380px]"
         >
           <h2 className="mb-8 text-4xl font-bold tracking-tight text-[#E5A546]">
             USER
           </h2>
-          <div className="relative h-48 w-full overflow-hidden rounded-xl">
+          <div className="relative h-56 w-full overflow-hidden rounded-xl mt-4">
             <img
               src="/img/student.png"
               alt="User"
@@ -64,12 +64,12 @@ const AppContent = () => {
         {/* Card: HOST */}
         <button
           onClick={() => handleSelect('host')}
-          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80"
+          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80 min-h-[380px]"
         >
           <h2 className="mb-8 text-4xl font-bold tracking-tight text-[#9F7AEA]">
             HOST
           </h2>
-          <div className="relative h-48 w-full overflow-hidden rounded-xl">
+          <div className="relative h-56 w-full overflow-hidden rounded-xl mt-4">
             <img
               src="/img/teacher.png"
               alt="Host"

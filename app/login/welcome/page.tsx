@@ -52,7 +52,7 @@ export default function WelcomePage() {
       </div>
 
       {/* Welcome Text */}
-      <h1 className="text-[#2D3E50] text-7xl md:text-8xl font-black tracking-tighter mb-12 animate-fade-in-down">
+      <h1 className="text-[#2D3E50] text-7xl md:text-8xl font-black tracking-tighter mb-12 animate-fade-in-down" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>
         WELCOME
       </h1>
 
@@ -84,16 +84,16 @@ export default function WelcomePage() {
 
       {/* User Info */}
       <div className="text-center z-10 mb-10">
-        <h2 className="text-2xl font-bold text-gray-800 mb-1">{user?.name}</h2>
+        <p className="text-2xl font-bold text-gray-800 mb-1">{user?.name}</p>
         <p className="text-gray-500 font-medium">{user?.gender}</p>
       </div>
 
       {/* Go to Home Button */}
       <button
         onClick={() => router.push('/firstpage')}
-        className="z-10 bg-[#2D3E50] text-white px-12 py-4 rounded-2xl font-bold text-xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-lg"
+        className="z-10 bg-[#FFDB10] text-[#8B6800] px-12 py-5 rounded-[20px] font-black text-xl italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all [text-shadow:0_3px_0_rgba(201,168,0,0.4)]"
       >
-        เริ่มต้นใช้งาน →
+        เริ่มต้นใช้งาน !
       </button>
 
       <style jsx global>{`

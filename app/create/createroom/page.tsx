@@ -101,7 +101,7 @@ export default function CreateRoomPage() {
   return (
     <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center justify-center px-4 py-12">
 
-      <h1 className="text-white font-black uppercase tracking-widest text-6xl mb-8">CREATE</h1>
+      <h1 className="text-white font-black uppercase tracking-widest text-6xl mb-8" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>CREATE</h1>
 
       <div className="w-full max-w-lg bg-[#f0f2f8] rounded-[24px] p-6 shadow-2xl">
 
