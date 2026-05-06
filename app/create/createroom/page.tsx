@@ -19,6 +19,18 @@ export default function CreateRoomPage() {
   const [showError, setShowError] = useState(false);
   const [sizeWarning, setSizeWarning] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showTotalDrop, setShowTotalDrop] = useState(false);
+  const [showGroupDrop, setShowGroupDrop] = useState(false);
+
+  const totalOptions = [5, 10, 15, 20, 25, 30, 35, 40];
+  const groupOptions = [2, 3, 4, 5, 6, 7, 8, 10];
+
+  const selectOption = (name: string, value: number) => {
+    const e = { target: { name, value: String(value) } } as React.ChangeEvent<HTMLInputElement>;
+    handleChange(e);
+    setShowTotalDrop(false);
+    setShowGroupDrop(false);
+  };
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -151,9 +163,25 @@ export default function CreateRoomPage() {
                     placeholder="30" min={1}
                     className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={() => { setShowTotalDrop((v) => !v); setShowGroupDrop(false); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 transition-colors"
+                  >
                     <ChevronDown size={20} strokeWidth={2.5} />
-                  </div>
+                  </button>
+                  {showTotalDrop && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg z-20 overflow-hidden">
+                      <div className="grid grid-cols-4">
+                        {totalOptions.map((v) => (
+                          <button key={v} type="button" onClick={() => selectOption('totalMembers', v)}
+                            className={`py-3 text-center font-bold text-[#1D324B] hover:bg-blue-50 transition-colors ${formData.totalMembers === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -166,9 +194,25 @@ export default function CreateRoomPage() {
                     placeholder="3" min={1}
                     className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={() => { setShowGroupDrop((v) => !v); setShowTotalDrop(false); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 transition-colors"
+                  >
                     <ChevronDown size={20} strokeWidth={2.5} />
-                  </div>
+                  </button>
+                  {showGroupDrop && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg z-20 overflow-hidden">
+                      <div className="grid grid-cols-4">
+                        {groupOptions.map((v) => (
+                          <button key={v} type="button" onClick={() => selectOption('groupSize', v)}
+                            className={`py-3 text-center font-bold text-[#1D324B] hover:bg-blue-50 transition-colors ${formData.groupSize === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {sizeWarning && (
                   <p className={`text-sm font-bold mt-3 ${sizeWarning.startsWith('✓') ? 'text-green-400' : 'text-yellow-300'}`}>

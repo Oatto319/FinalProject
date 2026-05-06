@@ -160,7 +160,7 @@ const MatchPage = () => {
                   className="w-full relative group transition-transform active:scale-95">
                   <div className="absolute inset-0 bg-[#D97706] rounded-[20px] translate-y-2 group-active:translate-y-1"></div>
                   <div className="relative bg-[#FF8A00] hover:bg-[#FF9D2E] text-white py-10 rounded-[20px] flex items-center justify-center transition-all border-b-4 border-white/20">
-                    <h1 className="text-7xl font-black italic tracking-tighter uppercase drop-shadow-md">MATCH</h1>
+                    <h1 className="text-7xl font-black italic tracking-tighter uppercase drop-shadow-md">MATCH!</h1>
                   </div>
                 </button>
               )}

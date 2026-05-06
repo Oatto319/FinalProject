@@ -107,7 +107,7 @@ export default function JoinCheckPage() {
                       <img src={member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt={member.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-800">{member.name}</h4>
+                      <p className="font-bold text-gray-800">{member.name}</p>
                       <p className="text-xs text-gray-400">นักเรียน</p>
                     </div>
                   </div>

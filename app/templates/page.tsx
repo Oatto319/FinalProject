@@ -74,14 +74,14 @@ function TemplatesContent() {
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
 
-        <div className="flex-1 bg-white rounded-[24px] p-8 md:p-10 shadow-sm flex flex-col items-center">
+        <div className="flex-1 bg-white rounded-[24px] px-8 pt-3 pb-8 md:px-10 md:pt-3 md:pb-10 shadow-sm flex flex-col items-center">
 
-          <p className="text-2xl md:text-3xl font-bold text-[#2D3142] mb-8 text-center">
+          <p className="text-sm font-bold text-[#2D3142] mb-0 text-center">
             &ldquo;Choose Templates&rdquo;
           </p>
 
           {/* Templates Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mt-6">
             {templates.map((item, index) => {
               const done = !!userTypes[item.id];
               const comingSoon = !!(item as { comingSoon?: boolean }).comingSoon;
