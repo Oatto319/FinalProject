@@ -112,15 +112,7 @@ const GroupResultPage = () => {
                             <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
                           </div>
                           <div>
-                            <div className="flex items-center gap-1">
-                              <p className="font-bold text-gray-700 text-sm leading-tight">{member.name}</p>
-                            </div>
-                            {roleTitle && (
-                              <div className="flex items-center gap-1 mt-0.5">
-                                {roleIcon && <img src={roleIcon} alt={roleTitle} className="w-3 h-3 object-contain" />}
-                                <p className="text-[10px] text-gray-400">{roleTitle}</p>
-                              </div>
-                            )}
+                            <p className="font-bold text-gray-700 text-sm leading-tight">{member.name}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
