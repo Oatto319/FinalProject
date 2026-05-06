@@ -31,6 +31,7 @@ const GroupResultPage = () => {
 
       const roomId = r.roomId ?? r.id;
       const res = await fetch(`/api/rooms/${roomId}`);
+      if (!res.ok) return;
       const data = await res.json();
       if (!data.room?.matchedGroups) return;
       setGroups(data.room.matchedGroups);
