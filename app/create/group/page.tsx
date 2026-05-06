@@ -6,21 +6,21 @@ import Navbar from '../../navbar/page';
 
 interface RoomMember { name: string; avatarSeed: number; gmail: string; role?: string; }
 interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; }
-interface TransferRequest { id: number; name: string; swapWith: string; fromGroup: string; toGroup: string; reason?: string; }
+interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+
 
 const GROUP_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
 const ROLE_ICONS: Record<string, string> = { 'นักวิเคราะห์': '/img/brain.png', 'นักสร้างสรรค์': '/img/idea.png', 'ผู้ปฏิบัติ': '/img/pencil.png', 'ผู้ประสานงาน': '/img/make.png' };
+const TEMPLATE_COLORS: Record<string, string> = { programming: '#FFAAAA', service: '#71EFB8', presentation: '#EAFF48', design: '#8C71EF' };
 
 const GroupResultPage = () => {
   const [showModal, setShowModal]             = useState(false);
-  const [selectedReq, setSelectedReq]         = useState<TransferRequest | null>(null);
-  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; totalMembers: number; groupSize: number; template?: string } | null>(null);
+  const [selectedReq, setSelectedReq]         = useState<{id:number;name:string} | null>(null);
+  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostAvatarSeed?: number; hostRole?: string; members?: {name:string}[] } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
-  const [transferRequests]                    = useState<TransferRequest[]>([]);
-  const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, { title: string; icon: string; description?: string; jobs?: string[] }>>({});
-  const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: { title: string; icon: string; description?: string; jobs?: string[] } } | null>(null);
+  const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, MBTIResult>>({});
+  const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
 
-  const getRoomId = (r: typeof room) => r?.roomId ?? r?.id ?? '';
 
   useEffect(() => {
     const load = async () => {
@@ -34,44 +34,14 @@ const GroupResultPage = () => {
       const data = await res.json();
       if (!data.room?.matchedGroups) return;
       setGroups(data.room.matchedGroups);
+      setRoom({ ...r, ...data.room });
 
-      const template = (r.template ?? 'programming').toLowerCase();
-
-      // สร้าง map name→gmail จาก room.members (มี gmail ครบกว่า matchedGroups)
-      const gmailByName: Record<string, string> = {};
-      (data.room.members ?? []).forEach((m: { name: string; gmail?: string }) => {
-        if (m.gmail) gmailByName[m.name] = m.gmail;
-      });
-
-      const seen = new Set<string>();
-      const allMembers: { name: string; gmail: string }[] = [];
-      data.room.matchedGroups.forEach((g: MatchedGroup) => {
-        g.members.forEach((m: RoomMember) => {
-          const gmail = m.gmail || gmailByName[m.name] || '';
-          if (gmail && !seen.has(m.name)) {
-            seen.add(m.name);
-            allMembers.push({ name: m.name, gmail });
-          }
-        });
-      });
-
-      const overrides: Record<string, { title: string; icon: string; description?: string; jobs?: string[] }> = {};
-      await Promise.all(
-        allMembers.map(async ({ name, gmail }) => {
-          try {
-            const ur = await fetch(`/api/users?gmail=${encodeURIComponent(gmail)}`);
-            const ud = await ur.json();
-            const types: Record<string, { title?: string; icon?: string; typeScores?: { title: string; score: number }[] }> = ud.user?.types ?? {};
-            let found: { title?: string; icon?: string; typeScores?: { title: string; score: number }[] } | undefined = types[template];
-            if (!found?.title) found = Object.values(types).find((t) => t?.title);
-            if (found?.title) {
-              const icon = found.icon || ROLE_ICONS[found.title] || '';
-              overrides[name] = { title: found.title, icon, description: (found as {description?: string}).description, jobs: (found as {jobs?: string[]}).jobs };
-            }
-          } catch {}
-        })
-      );
-      setMemberTypeOverrides(overrides);
+      // ดึง MBTI types ของทุกคนในห้องผ่าน endpoint เดียวกับ myteam
+      const typesRes = await fetch(`/api/rooms/${roomId}/member-types`);
+      if (typesRes.ok) {
+        const typesData = await typesRes.json();
+        setMemberTypeOverrides(typesData.types ?? {});
+      }
     };
     load();
   }, []);
@@ -82,31 +52,37 @@ const GroupResultPage = () => {
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
       <div className="w-full max-w-6xl px-4 mt-4 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-5 flex flex-col gap-6">
-          <div className="bg-[#F8A4A4] rounded-[20px] p-8 flex items-center justify-center shadow-sm">
-            <h1 className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
-          </div>
-          <div className="bg-white rounded-[20px] p-8 shadow-sm">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="font-bold text-gray-700">{room?.title ?? '...'}</p>
-                <p className="text-sm text-gray-500 italic">{room ? `จำนวน ${room.totalMembers} คน กลุ่มละ ${room.groupSize} คน` : ''}</p>
-                <p className="text-sm text-gray-500">จับกลุ่มแล้ว {groups.length} กลุ่ม</p>
-              </div>
-              <div className="text-right">
-                <p className="font-bold text-[#4B3E7A]">ID: {room ? getRoomId(room) : '...'}</p>
-              </div>
+        <div className="lg:col-span-5 flex flex-col gap-4">
+          {/* Room card — myprojects style */}
+          <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
+            {/* Template header */}
+            <div className="px-5 py-3" style={{ backgroundColor: TEMPLATE_COLORS[(room?.template ?? '').toLowerCase()] ?? '#D1D5DB' }}>
+              <span className="text-xs font-black uppercase tracking-widest text-white/90">{room?.template ?? 'PROGRAMMING'}</span>
             </div>
-          </div>
-          <div className="bg-white rounded-[20px] p-6 shadow-sm flex flex-col gap-3 flex-1 min-h-[200px]">
-            <div className="flex items-center justify-between">
-              <p className="font-bold text-gray-700 text-sm">การแจ้งเตือน</p>
-              {transferRequests.length > 0 && (
-                <span className="w-5 h-5 bg-rose-500 text-white text-xs font-black rounded-full flex items-center justify-center">{transferRequests.length}</span>
-              )}
-            </div>
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-gray-400 font-medium">ไม่มีการแจ้งเตือนใหม่</p>
+            {/* Body */}
+            <div className="p-5">
+              {/* Host profile */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
+                  <img src={room?.hostAvatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-gray-800 leading-tight">{room?.hostName ?? '...'}</p>
+                    <span className="bg-[#94A3B8] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">HOST</span>
+                  </div>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${room?.hostRole === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+                    {room?.hostRole ?? 'host'}
+                  </span>
+                </div>
+              </div>
+              {/* Room info */}
+              <p className="font-bold text-gray-800 text-base mb-1">{room?.title ?? '...'}</p>
+              {room?.description && <p className="text-gray-500 text-sm mb-3 leading-relaxed">{room.description}</p>}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">{room?.totalMembers} คน · กลุ่มละ {room?.groupSize} คน</p>
+                <p className="text-xs text-gray-400 font-medium">ID: {room?.roomId ?? room?.id ?? '...'}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -117,7 +93,8 @@ const GroupResultPage = () => {
           ) : (
             groups.map((group, idx) => (
               <div key={group.id} className="flex flex-col">
-                <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-8 py-2 rounded-t-2xl rounded-br-2xl font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
+                {idx > 0 && <div className="border-t-2 border-dashed border-gray-200 my-2" />}
+                <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-8 py-2 rounded-full font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
                   {group.name}
                 </div>
                 <div className="bg-gray-100/50 border-2 border-gray-100 rounded-[20px] p-4 flex flex-col gap-3">
@@ -135,7 +112,6 @@ const GroupResultPage = () => {
                           </div>
                           <div>
                             <div className="flex items-center gap-1">
-                              {isLeader && <span className="text-lg">👑</span>}
                               <p className="font-bold text-gray-700 text-sm leading-tight">{member.name}</p>
                             </div>
                             {roleTitle && (
@@ -146,14 +122,21 @@ const GroupResultPage = () => {
                             )}
                           </div>
                         </div>
-                        {typeOverride ? (
-                          <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
-                            className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex-shrink-0">
-                            <img src={typeOverride.icon} alt={typeOverride.title} className="w-full h-full object-contain" />
-                          </button>
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0" />
-                        )}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {isLeader && <span className="text-4xl leading-none">👑</span>}
+                          {typeOverride ? (
+                            <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
+                              className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
+                              <img src={typeOverride.icon} alt={typeOverride.title} className="w-full h-full object-contain" />
+                            </button>
+                          ) : roleIcon ? (
+                            <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
+                              <img src={roleIcon} alt={roleTitle ?? ''} className="w-8 h-8 object-contain opacity-60" />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-gray-100" />
+                          )}
+                        </div>
                       </div>
                     );
                   })}
