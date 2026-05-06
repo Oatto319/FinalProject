@@ -191,8 +191,8 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
       </div>
 
       <main className="w-full max-w-7xl px-6 pb-12">
-        <div className="bg-[#E5E7EB] rounded-b-[40px] rounded-tr-[40px] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[600px] shadow-2xl">
-          <div className="lg:col-span-5 flex flex-col gap-6">
+        <div className="bg-[#E5E7EB] rounded-b-[40px] rounded-tr-[40px] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 h-[700px] shadow-2xl">
+          <div className="lg:col-span-5 flex flex-col gap-6 overflow-y-auto">
             {!isMatched ? (
               <div className="bg-white rounded-2xl p-8 text-center text-gray-400 flex flex-col items-center gap-3">
                 <div className="text-5xl">⏳</div>
