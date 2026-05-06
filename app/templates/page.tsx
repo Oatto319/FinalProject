@@ -105,18 +105,18 @@ function TemplatesContent() {
                   }}
                   className={`${item.bgColor} rounded-[22px] p-2 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative mx-6 ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
                 >
-                  {/* Coming Soon Badge — ซ่อนใน create mode */}
+                  {/* Coming Soon Badge */}
                   {comingSoon && !isCreateMode && (
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/80 backdrop-blur-sm text-gray-600 text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
-                      🔒 Coming Soon
+                    <div className="absolute top-3 right-3 bg-black/20 text-white text-[10px] font-bold px-2.5 py-1 rounded-full tracking-widest uppercase">
+                      Soon
                     </div>
                   )}
 
-                  {/* Done Badge — ซ่อนใน create mode */}
+                  {/* Done Badge */}
                   {done && !comingSoon && !isCreateMode && (
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/80 backdrop-blur-sm text-green-600 text-xs font-black px-3 py-1.5 rounded-full shadow-sm">
-                      <CheckCircle2 size={14} strokeWidth={2.5} />
-                      เสร็จแล้ว
+                    <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 text-green-500 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                      <CheckCircle2 size={11} strokeWidth={2.5} />
+                      Done
                     </div>
                   )}
 
