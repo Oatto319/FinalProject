@@ -225,7 +225,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-bold text-gray-800 text-lg">{member.name}</h4>
+                              <p className="font-bold text-gray-800 text-lg">{member.name}</p>
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -318,7 +318,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[20px] w-full max-w-sm p-8 flex flex-col items-center gap-5 shadow-2xl">
             <div className="text-5xl">🗑️</div>
-            <h2 className="text-xl font-black text-gray-800 text-center">ห้องนี้ถูกลบแล้ว</h2>
+            <p className="text-xl font-black text-gray-800 text-center">ห้องนี้ถูกลบแล้ว</p>
             <p className="text-gray-500 text-sm text-center">ผู้สร้างห้องได้ลบห้องนี้ออกไปแล้ว</p>
             <button onClick={() => router.push('/')}
               className="w-full bg-[#2D3E50] text-white py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
@@ -332,7 +332,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
       {isEditingName && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setIsEditingName(false)}>
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-black text-gray-800 mb-4">แก้ไขชื่อทีม</h2>
+            <p className="text-lg font-black text-gray-800 mb-4">แก้ไขชื่อทีม</p>
             <input
               type="text"
               value={editingName}

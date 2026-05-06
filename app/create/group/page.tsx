@@ -17,7 +17,8 @@ const GroupResultPage = () => {
   const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; totalMembers: number; groupSize: number; template?: string } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
   const [transferRequests]                    = useState<TransferRequest[]>([]);
-  const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, { title: string; icon: string }>>({});
+  const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, { title: string; icon: string; description?: string; jobs?: string[] }>>({});
+  const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: { title: string; icon: string; description?: string; jobs?: string[] } } | null>(null);
 
   const getRoomId = (r: typeof room) => r?.roomId ?? r?.id ?? '';
 
@@ -54,7 +55,7 @@ const GroupResultPage = () => {
         });
       });
 
-      const overrides: Record<string, { title: string; icon: string }> = {};
+      const overrides: Record<string, { title: string; icon: string; description?: string; jobs?: string[] }> = {};
       await Promise.all(
         allMembers.map(async ({ name, gmail }) => {
           try {
@@ -65,7 +66,7 @@ const GroupResultPage = () => {
             if (!found?.title) found = Object.values(types).find((t) => t?.title);
             if (found?.title) {
               const icon = found.icon || ROLE_ICONS[found.title] || '';
-              overrides[name] = { title: found.title, icon };
+              overrides[name] = { title: found.title, icon, description: (found as {description?: string}).description, jobs: (found as {jobs?: string[]}).jobs };
             }
           } catch {}
         })
@@ -135,7 +136,7 @@ const GroupResultPage = () => {
                           <div>
                             <div className="flex items-center gap-1">
                               {isLeader && <span className="text-lg">👑</span>}
-                              <h4 className="font-bold text-gray-700 text-sm leading-tight">{member.name}</h4>
+                              <p className="font-bold text-gray-700 text-sm leading-tight">{member.name}</p>
                             </div>
                             {roleTitle && (
                               <div className="flex items-center gap-1 mt-0.5">
@@ -145,7 +146,14 @@ const GroupResultPage = () => {
                             )}
                           </div>
                         </div>
-                        {roleIcon && <img src={roleIcon} alt={roleTitle} className="w-8 h-8 object-contain opacity-60" />}
+                        {typeOverride ? (
+                          <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
+                            className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex-shrink-0">
+                            <img src={typeOverride.icon} alt={typeOverride.title} className="w-full h-full object-contain" />
+                          </button>
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gray-100 flex-shrink-0" />
+                        )}
                       </div>
                     );
                   })}
@@ -155,6 +163,31 @@ const GroupResultPage = () => {
           )}
         </div>
       </div>
+
+      {mbtiPopup && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setMbtiPopup(null)}>
+          <div className="bg-white rounded-[20px] w-full max-w-sm shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-[#4B3E7A] px-6 py-4 flex items-center justify-between">
+              <p className="font-black text-white text-lg">{mbtiPopup.name}</p>
+              <button onClick={() => setMbtiPopup(null)} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-6 flex flex-col items-center gap-4">
+              <img src={mbtiPopup.type.icon} alt={mbtiPopup.type.title} className="w-24 h-24 object-contain" />
+              <p className="font-black text-[#4B3E7A] text-xl">{mbtiPopup.type.title}</p>
+              {mbtiPopup.type.description && <p className="text-gray-500 text-sm text-center leading-relaxed">{mbtiPopup.type.description}</p>}
+              {mbtiPopup.type.jobs && mbtiPopup.type.jobs.length > 0 && (
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {mbtiPopup.type.jobs.map((job) => (
+                    <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1 rounded-full">{job}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && selectedReq && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
