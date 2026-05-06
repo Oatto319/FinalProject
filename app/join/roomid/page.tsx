@@ -28,23 +28,23 @@ export default function EnterRoomIdPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
+    <div className="h-screen bg-[#E8E8E8] font-sans flex flex-col overflow-hidden">
       <Navbar />
-      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
-        <div className="bg-white rounded-[24px] p-8 md:p-12 shadow-sm flex flex-col items-center min-h-[600px] relative">
-          <div className="w-full flex justify-center -mt-20 mb-6 relative z-10">
-            <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[400px] h-auto object-contain drop-shadow-xl"
+      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto mt-4 px-4 overflow-hidden">
+        <div className="bg-white rounded-[24px] rounded-bl-none rounded-br-none p-8 md:p-12 shadow-sm flex flex-col items-center flex-1 relative">
+          <div className="w-full flex justify-center -mt-36 mb-4 relative z-10">
+            <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[460px] h-auto object-contain drop-shadow-xl"
               onError={(e) => { e.currentTarget.src = 'https://img.freepik.com/free-vector/team-holding-jigsaw-puzzle-pieces_74855-6962.jpg'; }} />
           </div>
-          <div className="w-full max-w-[500px] bg-[#2D3E50] rounded-[20px] p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
+          <div className="w-full max-w-[380px] bg-[#1D324B] rounded-[20px] p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
             <label className="text-white text-xl font-bold italic">&quot;Enter the room ID&quot;</label>
-            <input type="text" placeholder="เช่น 1234567" value={roomId}
-              onChange={(e) => { setRoomId(e.target.value.replace(/\D/g, '')); setError(''); }}
+            <input type="text" placeholder="" value={roomId}
+              onChange={(e) => { setRoomId(e.target.value.replace(/\D/g, '').slice(0, 7)); setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleNext()}
               className="w-full bg-white rounded-xl py-4 px-6 text-[#2D3E50] font-bold text-2xl text-center focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all tracking-[0.2em]" />
             {error && <p className="text-red-300 text-sm font-bold">{error}</p>}
           </div>
-          <div className="w-full max-w-[500px] flex justify-between items-center">
+          <div className="w-full max-w-[380px] flex justify-between items-center mt-8">
             <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all" onClick={() => router.back()}>
               <ChevronLeft size={32} strokeWidth={2.5} />
             </button>
