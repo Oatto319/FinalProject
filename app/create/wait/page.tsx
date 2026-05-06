@@ -50,7 +50,7 @@ const WaitingRoom = () => {
 
   const handleCopy = () => {
     if (!room) return;
-    navigator.clipboard.writeText(getRoomId(room));
+    try { navigator.clipboard.writeText(getRoomId(room)); } catch { const el = document.createElement("textarea"); el.value = getRoomId(room); document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); }
   };
 
   const readyCount = readyUsers.length;

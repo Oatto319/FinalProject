@@ -59,7 +59,7 @@ const MatchPage = () => {
 
   const handleCopy = () => {
     if (!room) return;
-    navigator.clipboard.writeText(getRoomId(room));
+    try { navigator.clipboard.writeText(getRoomId(room)); } catch { const el = document.createElement("textarea"); el.value = getRoomId(room); document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
