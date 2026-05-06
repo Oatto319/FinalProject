@@ -13,9 +13,11 @@ interface User {
 
 interface NavbarProps {
   subtitle?: string;
+  bgColor?: string;
+  nameColor?: string;
 }
 
-export default function Navbar({ subtitle }: NavbarProps) {
+export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
 
@@ -37,7 +39,7 @@ export default function Navbar({ subtitle }: NavbarProps) {
   const displaySubtitle = subtitle ?? user.role ?? user.gender;
 
   return (
-    <header className="w-full flex items-center justify-between bg-white px-4 py-3 shadow-sm">
+    <header className="w-full flex items-center justify-between px-4 py-3 shadow-sm" style={{ backgroundColor: bgColor ?? 'white' }}>
       <div className="w-full flex items-center justify-between">
         <button
           onClick={() => router.push('/navbar/edit')}
@@ -47,7 +49,7 @@ export default function Navbar({ subtitle }: NavbarProps) {
             <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
           </div>
           <div className="text-left">
-            <p className="font-bold text-base text-gray-800 leading-tight">{user.name}</p>
+            <p className="font-bold text-base leading-tight" style={{ color: nameColor ?? '#1f2937' }}>{user.name}</p>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
               displaySubtitle === 'host'
                 ? 'bg-purple-100 text-purple-600'
