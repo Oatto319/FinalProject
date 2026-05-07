@@ -78,7 +78,7 @@ function ProfilePageInner() {
         <div className="grid grid-cols-5 gap-4 md:gap-6 justify-items-center">
           {avatars.map((avatar) => (
             <div key={avatar.id} onClick={() => setSelectedAvatar(avatar.id)}
-              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
               <div className={`w-full h-full rounded-full overflow-hidden transition-all ${selectedAvatar === avatar.id ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
                 <img src={avatar.url} alt={`Avatar ${avatar.id}`} className="w-full h-full object-cover" />
               </div>
