@@ -215,7 +215,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                       <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isCurrentUser ? 'border-[#7096D1]' : 'border-transparent'}`}>
                         <div className="flex items-center gap-4">
                           <div className="relative">
-                            <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
+                            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
                               <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                             </div>
                             {isCurrentUser && (
@@ -245,13 +245,13 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {myGroup?.leaderId === member.name && <span className="text-4xl leading-none">👑</span>}
+                          {myGroup?.leaderId === member.name && <div className="w-16 h-16 flex items-center justify-center text-[40px] leading-none">👑</div>}
                           {mbtiType ? (
-                            <button onClick={() => setPopup({ member, type: mbtiType })} className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
+                            <button onClick={() => setPopup({ member, type: mbtiType })} className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
                               <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
                             </button>
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gray-100" />
+                            <div className="w-16 h-16 rounded-full bg-gray-100" />
                           )}
                         </div>
                       </div>
@@ -296,8 +296,11 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     )}
                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
                       {!isMe && <span className="text-xs text-gray-400 mb-1 px-1">{msg.sender}</span>}
-                      <div className={`px-5 py-3 rounded-2xl font-medium text-lg shadow-sm ${isMe ? 'bg-[#7096D1] text-white rounded-br-none' : 'bg-gray-600 text-white rounded-bl-none'}`}>{msg.text}</div>
-                      <span className="text-[10px] text-gray-400 mt-1 px-1">{msg.time}</span>
+                      <div className="flex items-end gap-2">
+                        {isMe && <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">{msg.time}</span>}
+                        <div className={`px-5 py-3 rounded-2xl font-medium text-lg shadow-sm ${isMe ? 'bg-[#7096D1] text-white rounded-br-none' : 'bg-gray-600 text-white rounded-bl-none'}`}>{msg.text}</div>
+                        {!isMe && <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">{msg.time}</span>}
+                      </div>
                     </div>
                   </div>
                 );
