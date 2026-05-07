@@ -213,14 +213,6 @@ export default function VotePage() {
                                 {isMe && <span className="bg-[#7096D1] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">คุณ</span>}
                               </div>
 
-                              {/* MBTI type title */}
-                              {mbtiType && (
-                                <div className="flex items-center justify-center gap-1 mt-1">
-                                  <img src={mbtiType.icon} alt={mbtiType.title} className="w-4 h-4 object-contain" />
-                                  <p className="text-xs text-gray-500 font-medium">{mbtiType.title}</p>
-                                </div>
-                              )}
-
                               {/* Voter avatars */}
                               {voteCount > 0 && (
                                 <div className="flex justify-center -space-x-2 mt-2">
