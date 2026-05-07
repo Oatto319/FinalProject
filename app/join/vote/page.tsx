@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface RoomMember {
@@ -19,12 +19,7 @@ interface MatchedGroup {
   leaderId?: string;
 }
 
-const ROLE_ICONS: Record<string, string> = {
-  'นักวิเคราะห์': '/img/brain.png',
-  'นักสร้างสรรค์': '/img/idea.png',
-  'ผู้ปฏิบัติ': '/img/pencil.png',
-  'ผู้ประสานงาน': '/img/make.png',
-};
+interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
 
 export default function VotePage() {
   const router = useRouter();
@@ -33,7 +28,10 @@ export default function VotePage() {
   const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
   const [voted, setVoted] = useState(false);
   const [groupVotes, setGroupVotes] = useState<Record<string, string>>({});
+  const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
+  const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
   const roomIdRef = useRef<string>('');
+  const typesFetchedRef = useRef(false);
 
   const fetchGroup = async (roomId: string, userName: string) => {
     const res = await fetch(`/api/rooms/${roomId}`);
@@ -49,6 +47,16 @@ export default function VotePage() {
         setMyGroup(mine);
         const votes: Record<string, string> = room.votes?.[String(mine.id)] ?? {};
         setGroupVotes(votes);
+
+        // ดึง MBTI types ครั้งเดียว
+        if (!typesFetchedRef.current) {
+          typesFetchedRef.current = true;
+          const typesRes = await fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`);
+          if (typesRes.ok) {
+            const typesData = await typesRes.json();
+            setMemberTypes(typesData.types ?? {});
+          }
+        }
       }
     }
   };
@@ -166,7 +174,7 @@ export default function VotePage() {
                       {members.map((member) => {
                         const isMe = member.name === user?.name;
                         const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
-                        const roleIcon = member.role ? ROLE_ICONS[member.role] : null;
+                        const mbtiType = memberTypes[member.name];
                         const voteCount = tally[member.name] ?? 0;
                         const isLeading = voteCount > 0 && voteCount === maxVotes;
                         const myVote = groupVotes[user?.name ?? ''];
@@ -183,6 +191,16 @@ export default function VotePage() {
                                 : isLeading ? 'border-[#FFB800]' : 'border-transparent hover:border-gray-200'}
                             `}
                           >
+                            {/* MBTI type icon — top-right corner */}
+                            {mbtiType && (
+                              <div
+                                onClick={(e) => { e.stopPropagation(); setMbtiPopup({ name: member.name, type: mbtiType }); }}
+                                className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
+                              >
+                                <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
+                              </div>
+                            )}
+
                             {/* Avatar */}
                             <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
                               <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
@@ -195,11 +213,11 @@ export default function VotePage() {
                                 {isMe && <span className="bg-[#7096D1] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">คุณ</span>}
                               </div>
 
-                              {/* MBTI Role */}
-                              {member.role && member.role !== 'ไม่ระบุ' && (
+                              {/* MBTI type title */}
+                              {mbtiType && (
                                 <div className="flex items-center justify-center gap-1 mt-1">
-                                  {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
-                                  <p className="text-xs text-gray-500 font-medium">{member.role}</p>
+                                  <img src={mbtiType.icon} alt={mbtiType.title} className="w-4 h-4 object-contain" />
+                                  <p className="text-xs text-gray-500 font-medium">{mbtiType.title}</p>
                                 </div>
                               )}
 
@@ -266,6 +284,40 @@ export default function VotePage() {
         </div>
         </div>
       </main>
+
+      {/* MBTI Type Popup */}
+      {mbtiPopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setMbtiPopup(null)}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <img src={mbtiPopup.type.icon} alt={mbtiPopup.type.title} className="w-14 h-14 object-contain" />
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพ</p>
+                  <p className="text-xl font-black text-[#4B3E7A]">{mbtiPopup.type.title}</p>
+                  <p className="text-sm text-gray-500 font-medium">{mbtiPopup.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setMbtiPopup(null)} className="w-9 h-9 rounded-full border-2 border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <X size={18} className="text-gray-600" />
+              </button>
+            </div>
+            {mbtiPopup.type.description && (
+              <p className="text-gray-500 text-sm leading-relaxed mb-4">{mbtiPopup.type.description}</p>
+            )}
+            {mbtiPopup.type.jobs?.length > 0 && (
+              <div>
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
+                <div className="flex flex-wrap gap-2">
+                  {mbtiPopup.type.jobs.map((job) => (
+                    <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">{job}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
