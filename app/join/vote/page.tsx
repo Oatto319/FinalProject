@@ -32,6 +32,7 @@ export default function VotePage() {
   const [myGroup, setMyGroup] = useState<MatchedGroup | null>(null);
   const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
   const [voted, setVoted] = useState(false);
+  const [groupVotes, setGroupVotes] = useState<Record<string, string>>({});
   const roomIdRef = useRef<string>('');
 
   const fetchGroup = async (roomId: string, userName: string) => {
@@ -44,7 +45,11 @@ export default function VotePage() {
       const mine: MatchedGroup = room.matchedGroups.find(
         (g: MatchedGroup) => g.members.some((m) => m.name === userName)
       );
-      if (mine) setMyGroup(mine);
+      if (mine) {
+        setMyGroup(mine);
+        const votes: Record<string, string> = room.votes?.[String(mine.id)] ?? {};
+        setGroupVotes(votes);
+      }
     }
   };
 
@@ -152,70 +157,105 @@ export default function VotePage() {
           ) : (
             <>
               {/* Members Grid */}
-              <div className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
-                {members.map((member) => {
-                  const isMe = member.name === user?.name;
-                  const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
-                  const roleIcon = member.role ? ROLE_ICONS[member.role] : null;
-
+              {(() => {
+                  const tally: Record<string, number> = {};
+                  Object.values(groupVotes).forEach((name) => { tally[name] = (tally[name] ?? 0) + 1; });
+                  const maxVotes = Math.max(0, ...Object.values(tally));
                   return (
-                    <button
-                      key={member.name}
-                      onClick={() => setSelectedMember(member.name)}
-                      className={`
-                        bg-white rounded-[20px] p-6 flex flex-col items-center gap-3 shadow-sm
-                        transition-all duration-200 border-4 outline-none
-                        ${selectedMember === member.name
-                          ? 'border-[#7096D1] scale-105 shadow-xl'
-                          : 'border-transparent hover:border-gray-200'}
-                      `}
-                    >
-                      {/* Avatar */}
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
-                        <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
-                      </div>
+                    <div className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
+                      {members.map((member) => {
+                        const isMe = member.name === user?.name;
+                        const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
+                        const roleIcon = member.role ? ROLE_ICONS[member.role] : null;
+                        const voteCount = tally[member.name] ?? 0;
+                        const isLeading = voteCount > 0 && voteCount === maxVotes;
+                        const myVote = groupVotes[user?.name ?? ''];
 
-                      {/* Name + Me tag */}
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 flex-wrap">
-                          <h4 className="text-gray-800 text-base leading-tight">{member.name}</h4>
-                          {isMe && <span className="bg-[#7096D1] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">คุณ</span>}
-                        </div>
+                        return (
+                          <button
+                            key={member.name}
+                            onClick={() => setSelectedMember(member.name)}
+                            className={`
+                              bg-white rounded-[20px] p-6 flex flex-col items-center gap-3 shadow-sm
+                              transition-all duration-200 border-4 outline-none relative
+                              ${selectedMember === member.name
+                                ? 'border-[#7096D1] scale-105 shadow-xl'
+                                : isLeading ? 'border-[#FFB800]' : 'border-transparent hover:border-gray-200'}
+                            `}
+                          >
+                            {/* Avatar */}
+                            <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
+                              <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
+                            </div>
 
-                        {/* MBTI Role */}
-                        {member.role && (
-                          <div className="flex items-center justify-center gap-1 mt-1">
-                            {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
-                            <p className="text-xs text-gray-500 font-medium">{member.role}</p>
-                          </div>
-                        )}
-                      </div>
+                            {/* Name + Me tag */}
+                            <div className="text-center">
+                              <div className="flex items-center justify-center gap-1 flex-wrap">
+                                <h4 className="text-gray-800 text-base leading-tight">{member.name}</h4>
+                                {isMe && <span className="bg-[#7096D1] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">คุณ</span>}
+                              </div>
 
-                      {/* Radio indicator */}
-                      <div className={`
-                        w-7 h-7 rounded-full border-2 flex items-center justify-center
-                        ${selectedMember === member.name ? 'bg-[#7096D1] border-[#7096D1]' : 'border-gray-200'}
-                      `}>
-                        {selectedMember === member.name && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
-                      </div>
-                    </button>
+                              {/* MBTI Role */}
+                              {member.role && member.role !== 'ไม่ระบุ' && (
+                                <div className="flex items-center justify-center gap-1 mt-1">
+                                  {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
+                                  <p className="text-xs text-gray-500 font-medium">{member.role}</p>
+                                </div>
+                              )}
+
+                              {/* Voter avatars */}
+                              {voteCount > 0 && (
+                                <div className="flex justify-center -space-x-2 mt-2">
+                                  {Object.entries(groupVotes)
+                                    .filter(([, votedFor]) => votedFor === member.name)
+                                    .map(([voter]) => {
+                                      const seed = members.find((m) => m.name === voter)?.avatarSeed ?? 1;
+                                      return (
+                                        <div key={voter} className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-gray-100">
+                                          <img src={`/img/p${seed}.PNG`} alt={voter} className="w-full h-full object-contain" />
+                                        </div>
+                                      );
+                                    })}
+                                </div>
+                              )}
+
+                              {/* Vote count */}
+                              <div className={`mt-1 text-sm font-black ${isLeading ? 'text-[#FFB800]' : 'text-gray-400'}`}>
+                                {voteCount > 0 ? `${voteCount} โหวต` : '0 โหวต'}
+                              </div>
+
+                              {/* Who I voted for */}
+                              {myVote === member.name && (
+                                <div className="mt-1 text-[10px] text-[#7096D1] font-bold">✓ คุณโหวตให้</div>
+                              )}
+                            </div>
+
+                          </button>
+                        );
+                      })}
+                    </div>
                   );
-                })}
-              </div>
+                })()}
 
               {/* Vote Button */}
-              <button
-                disabled={selectedMember === null}
-                onClick={handleVote}
-                className={`
-                  w-full max-w-xs py-5 rounded-[20px] font-black text-3xl transition-all
-                  ${selectedMember !== null
-                    ? 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
-                    : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'}
-                `}
-              >
-                VOTE
-              </button>
+              {(() => {
+                const alreadyVoted = !!groupVotes[user?.name ?? ''];
+                const canVote = selectedMember !== null && !alreadyVoted;
+                return (
+                  <button
+                    disabled={!canVote}
+                    onClick={handleVote}
+                    className={`
+                      w-full max-w-xs py-5 rounded-[20px] font-black text-3xl transition-all
+                      ${canVote
+                        ? 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
+                        : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'}
+                    `}
+                  >
+                    {alreadyVoted ? 'โหวตแล้ว' : 'VOTE'}
+                  </button>
+                );
+              })()}
 
               <p className="mt-6 text-gray-500 text-sm font-bold italic opacity-60">
                 * เลือกสมาชิกหนึ่งคนเพื่อโหวตเป็นหัวหน้ากลุ่ม
