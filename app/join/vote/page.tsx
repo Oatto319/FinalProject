@@ -113,41 +113,33 @@ export default function VotePage() {
   const members = myGroup?.members ?? [];
 
   return (
-    <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
-      <Navbar />
+    <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center">
+      <Navbar bgColor="#122031" nameColor="white" />
 
-      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
-        <div className="bg-[#E5E7EB] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative">
+      <main className="w-full max-w-5xl mt-4 px-4 flex-1 flex flex-col">
+
+        {/* Title */}
+        <div className="text-center mb-4">
+          <h1 className="text-white text-3xl font-black uppercase tracking-tight">
+            &ldquo;Vote your team leader&rdquo;
+          </h1>
+          {myGroup && (
+            <p className="text-white/60 font-bold mt-1">{myGroup.name}</p>
+          )}
+        </div>
+
+        <div className="flex items-start gap-3 flex-1">
 
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="absolute left-8 top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-md hover:bg-gray-100 transition-all active:scale-90">
+            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
 
-          {/* Top Illustration */}
-          <div className="w-full flex justify-center -mt-16 mb-6">
-            <img
-              src="/img/team.png"
-              alt="Team Illustration"
-              className="w-full max-w-[280px] h-auto object-contain drop-shadow-lg"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src =
-                  'https://img.freepik.com/free-vector/team-holding-jigsaw-puzzle-pieces_74855-6962.jpg';
-              }}
-            />
-          </div>
+        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center">
 
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-[#2D3E50] text-3xl font-black uppercase tracking-tight">
-              &ldquo;Vote your team leader&rdquo;
-            </h1>
-            {myGroup && (
-              <p className="text-gray-500 font-bold mt-1">{myGroup.name}</p>
-            )}
-          </div>
+
 
           {voted ? (
             <div className="flex flex-col items-center gap-4 py-16">
@@ -186,7 +178,7 @@ export default function VotePage() {
                       {/* Name + Me tag */}
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1 flex-wrap">
-                          <h4 className="font-bold text-gray-800 text-base leading-tight">{member.name}</h4>
+                          <h4 className="text-gray-800 text-base leading-tight">{member.name}</h4>
                           {isMe && <span className="bg-[#7096D1] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">คุณ</span>}
                         </div>
 
@@ -216,10 +208,10 @@ export default function VotePage() {
                 disabled={selectedMember === null}
                 onClick={handleVote}
                 className={`
-                  w-full max-w-xs py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
+                  w-full max-w-xs py-5 rounded-[20px] font-black text-3xl transition-all
                   ${selectedMember !== null
-                    ? 'bg-[#2D3E50] text-white hover:bg-[#1E293B]'
-                    : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-none'}
+                    ? 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
+                    : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'}
                 `}
               >
                 VOTE
@@ -231,6 +223,7 @@ export default function VotePage() {
             </>
           )}
 
+        </div>
         </div>
       </main>
     </div>
