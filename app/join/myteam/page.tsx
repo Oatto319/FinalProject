@@ -31,6 +31,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const roomIdRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const groupIdRef = useRef<number | null>(null);
   const memberTypesFetchedRef = useRef(false);
   const initialScrollDoneRef = useRef(false);
@@ -131,7 +132,9 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   useEffect(() => {
     if (!isLoadingMessages && !initialScrollDoneRef.current) {
       initialScrollDoneRef.current = true;
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'instant' }), 50);
+      setTimeout(() => {
+        if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      }, 50);
     }
   }, [isLoadingMessages]);
 
@@ -142,7 +145,9 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     const optimistic: ChatMessage = { id: Date.now().toString(), sender: user.name, text: message.trim(), time, avatarSeed: user.avatarSeed };
     setMessages((prev) => [...prev, optimistic]);
     setMessage('');
-    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    setTimeout(() => {
+      if (chatContainerRef.current) chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }, 50);
 
     await fetch(`/api/rooms/${roomIdRef.current}/messages`, {
       method: 'POST',
@@ -188,7 +193,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
 
   return (
     <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center">
-      <Navbar bgColor="#122031" nameColor="white" large />
+      <Navbar bgColor="#122031" nameColor="white" />
       <div className="w-full max-w-7xl px-6 mt-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button className="bg-[#FF9142] text-white px-16 py-3 rounded-t-2xl font-bold text-xl shadow-lg">{myGroup?.name ?? 'My team'}</button>
@@ -287,7 +292,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
           </div>
 
           <div className="lg:col-span-7 bg-white rounded-[20px] flex flex-col overflow-hidden shadow-inner">
-            <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-[#BACEE0]">
+            <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-[#BACEE0]">
               {isLoadingMessages ? (
                 <>
                   {[...Array(4)].map((_, i) => (
