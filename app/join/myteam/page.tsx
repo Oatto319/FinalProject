@@ -29,6 +29,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName]     = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [leaderTip, setLeaderTip] = useState(false);
   const roomIdRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -260,7 +261,21 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {myGroup?.leaderId === member.name && <div className="w-16 h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
+                          {myGroup?.leaderId === member.name && (
+                            <div className="relative flex flex-col items-center">
+                              {leaderTip && (
+                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#2D3E50] text-white text-xs font-bold px-2 py-1 rounded-lg whitespace-nowrap shadow-md">
+                                  Team Leader
+                                </div>
+                              )}
+                              <div
+                                className="w-16 h-16 flex items-center justify-center cursor-pointer"
+                                onClick={() => { setLeaderTip(true); setTimeout(() => setLeaderTip(false), 3000); }}
+                              >
+                                <img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" />
+                              </div>
+                            </div>
+                          )}
                           {mbtiType ? (
                             <button onClick={() => setPopup({ member, type: mbtiType })} className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
                               <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
