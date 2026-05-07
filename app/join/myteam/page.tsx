@@ -277,13 +277,13 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
           </div>
 
           <div className="lg:col-span-7 bg-white rounded-[20px] flex flex-col overflow-hidden shadow-inner">
-            <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-3">
+            <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-[#BACEE0]">
               {messages.map((msg) => {
                 const isMe = msg.sender === user?.name;
                 return (
-                  <div key={msg.id} className={`flex items-end gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+                  <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                     {!isMe && (
-                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 self-end">
                         <img
                           src={(() => {
                             const seed = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed ?? msg.avatarSeed;
@@ -295,11 +295,11 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                       </div>
                     )}
                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                      {!isMe && <span className="text-xs text-gray-400 mb-1 px-1">{msg.sender}</span>}
-                      <div className="flex items-end gap-2">
-                        {isMe && <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">{msg.time}</span>}
-                        <div className={`px-5 py-3 rounded-2xl font-medium text-lg shadow-sm ${isMe ? 'bg-[#7096D1] text-white rounded-br-none' : 'bg-gray-600 text-white rounded-bl-none'}`}>{msg.text}</div>
-                        {!isMe && <span className="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">{msg.time}</span>}
+                      {!isMe && <span className="text-xs text-gray-600 mb-1 px-1 font-medium">{msg.sender}</span>}
+                      <div className="flex items-end gap-1.5">
+                        {isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
+                        <div className={`px-4 py-2 text-sm font-medium shadow-sm ${isMe ? 'bg-[#00B900] text-white rounded-t-2xl rounded-bl-2xl rounded-br' : 'bg-white text-gray-800 rounded-t-2xl rounded-br-2xl rounded-bl'}`}>{msg.text}</div>
+                        {!isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
                       </div>
                     </div>
                   </div>
