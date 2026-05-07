@@ -116,7 +116,7 @@ const GroupResultPage = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {isLeader && <span className="text-4xl leading-none">👑</span>}
+                          {isLeader && <div className="w-16 h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
                           {typeOverride ? (
                             <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
                               className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
