@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import Navbar from '../navbar/page';
 
 type MBTIResult = {
@@ -31,6 +31,7 @@ const TEMPLATES = [
 const MyTypePage = () => {
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; avatarSeed: number; gmail?: string; types?: UserTypes } | null>(null);
+  const [expandedScores, setExpandedScores] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -85,7 +86,7 @@ const MyTypePage = () => {
                   /* มีผลแล้ว — แสดงข้อมูลจริง */
                   <div className="bg-white p-6 flex flex-col gap-4">
                     <div className="flex items-center gap-4">
-                      <img src={result.icon} alt={result.title} className="w-16 h-16 object-contain flex-shrink-0" />
+                      <img src={result.icon} alt={result.title} className="w-28 h-28 object-contain flex-shrink-0" />
                       <div>
                         <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพการทำงาน</p>
                         <p className="text-xl font-black text-[#4B3E7A]">{result.title}</p>
@@ -103,22 +104,30 @@ const MyTypePage = () => {
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">คะแนนแต่ละประเภท</p>
-                      <div className="flex flex-col gap-2">
-                        {result.typeScores.map((t) => (
-                          <div key={t.title} className="flex items-center gap-3">
-                            <img src={t.icon} alt={t.title} className="w-6 h-6 object-contain flex-shrink-0" />
-                            <span className="text-xs font-bold text-[#1A2E44] w-24 flex-shrink-0">{t.title}</span>
-                            <div className="flex-1 bg-gray-100 rounded-full h-2">
-                              <div
-                                className="bg-[#4B3E7A] h-2 rounded-full"
-                                style={{ width: `${(t.score / 11) * 100}%` }}
-                              />
+                      <button
+                        onClick={() => setExpandedScores((prev) => ({ ...prev, [tmpl.id]: !prev[tmpl.id] }))}
+                        className="flex items-center gap-1 text-xs font-black text-gray-400 uppercase tracking-widest mb-2 hover:text-gray-600 transition-colors"
+                      >
+                        คะแนนแต่ละประเภท
+                        {expandedScores[tmpl.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+                      {expandedScores[tmpl.id] && (
+                        <div className="flex flex-col gap-2">
+                          {result.typeScores.map((t) => (
+                            <div key={t.title} className="flex items-center gap-3">
+                              <img src={t.icon} alt={t.title} className="w-6 h-6 object-contain flex-shrink-0" />
+                              <span className="text-xs font-bold text-[#1A2E44] w-24 flex-shrink-0">{t.title}</span>
+                              <div className="flex-1 bg-gray-100 rounded-full h-2">
+                                <div
+                                  className="bg-[#4B3E7A] h-2 rounded-full"
+                                  style={{ width: `${(t.score / 11) * 100}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}/11</span>
                             </div>
-                            <span className="text-xs font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}/11</span>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
