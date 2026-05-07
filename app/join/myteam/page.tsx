@@ -286,7 +286,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                         <img
                           src={(() => {
-                            const seed = msg.avatarSeed ?? (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed;
+                            const seed = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed ?? msg.avatarSeed;
                             return `/img/p${seed || 1}.PNG`;
                           })()}
                           alt={msg.sender}
