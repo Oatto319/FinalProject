@@ -16,7 +16,7 @@ interface MBTIResult { title: string; icon: string; description: string; jobs: s
 
 export default function MyTeamPage() {
   const router = useRouter();
-  const [user, setUser]               = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [user, setUser]               = useState<{ name: string; avatarSeed: number; gmail?: string } | null>(null);
   const [teamMembers, setTeamMembers] = useState<RoomMember[]>([]);
   const [myGroup, setMyGroup]         = useState<MatchedGroup | null>(null);
   const [message, setMessage]         = useState('');
@@ -39,7 +39,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
-  const fetchRoomData = async (roomId: string, userName: string) => {
+  const fetchRoomData = async (roomId: string, userName: string, userGmail?: string) => {
     const res = await fetch(`/api/rooms/${roomId}`);
     if (!res.ok) {
       setRoomDeleted(true);
@@ -52,10 +52,11 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     setIsMatched(!!room.matchDone);
     setTeamMembers(room.members ?? []);
     if (room.matchedGroups?.length) {
-      const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => m.name === userName));
+      const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => (userGmail && m.gmail === userGmail) || m.name === userName));
       if (mine) {
         setMyGroup(mine);
         groupIdRef.current = mine.id;
+
         if (!memberTypesFetchedRef.current) {
           memberTypesFetchedRef.current = true;
           const currentUserRaw = localStorage.getItem('currentUser');
@@ -109,6 +110,12 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   };
 
   useEffect(() => {
+    const syncUser = () => {
+      const raw = localStorage.getItem('currentUser');
+      if (raw) setUser(JSON.parse(raw));
+    };
+    window.addEventListener('focus', syncUser);
+
     const raw = localStorage.getItem('currentUser');
     if (!raw) return;
     const currentUser = JSON.parse(raw);
@@ -120,14 +127,15 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     const roomId = getRoomId(room);
     roomIdRef.current = roomId;
 
-    fetchRoomData(roomId, currentUser.name);
+    fetchRoomData(roomId, currentUser.name, currentUser.gmail);
     fetchMessages(roomId);
 
     const interval = setInterval(() => {
-      fetchRoomData(roomId, currentUser.name);
+      const latestUser = JSON.parse(localStorage.getItem('currentUser') ?? '{}');
+      fetchRoomData(roomId, latestUser.name, latestUser.gmail);
       fetchMessages(roomId);
     }, 2000);
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); window.removeEventListener('focus', syncUser); };
   }, []);
 
   useEffect(() => {
@@ -222,7 +230,8 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
               <>
                 <div className="flex flex-col gap-3">
                   {(myGroup?.members ?? teamMembers).map((member, idx) => {
-                    const isCurrentUser = member.name === user?.name;
+                    const isCurrentUser = (user?.gmail && member.gmail === user.gmail) || member.name === user?.name;
+                    const displayName = isCurrentUser ? (user?.name ?? member.name) : member.name;
                     const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
                     const showRole = member.role && member.role !== 'ไม่ระบุ';
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
@@ -242,7 +251,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-bold text-gray-800 text-lg">{member.name}</p>
+                              <p className="font-bold text-gray-800 text-lg">{displayName}</p>
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
