@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Edit2, List, Info, Send, User, X } from 'lucide-react';
+import { Edit2, Home, Info, Send, User, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; }
@@ -187,7 +187,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
         <div className="flex items-center gap-4">
           <div className="bg-[#7096D1] text-white px-10 py-3 rounded-tl-2xl rounded-tr-2xl font-bold text-xl flex items-center gap-2 shadow-inner">{myGroup ? myGroup.members.length : teamMembers.length} :Members</div>
           <div className="flex gap-2">
-            <button onClick={() => router.push('/join/myroom')} className="bg-[#2D3E50] p-3 rounded-lg text-white hover:bg-slate-700 transition-colors"><List size={20} /></button>
+            <button onClick={() => router.push('/')} className="bg-[#2D3E50] p-3 rounded-lg text-white hover:bg-slate-700 transition-colors"><Home size={20} /></button>
             <button onClick={() => router.push('/join/myroom')} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Info size={20} /></button>
           </div>
         </div>
