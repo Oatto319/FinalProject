@@ -128,14 +128,12 @@ export default function MyRoomPage() {
             ) : (
               members.map((member, idx) => {
                 const isMe = member.name === user?.name;
-                const avatarUrl = member.avatarSeed
-                  ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}`
-                  : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
                 return (
                   <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isMe ? 'border-[#7096D1]' : 'border-transparent'}`}>
                     <div className="flex items-center gap-4">
                       <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
-                        <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                        <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -159,7 +157,7 @@ export default function MyRoomPage() {
             <div className="bg-white rounded-[20px] p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
-                  <img src={room?.hostAvatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" />
+                  <img src={`/img/p${room?.hostAvatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

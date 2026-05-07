@@ -25,7 +25,7 @@ export default function WelcomePage() {
   }, [router]);
 
   const avatarUrl = user
-    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed + 100}`
+    ? `/img/p${user.avatarSeed || 1}.PNG`
     : '';
 
   return (

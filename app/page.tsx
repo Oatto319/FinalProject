@@ -27,7 +27,7 @@ const App = () => {
         <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Left Section: Create, Join, Team */}
-        <div className="bg-white rounded-[24px] px-6 py-10 shadow-sm flex flex-col gap-6">
+        <div className="bg-white rounded-[24px] px-6 pt-5 pb-2 shadow-sm flex flex-col gap-6">
           {/* Create Button (Yellow) */}
           <button
             className="h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"

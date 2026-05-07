@@ -32,9 +32,7 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
 
   if (!user) return null;
 
-  const avatarUrl = user.avatarSeed === 0
-    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`
-    : `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed + 100}`;
+  const avatarUrl = `/img/p${user.avatarSeed || 1}.PNG`;
 
   const displaySubtitle = subtitle ?? user.role ?? user.gender;
 
@@ -46,7 +44,7 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
           className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
         >
           <div className="w-10 h-10 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
-            <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+            <img src={avatarUrl} alt="Profile" className="w-full h-full object-contain" />
           </div>
           <div className="text-left">
             <p className="font-bold text-base leading-tight" style={{ color: nameColor ?? '#1f2937' }}>{user.name}</p>

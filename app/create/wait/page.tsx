@@ -78,7 +78,7 @@ const WaitingRoom = () => {
                 <div key={idx} className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border border-transparent hover:border-white transition-all">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border-2 border-white">
-                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed}`} alt={member.name} />
+                      <img src={`/img/p${member.avatarSeed || 1}.PNG`} alt={member.name} className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-700 leading-tight">{member.name}</h4>
@@ -97,7 +97,7 @@ const WaitingRoom = () => {
             <div className="bg-white rounded-[20px] p-8 shadow-sm flex flex-col gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
-                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.avatarSeed ?? 0}`} alt="Host" />
+                  <img src={`/img/p${user?.avatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

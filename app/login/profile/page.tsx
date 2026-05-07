@@ -10,9 +10,9 @@ function ProfilePageInner() {
   const [selectedAvatar, setSelectedAvatar] = useState(7);
   const [loading, setLoading] = useState(false);
 
-  const avatars = Array.from({ length: 15 }, (_, i) => ({
+  const avatars = Array.from({ length: 30 }, (_, i) => ({
     id: i + 1,
-    url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 101}`,
+    url: `/img/p${i + 1}.PNG`,
   }));
 
   useEffect(() => {
@@ -75,11 +75,11 @@ function ProfilePageInner() {
         {fromEdit ? '"เลือก Avatar ใหม่"' : '"Choose your avatar"'}
       </p>
       <div className="bg-white w-full max-w-[900px] rounded-[24px] p-8 md:p-12 shadow-sm border border-gray-100">
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-6 md:gap-10 justify-items-center">
+        <div className="grid grid-cols-5 gap-4 md:gap-6 justify-items-center">
           {avatars.map((avatar) => (
             <div key={avatar.id} onClick={() => setSelectedAvatar(avatar.id)}
-              className={`relative w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
-              <div className={`w-full h-full rounded-full overflow-hidden bg-gray-50 border-4 transition-colors ${selectedAvatar === avatar.id ? 'border-blue-500 shadow-lg' : 'border-transparent shadow-sm'}`}>
+              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              <div className={`w-full h-full rounded-full overflow-hidden transition-all ${selectedAvatar === avatar.id ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
                 <img src={avatar.url} alt={`Avatar ${avatar.id}`} className="w-full h-full object-cover" />
               </div>
             </div>

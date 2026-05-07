@@ -56,7 +56,7 @@ export default function EditProfilePage() {
 
   if (!user) return null;
 
-  const currentAvatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${(user.avatarSeed || 1) + 100}`;
+  const currentAvatarUrl = `/img/p${user.avatarSeed || 1}.PNG`;
 
   return (
     <div className="min-h-screen bg-gray-200 font-sans flex items-start justify-center p-6 pt-10">

@@ -93,7 +93,7 @@ const MatchPage = () => {
                 <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
-                      <img src={member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt={member.name} />
+                      <img src={`/img/p${member.avatarSeed || 1}.PNG`} alt={member.name} className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <p className="font-bold text-gray-700 leading-tight">{member.name}</p>
@@ -112,7 +112,7 @@ const MatchPage = () => {
             <div className="bg-white rounded-[20px] p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
-                  <img src={user?.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" />
+                  <img src={`/img/p${user?.avatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

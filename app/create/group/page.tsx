@@ -65,7 +65,7 @@ const GroupResultPage = () => {
               {/* Host profile */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
-                  <img src={room?.hostAvatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`} alt="Host" className="w-full h-full object-cover" />
+                  <img src={`/img/p${room?.hostAvatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ const GroupResultPage = () => {
                 </div>
                 <div className="bg-gray-100/50 border-2 border-gray-100 rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
-                    const avatarUrl = member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                    const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
                     const typeOverride = memberTypeOverrides[member.name];
                     const roleTitle = typeOverride?.title ?? (member.role !== 'ไม่ระบุ' ? member.role : undefined);
                     const roleIcon  = typeOverride?.icon ?? (roleTitle ? ROLE_ICONS[roleTitle] ?? null : null);
@@ -109,7 +109,7 @@ const GroupResultPage = () => {
                       <div key={mIdx} className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border-2 border-transparent hover:border-yellow-400 transition-all">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 border border-gray-100">
-                            <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                            <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                           </div>
                           <div>
                             <p className="font-bold text-gray-700 text-sm leading-tight">{member.name}</p>

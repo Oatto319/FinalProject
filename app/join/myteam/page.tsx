@@ -207,9 +207,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                 <div className="flex flex-col gap-3">
                   {(myGroup?.members ?? teamMembers).map((member, idx) => {
                     const isCurrentUser = member.name === user?.name;
-                    const avatarUrl = member.avatarSeed
-                      ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}`
-                      : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                    const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
                     const showRole = member.role && member.role !== 'ไม่ระบุ';
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
                     const mbtiType = memberTypes[member.name];
@@ -218,7 +216,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                         <div className="flex items-center gap-4">
                           <div className="relative">
                             <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
-                              <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                              <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                             </div>
                             {isCurrentUser && (
                               <div className="absolute -bottom-1 -right-1 bg-[#2D3E50] text-white rounded-full p-1 border-2 border-white">
@@ -289,10 +287,10 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                         <img
                           src={(() => {
                             const seed = msg.avatarSeed ?? (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed;
-                            return seed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                            return `/img/p${seed || 1}.PNG`;
                           })()}
                           alt={msg.sender}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       </div>
                     )}

@@ -163,9 +163,7 @@ export default function VotePage() {
               <div className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
                 {members.map((member) => {
                   const isMe = member.name === user?.name;
-                  const avatarUrl = member.avatarSeed
-                    ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}`
-                    : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`;
+                  const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
                   const roleIcon = member.role ? ROLE_ICONS[member.role] : null;
 
                   return (
@@ -182,7 +180,7 @@ export default function VotePage() {
                     >
                       {/* Avatar */}
                       <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
-                        <img src={avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                        <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                       </div>
 
                       {/* Name + Me tag */}

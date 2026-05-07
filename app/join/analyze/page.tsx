@@ -158,9 +158,9 @@ export default function AnalyzePage() {
                     <div className="relative w-24 h-24 md:w-28 md:h-28">
                       <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
                         <img
-                          src={member.avatarSeed ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.avatarSeed + 100}` : `https://api.dicebear.com/7.x/avataaars/svg?seed=Guest`}
+                          src={`/img/p${member.avatarSeed || 1}.PNG`}
                           alt={member.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       </div>
                       {isAnalyzing && (

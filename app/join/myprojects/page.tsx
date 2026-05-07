@@ -103,7 +103,7 @@ export default function MyProjectsPage() {
                         {/* Host profile */}
                         <div className="flex items-center gap-3 mb-4">
                           <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
-                            <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${room.hostAvatarSeed + 100}`} alt={room.hostName} className="w-full h-full object-cover" />
+                            <img src={`/img/p${room.hostAvatarSeed || 1}.PNG`} alt={room.hostName} className="w-full h-full object-contain" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
