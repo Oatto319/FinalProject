@@ -212,7 +212,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
                     const mbtiType = memberTypes[member.name];
                     return (
-                      <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isCurrentUser ? 'border-[#7096D1]' : 'border-transparent'}`}>
+                      <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
                           <div className="relative">
                             <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
@@ -245,7 +245,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {myGroup?.leaderId === member.name && <div className="w-16 h-16 flex items-center justify-center text-[40px] leading-none">👑</div>}
+                          {myGroup?.leaderId === member.name && <div className="w-16 h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
                           {mbtiType ? (
                             <button onClick={() => setPopup({ member, type: mbtiType })} className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
                               <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
