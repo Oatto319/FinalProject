@@ -28,10 +28,12 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const [roomDeleted, setRoomDeleted] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName]     = useState('');
+  const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const roomIdRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const groupIdRef = useRef<number | null>(null);
   const memberTypesFetchedRef = useRef(false);
+  const initialScrollDoneRef = useRef(false);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -98,9 +100,10 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const fetchMessages = async (roomId: string) => {
     if (groupIdRef.current === null) return;
     const res = await fetch(`/api/rooms/${roomId}/messages?groupId=${groupIdRef.current}`);
-    if (!res.ok) return;
+    if (!res.ok) { setIsLoadingMessages(false); return; }
     const data = await res.json();
     setMessages((data.messages ?? []).map((m: any) => ({ ...m, id: m._id ?? m.id })));
+    setIsLoadingMessages(false);
   };
 
   useEffect(() => {
@@ -124,6 +127,13 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!isLoadingMessages && !initialScrollDoneRef.current) {
+      initialScrollDoneRef.current = true;
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'instant' }), 50);
+    }
+  }, [isLoadingMessages]);
 
   const handleSend = async () => {
     if (!message.trim() || !user || !roomIdRef.current) return;
@@ -178,7 +188,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
 
   return (
     <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center">
-      <Navbar bgColor="#122031" nameColor="white" />
+      <Navbar bgColor="#122031" nameColor="white" large />
       <div className="w-full max-w-7xl px-6 mt-4 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button className="bg-[#FF9142] text-white px-16 py-3 rounded-t-2xl font-bold text-xl shadow-lg">{myGroup?.name ?? 'My team'}</button>
@@ -278,7 +288,21 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
 
           <div className="lg:col-span-7 bg-white rounded-[20px] flex flex-col overflow-hidden shadow-inner">
             <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-[#BACEE0]">
-              {messages.map((msg) => {
+              {isLoadingMessages ? (
+                <>
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className={`flex items-end gap-2 ${i % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+                      {i % 2 !== 0 && <div className="w-11 h-11 rounded-full bg-white/50 animate-pulse flex-shrink-0" />}
+                      <div className={`flex flex-col gap-1 ${i % 2 === 0 ? 'items-end' : 'items-start'}`}>
+                        {i % 2 !== 0 && <div className="h-3 w-16 bg-white/50 rounded-full animate-pulse mb-1" />}
+                        <div className={`h-9 rounded-2xl animate-pulse ${i % 2 === 0 ? 'bg-[#00B900]/40 w-36' : 'bg-white/60 w-44'} ${[28, 44, 32, 52][i] ? '' : ''}`}
+                          style={{ width: `${[144, 176, 120, 200][i]}px` }} />
+                      </div>
+                    </div>
+                  ))}
+                </>
+              ) : null}
+              {!isLoadingMessages && messages.map((msg) => {
                 const isMe = msg.sender === user?.name;
                 return (
                   <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
