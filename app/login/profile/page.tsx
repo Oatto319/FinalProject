@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 function ProfilePageInner() {
@@ -86,9 +87,11 @@ function ProfilePageInner() {
           ))}
         </div>
         <div className="flex justify-between items-center mt-12">
-          <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-600 transition-colors text-sm font-medium">← กลับ</button>
+          <button onClick={() => router.back()} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+            <ChevronLeft size={28} strokeWidth={2.5} />
+          </button>
           <button onClick={handleConfirm} disabled={loading}
-            className="bg-[#2D3E50] text-white px-12 py-4 rounded-2xl font-bold text-xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-lg disabled:opacity-60">
+            className={`px-12 py-4 rounded-[20px] font-bold text-xl transition-all ${loading ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]' : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}`}>
             {loading ? 'กำลังบันทึก...' : 'Confirm'}
           </button>
         </div>
