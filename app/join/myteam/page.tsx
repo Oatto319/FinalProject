@@ -266,11 +266,11 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
               <div className="grid grid-cols-2 gap-4">
                 <div onClick={() => router.push('/join/vote')} className="bg-white rounded-[20px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
                   <span className="font-bold text-gray-700">Vote</span>
-                  <div className="w-24 h-24 flex items-center justify-center"><img src="https://cdn-icons-png.flaticon.com/512/3050/3050525.png" alt="Vote Icon" className="w-full h-full object-contain" /></div>
+                  <div className="w-24 h-24 flex items-center justify-center"><img src="/img/vote.PNG" alt="Vote Icon" className="w-full h-full object-contain" /></div>
                 </div>
                 <div onClick={() => router.push('/join/analyze')} className="bg-white rounded-[20px] p-4 flex flex-col items-center gap-2 shadow-sm border-b-4 border-gray-200 cursor-pointer hover:brightness-95 transition-all">
                   <span className="font-bold text-gray-700">Analyze</span>
-                  <div className="w-24 h-24 flex items-center justify-center"><img src="https://cdn-icons-png.flaticon.com/512/2620/2620703.png" alt="Analyze Icon" className="w-full h-full object-contain" /></div>
+                  <div className="w-24 h-24 flex items-center justify-center"><img src="/img/analyze.PNG" alt="Analyze Icon" className="w-full h-full object-contain" /></div>
                 </div>
               </div>
             </div>
