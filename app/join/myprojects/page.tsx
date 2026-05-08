@@ -21,7 +21,7 @@ const TEMPLATE_COLORS: Record<string, string> = {
 
 export default function MyProjectsPage() {
   const router = useRouter();
-  const [user, setUser]             = useState<{ name: string; avatarSeed: number; role?: string } | null>(null);
+  const [user, setUser]             = useState<{ name: string; avatarSeed: number; role?: string; gmail?: string } | null>(null);
   const [joinedRooms, setJoinedRooms] = useState<RoomData[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<RoomData | null>(null);
   const [deleteInput, setDeleteInput]   = useState('');
@@ -33,7 +33,7 @@ export default function MyProjectsPage() {
     const u = JSON.parse(raw);
     setUser(u);
 
-    fetch(`/api/myrooms?userName=${encodeURIComponent(u.name)}`)
+    fetch(`/api/myrooms?userName=${encodeURIComponent(u.name)}${u.gmail ? `&gmail=${encodeURIComponent(u.gmail)}` : ''}`)
       .then((r) => {
         if (!r.ok) throw new Error(`API ${r.status}`);
         return r.json();

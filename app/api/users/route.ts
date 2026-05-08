@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { User } from '@/lib/models';
+import { User, Room } from '@/lib/models';
 
 // GET /api/users?gmail=xxx&password=xxx  → login
 // GET /api/users?gmail=xxx              → check duplicate
@@ -46,11 +46,57 @@ export async function PATCH(req: NextRequest) {
   const { gmail, ...updates } = body;
   if (!gmail) return NextResponse.json({ error: 'gmail required' }, { status: 400 });
 
+  const lowerGmail = gmail.toLowerCase();
+  const oldUser = await User.findOne({ gmail: lowerGmail });
+  if (!oldUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
   const user = await User.findOneAndUpdate(
-    { gmail: gmail.toLowerCase() },
+    { gmail: lowerGmail },
     { $set: updates },
     { new: true }
   );
-  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-  return NextResponse.json({ user: user.toObject() });
+
+  if (updates.name && updates.name !== oldUser.name) {
+    const oldName: string = oldUser.name;
+    const newName: string = updates.name;
+
+    // Update member name inside room member arrays
+    await Room.updateMany(
+      { 'members.gmail': lowerGmail },
+      { $set: { 'members.$[elem].name': newName } },
+      { arrayFilters: [{ 'elem.gmail': lowerGmail }] }
+    );
+
+    // Update readyUsers: remove old name then re-add for rooms where user was ready
+    const readyRooms = await Room.find(
+      { 'members.gmail': lowerGmail, readyUsers: oldName },
+      { roomId: 1 }
+    );
+    await Room.updateMany(
+      { 'members.gmail': lowerGmail },
+      { $pull: { readyUsers: oldName } }
+    );
+    if (readyRooms.length > 0) {
+      const readyRoomIds = readyRooms.map((r: { roomId: string }) => r.roomId);
+      await Room.updateMany(
+        { roomId: { $in: readyRoomIds } },
+        { $addToSet: { readyUsers: newName } }
+      );
+    }
+
+    // Update leaderId in matchedGroups
+    await Room.updateMany(
+      { 'matchedGroups.leaderId': oldName },
+      { $set: { 'matchedGroups.$[g].leaderId': newName } },
+      { arrayFilters: [{ 'g.leaderId': oldName }] }
+    );
+
+    // Update hostName for rooms this user created
+    await Room.updateMany(
+      { hostName: oldName },
+      { $set: { hostName: newName } }
+    );
+  }
+
+  return NextResponse.json({ user: user!.toObject() });
 }
