@@ -29,6 +29,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName]     = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+  const [roomTitle, setRoomTitle] = useState('');
   const [leaderTip, setLeaderTip] = useState(false);
   const roomIdRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -126,6 +127,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     const room: CurrentRoom = JSON.parse(roomRaw);
     const roomId = getRoomId(room);
     roomIdRef.current = roomId;
+    setRoomTitle(room.title ?? '');
 
     fetchRoomData(roomId, currentUser.name, currentUser.gmail);
     fetchMessages(roomId);
@@ -209,7 +211,11 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
           <button onClick={() => { setEditingName(myGroup?.name ?? ''); setIsEditingName(true); }} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Edit2 size={20} /></button>
         </div>
         <div className="flex items-center gap-4">
-          <div className="bg-[#7096D1] text-white px-10 py-3 rounded-tl-2xl rounded-tr-2xl font-bold text-xl flex items-center gap-2 shadow-inner">{myGroup ? myGroup.members.length : teamMembers.length} :Members</div>
+          <div className="bg-[#7096D1] text-white px-10 py-3 rounded-tl-2xl rounded-tr-2xl font-bold text-xl flex items-center gap-3 shadow-inner">
+            <span>{roomTitle}</span>
+            <span className="opacity-40">|</span>
+            <span>{myGroup ? myGroup.members.length : teamMembers.length} :Members</span>
+          </div>
           <div className="flex gap-2">
             <button onClick={() => router.push('/')} className="bg-[#2D3E50] p-3 rounded-lg text-white hover:bg-slate-700 transition-colors"><Home size={20} /></button>
             <button onClick={() => router.push('/join/myroom')} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Info size={20} /></button>
