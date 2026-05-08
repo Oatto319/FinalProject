@@ -45,6 +45,31 @@ export default function EditProfilePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gmail: user.gmail, name: updated.name, role: updated.role }),
       });
+
+      // อัปเดตชื่อใน room ปัจจุบัน (ถ้ามี) เพื่อให้เพื่อนในกลุ่มเห็นชื่อใหม่
+      const roomRaw = localStorage.getItem('currentRoom');
+      if (roomRaw && user.gmail && user.name !== updated.name) {
+        const room = JSON.parse(roomRaw);
+        const roomId = room.roomId ?? room.id;
+        const roomRes = await fetch(`/api/rooms/${roomId}`);
+        if (roomRes.ok) {
+          const roomData = await roomRes.json();
+          if (roomData.room) {
+            const updateName = (m: { gmail?: string; name: string }) =>
+              m.gmail === user.gmail ? { ...m, name: updated.name } : m;
+            const updatedMembers = (roomData.room.members ?? []).map(updateName);
+            const updatedGroups = (roomData.room.matchedGroups ?? []).map((g: { members: { gmail?: string; name: string }[] }) => ({
+              ...g, members: g.members.map(updateName),
+            }));
+            await fetch(`/api/rooms/${roomId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ members: updatedMembers, matchedGroups: updatedGroups }),
+            });
+          }
+        }
+      }
+
       localStorage.setItem('currentUser', JSON.stringify(updated));
       router.back();
     } catch {
