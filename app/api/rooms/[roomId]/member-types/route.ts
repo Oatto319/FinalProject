@@ -38,37 +38,40 @@ export async function GET(
 
   const types: Record<string, { title: string; icon: string; description: string; jobs: string[] }> = {};
 
-  await Promise.all(
-    allMembers.map(async (member: { name: string; gmail?: string; role?: string }) => {
-      try {
-        const user = member.gmail
-          ? await User.findOne({ gmail: member.gmail.toLowerCase() })
-          : await User.findOne({ name: member.name });
+  // Batch fetch — 1-2 queries แทน N queries
+  const gmails  = allMembers.filter((m) => m.gmail).map((m) => m.gmail!.toLowerCase());
+  const names   = allMembers.filter((m) => !m.gmail).map((m) => m.name);
 
-        if (!user) return;
+  const [usersByGmail, usersByName] = await Promise.all([
+    gmails.length ? User.find({ gmail: { $in: gmails } }) : Promise.resolve([]),
+    names.length  ? User.find({ name:  { $in: names  } }) : Promise.resolve([]),
+  ]);
 
-        const userTypes = user.toObject().types ?? {};
-        let typeResult = userTypes[templateKey];
+  const gmailMap = new Map(usersByGmail.map((u: { gmail: string; toObject: () => Record<string, unknown> }) => [u.gmail, u.toObject()]));
+  const nameMap  = new Map(usersByName.map((u:  { name:  string; toObject: () => Record<string, unknown> }) => [u.name,  u.toObject()]));
 
-        // fallback: ลองดู template อื่นถ้าไม่มี template ของห้อง
-        if (!typeResult) {
-          typeResult = Object.values(userTypes).find((t: unknown) => (t as { icon?: string })?.icon);
-        }
+  for (const member of allMembers) {
+    const userData = member.gmail ? gmailMap.get(member.gmail.toLowerCase()) : nameMap.get(member.name);
+    if (!userData) continue;
 
-        if (typeResult && (typeResult as { icon?: string }).icon) {
-          const t = typeResult as { title: string; icon: string; description?: string; jobs?: string[] };
-          types[member.name] = {
-            title: t.title,
-            icon: t.icon,
-            description: t.description ?? '',
-            jobs: t.jobs ?? [],
-          };
-        }
-      } catch {
-        // ข้ามสมาชิกที่ query ไม่ได้
-      }
-    })
-  );
+    const userTypes = (userData.types as Record<string, unknown>) ?? {};
+    let typeResult = userTypes[templateKey];
+
+    // fallback: ลองดู template อื่นถ้าไม่มี template ของห้อง
+    if (!typeResult) {
+      typeResult = Object.values(userTypes).find((t: unknown) => (t as { icon?: string })?.icon);
+    }
+
+    if (typeResult && (typeResult as { icon?: string }).icon) {
+      const t = typeResult as { title: string; icon: string; description?: string; jobs?: string[] };
+      types[member.name] = {
+        title: t.title,
+        icon: t.icon,
+        description: t.description ?? '',
+        jobs: t.jobs ?? [],
+      };
+    }
+  }
 
   return NextResponse.json({ types });
 }

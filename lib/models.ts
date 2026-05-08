@@ -11,6 +11,8 @@ const UserSchema = new Schema({
   types:      { type: Schema.Types.Mixed, default: {} },
 }, { timestamps: true });
 
+UserSchema.index({ name: 1 });
+
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 // ─── Room ───────────────────────────────────────────────
@@ -44,6 +46,10 @@ const RoomSchema = new Schema({
   votes:          { type: Schema.Types.Mixed, default: {} },
 }, { timestamps: true });
 
+RoomSchema.index({ hostName: 1 });
+RoomSchema.index({ 'members.gmail': 1 });
+RoomSchema.index({ 'members.name': 1 });
+
 export const Room = mongoose.models.Room || mongoose.model('Room', RoomSchema);
 
 // ─── Message ─────────────────────────────────────────────
@@ -55,5 +61,7 @@ const MessageSchema = new Schema({
   time:       { type: String, required: true },
   avatarSeed: { type: Number, default: 0 },
 }, { timestamps: true });
+
+MessageSchema.index({ roomId: 1, groupId: 1 });
 
 export const Message = mongoose.models.Message || mongoose.model('Message', MessageSchema);

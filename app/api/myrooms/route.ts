@@ -19,7 +19,9 @@ export async function GET(req: NextRequest) {
       orConditions.push({ 'members.gmail': gmail.toLowerCase() });
     }
 
-    const rooms = await Room.find({ $or: orConditions }).sort({ createdAt: -1 });
+    const rooms = await Room.find({ $or: orConditions })
+      .select('roomId title description totalMembers groupSize template hostName hostAvatarSeed members matchDone createdAt')
+      .sort({ createdAt: -1 });
     return NextResponse.json({ rooms: rooms.map((r) => r.toObject()) });
   } catch (err) {
     console.error('[myrooms] DB error:', err);
