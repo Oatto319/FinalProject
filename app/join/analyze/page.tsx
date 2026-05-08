@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Sparkles, BrainCircuit } from 'lucide-react';
+import { ChevronLeft, Sparkles, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface RoomMember {
@@ -19,6 +19,8 @@ interface MatchedGroup {
   leaderId?: string;
 }
 
+interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+
 export default function AnalyzePage() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
@@ -26,6 +28,9 @@ export default function AnalyzePage() {
   const [roomIdState, setRoomIdState] = useState('');
   const [matchedGroups, setMatchedGroups] = useState<MatchedGroup[]>([]);
   const [myGroupId, setMyGroupId] = useState<number | null>(null);
+  const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
+  const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
+  const typesFetchedRef = useRef(false);
 
   useEffect(() => {
     const userRaw = localStorage.getItem('currentUser');
@@ -54,6 +59,14 @@ export default function AnalyzePage() {
         if (mine) {
           members = mine.members;
           setMyGroupId(mine.id);
+          if (!typesFetchedRef.current) {
+            typesFetchedRef.current = true;
+            const typesRes = await fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`);
+            if (typesRes.ok) {
+              const typesData = await typesRes.json();
+              setMemberTypes(typesData.types ?? {});
+            }
+          }
         }
       }
       if (members.length === 0) {
@@ -100,36 +113,31 @@ export default function AnalyzePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1A2635] font-sans flex flex-col items-center">
-      <Navbar />
+    <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center">
+      <Navbar bgColor="#122031" nameColor="white" />
 
-      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
-        <div className="bg-[#E5E7EB] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center min-h-[700px] relative overflow-hidden">
+      <main className="w-full max-w-5xl mt-4 px-4 flex-1 flex flex-col">
+
+        {/* Title */}
+        <div className="text-center mb-4">
+          <h1 className="text-white text-3xl font-black uppercase tracking-tight">
+            &ldquo;Analyze for leader&rdquo;
+          </h1>
+          <p className="text-white/60 font-bold mt-1">
+            {isAnalyzing ? 'ระบบกำลังวิเคราะห์ความเหมาะสมจากข้อมูลสมาชิก...' : 'วิเคราะห์เสร็จสิ้น'}
+          </p>
+        </div>
+
+        <div className="flex items-start gap-3 flex-1">
 
           {/* Back Button */}
           <button
             onClick={() => router.back()}
-            className="absolute left-8 top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-md hover:bg-gray-100 transition-all z-20">
+            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
             <ChevronLeft size={28} strokeWidth={2.5} />
           </button>
 
-          {/* Analyze Icon & Animation */}
-          <div className="relative mb-8">
-            <div className={`p-6 rounded-full bg-white shadow-xl transition-all duration-1000 ${isAnalyzing ? 'animate-pulse scale-110' : 'scale-100'}`}>
-              <BrainCircuit size={64} className={isAnalyzing ? 'text-blue-500' : 'text-[#2D3E50]'} />
-            </div>
-            {isAnalyzing && (
-              <div className="absolute inset-0 border-4 border-blue-400 rounded-full animate-ping opacity-25"></div>
-            )}
-          </div>
-
-          {/* Title */}
-          <div className="text-center mb-10">
-            <h1 className="text-[#2D3E50] text-3xl font-black uppercase tracking-tight mb-2">
-              &ldquo;Analyze for leader&rdquo;
-            </h1>
-            <p className="text-gray-500 font-medium">ระบบกำลังวิเคราะห์ความเหมาะสมจากข้อมูลสมาชิก...</p>
-          </div>
+        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center overflow-hidden">
 
           {/* Analysis Results Grid */}
           <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
@@ -152,6 +160,15 @@ export default function AnalyzePage() {
                     {isBest && (
                       <div className="absolute top-4 right-4 bg-yellow-400 text-white p-1 rounded-full">
                         <Sparkles size={16} fill="currentColor" />
+                      </div>
+                    )}
+                    {/* MBTI icon — top-right */}
+                    {!isBest && memberTypes[member.name] && (
+                      <div
+                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.name] })}
+                        className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
+                      >
+                        <img src={memberTypes[member.name].icon} alt={memberTypes[member.name].title} className="w-full h-full object-contain" />
                       </div>
                     )}
 
@@ -197,13 +214,12 @@ export default function AnalyzePage() {
           {/* Result Action Button */}
           <button
             onClick={handleConfirm}
-            className={`
-              w-full max-w-sm py-5 rounded-[25px] font-black text-3xl shadow-lg transition-all transform active:scale-95
-              ${isAnalyzing
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-[#2D3E50] text-white hover:bg-[#1E293B] shadow-[#1A2635]/30'}
-            `}
             disabled={isAnalyzing}
+            className={`w-full max-w-sm py-5 rounded-[20px] font-black text-3xl transition-all
+              ${isAnalyzing
+                ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'
+                : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}
+            `}
           >
             {isAnalyzing ? 'ANALYZING...' : 'CONFIRM LEADER'}
           </button>
@@ -215,7 +231,42 @@ export default function AnalyzePage() {
           </div>
 
         </div>
+        </div>
       </main>
+
+      {/* MBTI Popup */}
+      {mbtiPopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setMbtiPopup(null)}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <img src={mbtiPopup.type.icon} alt={mbtiPopup.type.title} className="w-14 h-14 object-contain" />
+                <div>
+                  <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพ</p>
+                  <p className="text-xl font-black text-[#4B3E7A]">{mbtiPopup.type.title}</p>
+                  <p className="text-sm text-gray-500 font-medium">{mbtiPopup.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setMbtiPopup(null)} className="w-9 h-9 rounded-full border-2 border-gray-200 flex items-center justify-center hover:bg-gray-100 transition-colors">
+                <X size={18} className="text-gray-600" />
+              </button>
+            </div>
+            {mbtiPopup.type.description && (
+              <p className="text-gray-500 text-sm leading-relaxed mb-4">{mbtiPopup.type.description}</p>
+            )}
+            {mbtiPopup.type.jobs?.length > 0 && (
+              <div>
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
+                <div className="flex flex-wrap gap-2">
+                  {mbtiPopup.type.jobs.map((job) => (
+                    <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">{job}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes scan {
