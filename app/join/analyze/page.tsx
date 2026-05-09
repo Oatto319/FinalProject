@@ -152,7 +152,7 @@ export default function AnalyzePage() {
                   <div
                     key={idx}
                     className={`
-                      bg-white rounded-[22px] p-6 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
+                      bg-white rounded-[22px] p-6 pb-10 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
                       transition-all duration-500 border-4
                       ${isBest ? 'border-yellow-400 scale-105 shadow-2xl' : 'border-transparent'}
                     `}
@@ -189,8 +189,9 @@ export default function AnalyzePage() {
 
                     <div className="text-center w-full">
                       <h4 className="font-bold text-gray-800 text-lg leading-tight">{member.name}</h4>
-                      <p className="text-sm text-gray-400 mt-1 mb-3">นักเรียน</p>
+                    </div>
 
+                    <div className="w-full mt-auto">
                       <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                         <div
                           className="h-full transition-all duration-1000 ease-out"
