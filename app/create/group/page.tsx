@@ -50,7 +50,7 @@ const GroupResultPage = () => {
   const handleRequest = () => { setShowModal(false); setSelectedReq(null); };
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
+    <div className="min-h-screen bg-[#E8E8E8] font-sans flex flex-col items-center">
       <Navbar />
       <div className="w-full max-w-6xl px-4 mt-4 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 flex flex-col gap-4">
@@ -98,7 +98,7 @@ const GroupResultPage = () => {
                 <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-8 py-2 rounded-full font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
                   {group.name}
                 </div>
-                <div className="bg-gray-100/50 border-2 border-gray-100 rounded-[20px] p-4 flex flex-col gap-3">
+                <div className="bg-[#E8E8E8] border-2 border-[#E8E8E8] rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
                     const typeOverride = memberTypeOverrides[member.name];
