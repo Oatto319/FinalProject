@@ -27,6 +27,7 @@ export default function VotePage() {
   const [myGroup, setMyGroup] = useState<MatchedGroup | null>(null);
   const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
   const [voted, setVoted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [groupVotes, setGroupVotes] = useState<Record<string, string>>({});
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
@@ -79,48 +80,55 @@ export default function VotePage() {
   }, []);
 
   const handleVote = async () => {
-    if (!selectedMember || !myGroup || !user || !roomIdRef.current) return;
+    if (!selectedMember || !myGroup || !user || !roomIdRef.current || submitting) return;
+    setSubmitting(true);
+    try {
+      // Load current votes from DB
+      const res = await fetch(`/api/rooms/${roomIdRef.current}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const room = data.room;
 
-    // Load current votes from DB
-    const res = await fetch(`/api/rooms/${roomIdRef.current}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    const room = data.room;
+      const groupKey = String(myGroup.id);
+      const existingVotes: Record<string, string> = room.votes?.[groupKey] ?? {};
+      const updatedVotes = { ...existingVotes, [user.name]: selectedMember };
 
-    const groupKey = String(myGroup.id);
-    const existingVotes: Record<string, string> = room.votes?.[groupKey] ?? {};
-    const updatedVotes = { ...existingVotes, [user.name]: selectedMember };
+      // Count winner (guard against empty tally)
+      const tally: Record<string, number> = {};
+      Object.values(updatedVotes).forEach((name) => {
+        tally[name] = (tally[name] ?? 0) + 1;
+      });
+      const entries = Object.entries(tally);
+      const winner = entries.length > 0
+        ? entries.reduce((a, b) => b[1] >= a[1] ? b : a)[0]
+        : selectedMember;
 
-    // Count winner
-    const tally: Record<string, number> = {};
-    Object.values(updatedVotes).forEach((name) => {
-      tally[name] = (tally[name] ?? 0) + 1;
-    });
-    const winner = Object.entries(tally).reduce((a, b) => b[1] >= a[1] ? b : a)[0];
+      // Update matchedGroups with leaderId
+      const updatedGroups = (room.matchedGroups ?? []).map((g: MatchedGroup) => {
+        if (g.id !== myGroup.id) return g;
+        return { ...g, leaderId: winner };
+      });
 
-    // Update matchedGroups with leaderId
-    const updatedGroups = (room.matchedGroups ?? []).map((g: MatchedGroup) => {
-      if (g.id !== myGroup.id) return g;
-      return { ...g, leaderId: winner };
-    });
+      const newVotes = { ...(room.votes ?? {}), [groupKey]: updatedVotes };
 
-    const newVotes = { ...(room.votes ?? {}), [groupKey]: updatedVotes };
+      const patchRes = await fetch(`/api/rooms/${roomIdRef.current}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          votes: newVotes,
+          matchedGroups: updatedGroups,
+        }),
+      });
+      if (!patchRes.ok) {
+        const err = await patchRes.json().catch(() => ({}));
+        console.error('Vote save failed:', err);
+        return;
+      }
 
-    const patchRes = await fetch(`/api/rooms/${roomIdRef.current}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        votes: newVotes,
-        matchedGroups: updatedGroups,
-      }),
-    });
-    if (!patchRes.ok) {
-      const err = await patchRes.json();
-      console.error('Vote save failed:', err);
-      return;
+      setVoted(true);
+    } finally {
+      setSubmitting(false);
     }
-
-    setVoted(true);
   };
 
   const members = myGroup?.members ?? [];
@@ -250,7 +258,7 @@ export default function VotePage() {
               {/* Vote Button */}
               {(() => {
                 const alreadyVoted = !!groupVotes[user?.name ?? ''];
-                const canVote = selectedMember !== null && !alreadyVoted;
+                const canVote = selectedMember !== null && !alreadyVoted && !submitting;
                 return (
                   <button
                     disabled={!canVote}

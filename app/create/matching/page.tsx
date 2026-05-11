@@ -91,11 +91,20 @@ const MatchingPage = () => {
       }
 
       // บันทึกผลลัพธ์ไปยัง MongoDB
-      await fetch(`/api/rooms/${roomId}`, {
+      const matchPayload = JSON.stringify({ matchedGroups: groups, matchDone: true });
+      let saveRes = await fetch(`/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matchedGroups: groups, matchDone: true }),
+        body: matchPayload,
       });
+      // retry ครั้งเดียวถ้าล้มเหลว
+      if (!saveRes.ok) {
+        saveRes = await fetch(`/api/rooms/${roomId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: matchPayload,
+        });
+      }
 
       router.push('/create/group');
     };
