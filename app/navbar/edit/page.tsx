@@ -90,7 +90,7 @@ export default function EditProfilePage() {
         {/* Left Card — Avatar + Name + Save */}
         <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="w-48 h-48 rounded-full overflow-hidden bg-blue-100">
+            <div className="w-56 h-56 rounded-full overflow-hidden bg-blue-100">
               <img src={currentAvatarUrl} alt="Profile" className="w-full h-full object-cover" />
             </div>
             <button
