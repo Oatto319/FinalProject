@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 type MBTIResult = {
@@ -55,7 +55,7 @@ const PresentationTypePage = () => {
               onClick={() => router.back()}
               className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
             >
-              <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-800" />
+              <ChevronLeft size={24} strokeWidth={2.5} />
             </button>
             <div className={`${TEMPLATE.color} px-10 py-3 rounded-tl-3xl rounded-br-3xl shadow-sm`}>
               <h1 className={`${TEMPLATE.textColor} text-2xl font-black italic tracking-tighter uppercase`}>{TEMPLATE.label}</h1>

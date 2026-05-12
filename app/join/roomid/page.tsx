@@ -46,7 +46,7 @@ export default function EnterRoomIdPage() {
           </div>
           <div className="w-full max-w-[380px] flex justify-between items-center mt-8">
             <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all" onClick={() => router.back()}>
-              <ChevronLeft size={32} strokeWidth={2.5} />
+              <ChevronLeft size={24} strokeWidth={2.5} />
             </button>
             <button onClick={handleNext} disabled={loading}
               className="bg-[#2D3E50] text-white flex items-center gap-3 px-8 py-3 rounded-2xl hover:bg-[#1E293B] transition-all active:scale-95 shadow-md group disabled:opacity-60">

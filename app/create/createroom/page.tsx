@@ -138,7 +138,7 @@ export default function CreateRoomPage() {
                 onClick={() => router.push('/')}
                 className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
               >
-                <ChevronLeft size={28} strokeWidth={2.5} />
+                <ChevronLeft size={24} strokeWidth={2.5} />
               </button>
               <button
                 onClick={handleNext}
@@ -231,7 +231,7 @@ export default function CreateRoomPage() {
                 onClick={() => { setStep(1); setShowError(false); }}
                 className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
               >
-                <ChevronLeft size={28} strokeWidth={2.5} />
+                <ChevronLeft size={24} strokeWidth={2.5} />
               </button>
               <button
                 onClick={handleCreate} disabled={loading}

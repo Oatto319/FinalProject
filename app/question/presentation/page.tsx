@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Minus, ArrowLeft } from 'lucide-react';
+import { Plus, Minus, ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 const PresentationQuestionnaire = () => {
@@ -139,7 +139,7 @@ const PresentationQuestionnaire = () => {
       <Navbar />
       <div className="w-full max-w-5xl flex items-center justify-between px-4 md:px-8 mt-6 mb-6">
         <button onClick={() => router.back()} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-          <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-600" />
+          <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
         <div className="bg-[#E2F37C] px-8 py-3 rounded-2xl shadow-sm">
           <h2 className="text-[#22C55E] font-black italic tracking-tight uppercase">PRESENTATION</h2>

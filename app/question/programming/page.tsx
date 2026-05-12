@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Minus, ArrowLeft } from 'lucide-react';
+import { Plus, Minus, ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 const ProgrammingQuestionnaire = () => {
@@ -172,7 +172,7 @@ const ProgrammingQuestionnaire = () => {
           onClick={() => router.back()}
           className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
         >
-          <ArrowLeft size={20} strokeWidth={2.5} className="text-gray-600" />
+          <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
 
         {/* ป้ายชื่อวิชาด้านขวา */}
