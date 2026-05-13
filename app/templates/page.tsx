@@ -80,7 +80,7 @@ function TemplatesContent() {
 
         <div className="flex-1 bg-white rounded-[24px] px-8 pt-3 pb-8 md:px-10 md:pt-3 md:pb-10 shadow-sm flex flex-col items-center">
 
-          <p className="text-sm font-bold text-[#2D3142] mb-0 text-center">
+          <p className="text-sm text-[#2D3142] mb-0 text-center" style={{ fontFamily: 'var(--font-geologica)' }}>
             &ldquo;Choose Templates&rdquo;
           </p>
 
