@@ -421,7 +421,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <img src={popup.type.icon} alt={popup.type.title} className="w-14 h-14 object-contain" />
+                <img src={popup.type.icon} alt={popup.type.title} className="w-24 h-24 object-contain" />
                 <div>
                   <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพ</p>
                   <p className="text-xl font-black text-[#4B3E7A]">{popup.type.title}</p>
