@@ -167,28 +167,27 @@ const ProgrammingQuestionnaire = () => {
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
-      <div className="w-full max-w-5xl flex items-center justify-between px-4 md:px-8 mt-6 mb-6">
+      {/* Wrapper: ปุ่ม back + กล่องคำถาม */}
+      <div className="w-full max-w-5xl flex items-start gap-4 mt-4 px-4 md:px-0">
         <button
           onClick={() => router.back()}
-          className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+          className="flex-shrink-0 mt-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
 
-        {/* ป้ายชื่อวิชาด้านขวา */}
-        <div className="bg-[#F8A4A4] px-8 py-3 rounded-2xl shadow-sm">
+        {/* Container สำหรับคำถาม */}
+        <div className="relative flex-1 bg-white rounded-[24px] shadow-xl p-8 md:p-16 flex flex-col gap-12 border-b-8 border-gray-300">
+        {/* ป้ายชื่อวิชามุมบนขวา */}
+        <div className="absolute top-6 right-6 bg-[#F8A4A4] px-6 py-2 rounded-2xl shadow-sm">
           <h2 className="text-[#4B3E7A] font-black italic tracking-tight uppercase">
             PROGRAMMING
           </h2>
         </div>
-      </div>
-
-      {/* Container สำหรับคำถาม */}
-      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-xl p-8 md:p-16 flex flex-col gap-12 border-b-8 border-gray-300">
         {questions.map((q, idx) => (
           <div key={q.id} className="flex flex-col items-center gap-8">
             {/* ข้อความคำถาม */}
-            <h3 className="text-[#1A2E44] text-xl md:text-2xl font-black text-center leading-relaxed">
+            <h3 className="text-[#1A2E44] text-xl md:text-2xl text-center leading-relaxed" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif', textShadow: 'none' }}>
               "{q.text}"
             </h3>
 
@@ -196,7 +195,7 @@ const ProgrammingQuestionnaire = () => {
             <div className="w-full flex items-center justify-between max-w-3xl">
               {/* ฝั่งเห็นด้วย */}
               <div className="flex items-center gap-3">
-                <span className="text-[#22C55E] font-black text-lg md:text-xl">เห็นด้วย</span>
+                <span className="text-[#22C55E] text-lg md:text-xl" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เห็นด้วย</span>
                 <div className="w-10 h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white">
                   <Plus size={24} strokeWidth={4} />
                 </div>
@@ -232,7 +231,7 @@ const ProgrammingQuestionnaire = () => {
                 <div className="w-10 h-10 rounded-full border-2 border-[#F8A4A4] flex items-center justify-center text-[#F8A4A4] bg-white">
                   <Minus size={24} strokeWidth={4} />
                 </div>
-                <span className="text-[#F8A4A4] font-black text-lg md:text-xl whitespace-nowrap">ไม่เห็นด้วย</span>
+                <span className="text-[#F8A4A4] text-lg md:text-xl whitespace-nowrap" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ไม่เห็นด้วย</span>
               </div>
             </div>
 
@@ -248,9 +247,10 @@ const ProgrammingQuestionnaire = () => {
           {/* --- แก้: เพิ่ม onClick ตรวจสอบและแสดง popup --- */}
           <button
             onClick={handleSubmit}
-            className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl font-black text-xl hover:bg-[#3b3161] transition-colors shadow-lg">
+            className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl text-xl hover:bg-[#3b3161] transition-colors shadow-lg" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>
             ถัดไป
           </button>
+        </div>
         </div>
       </div>
 
@@ -260,12 +260,12 @@ const ProgrammingQuestionnaire = () => {
           <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
             <img src={jobResult.icon} alt={jobResult.title} className="w-24 h-24 object-contain" />
             <div className="text-center w-full">
-              <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>
-              <p className="text-xs text-gray-400 font-medium mb-3">ประเภทบุคลิกภาพการทำงานของคุณ</p>
-              <p className="text-2xl font-black text-[#4B3E7A] mb-3">{jobResult.title}</p>
-              <p className="text-gray-500 text-sm leading-relaxed mb-4">{jobResult.description}</p>
+              <h2 className="text-2xl text-[#1A2E44] mb-1" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif', textShadow: 'none' }}>เสร็จแล้ว!</h2>
+              <p className="text-xs text-gray-400 mb-3" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ประเภทบุคลิกภาพการทำงานของคุณ</p>
+              <p className="text-2xl text-[#4B3E7A] mb-3" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>{jobResult.title}</p>
+              <p className="text-gray-500 text-sm leading-relaxed mb-4" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>{jobResult.description}</p>
               <div className="text-left">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
+                <p className="text-xs text-gray-400 mb-2" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ตำแหน่งงานที่เหมาะสม</p>
                 <div className="flex flex-wrap gap-2">
                   {jobResult.jobs.map((job) => (
                     <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">
@@ -275,12 +275,12 @@ const ProgrammingQuestionnaire = () => {
                 </div>
               </div>
               <div className="text-left w-full mt-2">
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">คะแนนแต่ละประเภท</p>
+                <p className="text-xs text-gray-400 mb-3" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>คะแนนแต่ละประเภท</p>
                 <div className="flex flex-col gap-3">
                   {jobResult.typeScores.map((t) => (
                     <div key={t.title} className="flex items-center gap-3">
                       <img src={t.icon} alt={t.title} className="w-8 h-8 object-contain flex-shrink-0" />
-                      <span className="text-sm font-bold text-[#1A2E44] w-28 flex-shrink-0">{t.title}</span>
+                      <span className="text-sm text-[#1A2E44] w-28 flex-shrink-0" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>{t.title}</span>
                       <div className="flex-1 bg-gray-100 rounded-full h-2.5">
                         <div
                           className="bg-[#4B3E7A] h-2.5 rounded-full transition-all duration-500"

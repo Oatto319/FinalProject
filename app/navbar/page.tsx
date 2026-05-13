@@ -47,8 +47,8 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
             <img src={avatarUrl} alt="Profile" className="w-full h-full object-contain" />
           </div>
           <div className="text-left">
-            <p className="font-bold text-lg leading-tight" style={{ color: nameColor ?? '#1f2937' }}>{user.name}</p>
-            <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${
+            <p className="text-lg leading-tight" style={{ color: nameColor ?? '#1f2937' }}>{user.name}</p>
+            <span className={`text-sm px-2 py-0.5 rounded-full ${
               displaySubtitle === 'host'
                 ? 'bg-purple-100 text-purple-600'
                 : 'bg-orange-100 text-orange-500'
