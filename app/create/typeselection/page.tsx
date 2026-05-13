@@ -31,7 +31,11 @@ export default function TypeSelectionPage() {
     const room = raw ? JSON.parse(raw) : {};
     localStorage.setItem('pendingRoom', JSON.stringify({ ...room, matchMode: selected }));
 
-    router.push('/create/match');
+    if (selected === 'selection') {
+      router.push('/create/manual');
+    } else {
+      router.push('/create/match');
+    }
   };
 
   return (
