@@ -14,35 +14,37 @@ const ProgrammingQuestionnaire = () => {
     if (raw) setUser(JSON.parse(raw));
   }, []);
 
-  // ข้อมูลคำถาม MBTI-based
+  // คำถามวัดแนวโน้ม — ไม่มีคำตอบถูกผิด วัดเฉพาะว่าคุณถนัดแบบไหน
+  // ข้อ 1-10: เห็นด้วย → ชอบ logic/data/system  | ไม่เห็นด้วย → ชอบ people/empathy
+  // ข้อ 11-20: เห็นด้วย → ชอบ detail/concrete  | ไม่เห็นด้วย → ชอบ vision/abstract
   const questions = [
-    { id: 1,  text: 'ฉันชอบพูดคุยแลกเปลี่ยนไอเดียกับทีมมากกว่าคิดคนเดียว', dimension: 'EI' },
-    { id: 2,  text: 'ฉันให้ความสำคัญกับรายละเอียดการทำงานมากกว่าภาพรวมของโปรเจกต์', dimension: 'SN' },
-    { id: 3,  text: 'เมื่อตัดสินใจเรื่องฟีเจอร์ ฉันพิจารณาจากตรรกะและข้อมูลมากกว่าความรู้สึกของผู้ใช้', dimension: 'TF' },
-    { id: 4,  text: 'ฉันชอบวางแผนและกำหนดขั้นตอนก่อนลงมือทำงาน', dimension: 'JP' },
-    { id: 5,  text: 'ฉันชอบเป็นผู้นำและตัดสินใจมากกว่าปฏิบัติตามแผนที่วางไว้', dimension: 'EI_lead' },
-    { id: 6,  text: 'ฉันให้ความสำคัญกับประสบการณ์ผู้ใช้มากกว่าความเร็วและประสิทธิภาพของระบบ', dimension: 'TF_user' },
-    { id: 7,  text: 'ฉันชอบทดลองวิธีการใหม่ๆ มากกว่าใช้แนวทางที่เคยได้ผลมาแล้ว', dimension: 'SN2' },
-    { id: 8,  text: 'เมื่องานเปลี่ยนแปลงกะทันหัน ฉันปรับตัวได้ง่ายโดยไม่รู้สึกกดดัน', dimension: 'JP2' },
-    { id: 9,  text: 'หลังจากประชุมหรือทำงานร่วมกับหลายคน ฉันรู้สึกมีพลังงานมากขึ้น', dimension: 'EI2' },
-    { id: 10, text: 'ฉันสามารถให้ feedback ตรงๆ กับเพื่อนร่วมงานได้โดยไม่กังวลว่าเขาจะรู้สึกอย่างไร', dimension: 'TF2' },
-    { id: 11, text: 'ฉันชอบงานที่มีขั้นตอนชัดเจนและทำซ้ำได้ มากกว่างานที่ต้องคิดวิธีแก้ใหม่ทุกครั้ง', dimension: 'SN3' },
-    { id: 12, text: 'เมื่อทีมมีความเห็นต่าง ฉันโน้มน้าวด้วยข้อมูลและเหตุผลมากกว่าการสร้างความเข้าใจร่วมกัน', dimension: 'TF3' },
-    { id: 13, text: 'ฉันชอบทำงานให้เสร็จล่วงหน้ามากกว่ารอจนใกล้ deadline', dimension: 'JP3' },
-    { id: 14, text: 'ฉันชอบระดมความคิดร่วมกับทีมมากกว่านั่งคิดคนเดียวก่อนนำเสนอ', dimension: 'EI3' },
-    { id: 15, text: 'ฉันให้ความสำคัญกับ morale ของทีมมากกว่าการประเมินผลงานที่ตรงไปตรงมา', dimension: 'TF4' },
-    { id: 16, text: 'ฉันเชื่อมั่นในแนวทางที่พิสูจน์มาแล้วมากกว่าทดลองสิ่งใหม่ที่ยังไม่แน่ใจ', dimension: 'SN4' },
-    { id: 17, text: 'ฉันทำงานได้ดีแม้ไม่มีแผนชัดเจน และชอบปรับเปลี่ยนไปตามสถานการณ์', dimension: 'JP4' },
-    { id: 18, text: 'ฉันชอบทำงานในที่เงียบๆ คนเดียว มากกว่าทำงานในบรรยากาศที่มีคนรอบข้าง', dimension: 'EI4' },
-    { id: 19, text: 'เมื่อ code review ฉันให้ความสำคัญกับความถูกต้องและประสิทธิภาพมากกว่าความรู้สึกของเจ้าของ code', dimension: 'TF5' },
-    { id: 20, text: 'ฉันสนใจภาพรวมและทิศทางระยะยาวของโปรเจกต์มากกว่ารายละเอียดการใช้งานในปัจจุบัน', dimension: 'SN5' },
+    { id: 1,  text: 'ฉันสนุกกับการ debug โดยวิเคราะห์ logic เองมากกว่าการพูดคุยกับทีมเพื่อหาสาเหตุร่วมกัน' },
+    { id: 2,  text: 'ใน code review ฉันจะชี้ปัญหาตรงๆ แม้จะทำให้บรรยากาศอึดอัด มากกว่าเลือกพูดแบบกลมกล่อม' },
+    { id: 3,  text: 'ฉันรู้สึกว่า performance และ correctness ของระบบสำคัญกว่าความสุขของทีมในการทำงาน' },
+    { id: 4,  text: 'เมื่อต้องตัดสินใจทิศทาง project ฉันพึ่งข้อมูลและ metrics มากกว่าฟังความรู้สึกของ stakeholder' },
+    { id: 5,  text: 'ฉันสนุกกับการวิเคราะห์ tradeoff ทาง technical มากกว่าการทำความเข้าใจว่า user รู้สึกยังไงกับ product' },
+    { id: 6,  text: 'ฉันสนใจ optimize performance ของระบบมากกว่าดูแลความสัมพันธ์และบรรยากาศภายในทีม' },
+    { id: 7,  text: 'ฉันให้ความสำคัญกับ technical correctness มากกว่าความรู้สึกของเจ้าของ code เมื่อต้อง review งาน' },
+    { id: 8,  text: 'เมื่อทีมขัดแย้งกัน ฉันมักหาข้อมูลมาตัดสินว่าแนวทางไหนดีกว่า มากกว่าหาจุดที่ทุกคนยอมรับได้' },
+    { id: 9,  text: 'ฉันสนุกกับการ optimize algorithm มากกว่าการปรับปรุง developer experience ของ codebase' },
+    { id: 10, text: 'ฉันชอบออกแบบ system architecture ที่ซับซ้อนมากกว่าการช่วยให้ทีมทำงานร่วมกันได้ราบรื่น' },
+    { id: 11, text: 'ฉันชอบงานที่มี requirement ชัดเจนและวัดผลได้ มากกว่างานที่ต้องสร้าง vision ใหม่จากศูนย์' },
+    { id: 12, text: 'ฉันสนใจรายละเอียดของ implementation มากกว่าทิศทางระยะยาวของ product' },
+    { id: 13, text: 'ฉันชอบใช้ technology ที่ stable และพิสูจน์แล้ว มากกว่าทดลองสิ่งใหม่ที่ยังไม่ mature' },
+    { id: 14, text: 'ฉันชอบ maintain และปรับปรุงระบบที่มีอยู่ให้ดีขึ้น มากกว่าออกแบบ architecture ใหม่ทั้งหมด' },
+    { id: 15, text: 'ฉันให้ความสำคัญกับการเขียน test ให้ครอบคลุมมากกว่าการ prototype ไอเดียใหม่อย่างรวดเร็ว' },
+    { id: 16, text: 'ฉันชอบ project ที่มีขอบเขตและ scope ชัดเจน มากกว่า project ที่ scope เปลี่ยนแปลงได้ตลอด' },
+    { id: 17, text: 'ฉันสนใจว่าระบบทำงานยังไงในตอนนี้ มากกว่าจินตนาการว่ามันควรเป็นยังไงในอีก 3 ปีข้างหน้า' },
+    { id: 18, text: 'ฉันชอบ refine และ polish feature ที่มีอยู่ให้สมบูรณ์ มากกว่าเสนอ feature ใหม่ที่น่าตื่นเต้น' },
+    { id: 19, text: 'ฉันรู้สึกสนุกกับงาน QA หรือ testing มากกว่างาน brainstorm หรือ design thinking' },
+    { id: 20, text: 'ฉันชอบปรับปรุง process ที่มีอยู่ให้ดีขึ้น มากกว่าเสนอวิธีการทำงานแบบใหม่ทั้งหมด' },
   ];
 
   // เก็บสถานะการเลือกของแต่ละคำถาม (1-7)
   const [answers, setAnswers] = useState<Record<number, number>>({});
 
-  // --- เพิ่ม: state สำหรับ popup ---
-  const [showPopup, setShowPopup] = useState(false);
+  const [showPopup, setShowPopup]   = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [jobResult, setJobResult] = useState<{
     title: string;
     description: string;
@@ -55,70 +57,32 @@ const ProgrammingQuestionnaire = () => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
-  // --- เพิ่ม: กดถัดไป ตรวจสอบว่าตอบครบทุกข้อ ---
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const allAnswered = questions.every((q) => answers[q.id] !== undefined);
     if (!allAnswered) {
       alert('กรุณาตอบให้ครบทุกข้อก่อนนะครับ');
       return;
     }
 
-    // คำนวณ MBTI dimensions
-    // pole: agree(1-3)=+1, neutral(4)=0, disagree(5-7)=-1
-    const pole = (val: number) => val <= 3 ? 1 : val >= 5 ? -1 : 0;
-    // EI: Q1,Q5,Q9,Q14=agree→E  |  Q18=agree→I (reversed)
-    // SN: Q2,Q11,Q16=agree→S   |  Q7,Q20=agree→N (reversed)
-    // TF: Q3,Q10,Q12,Q19=agree→T  |  Q6,Q15=agree→F (reversed)
-    // JP: Q4,Q13=agree→J  |  Q8,Q17=agree→P (reversed)
-    const EI_score = pole(answers[1]) + pole(answers[5]) + pole(answers[9]) + pole(answers[14]) + (-1 * pole(answers[18]));
-    const SN_score = pole(answers[2]) + (-1 * pole(answers[7])) + pole(answers[11]) + pole(answers[16]) + (-1 * pole(answers[20]));
-    const TF_score = pole(answers[3]) + (-1 * pole(answers[6])) + pole(answers[10]) + pole(answers[12]) + (-1 * pole(answers[15])) + pole(answers[19]);
-    const JP_score = pole(answers[4]) + (-1 * pole(answers[8])) + pole(answers[13]) + (-1 * pole(answers[17]));
-
-    const T = TF_score >= 0, S = SN_score >= 0;
-
-    // คำนวณคะแนนแต่ละ type (0-5)
-    const T_comp = Math.max(0, TF_score);
-    const F_comp = Math.max(0, -TF_score);
-    const S_comp = Math.max(0, SN_score);
-    const N_comp = Math.max(0, -SN_score);
-    const typeScores = [
-      { title: 'นักวิเคราะห์',    icon: '/img/brain.png',  score: T_comp + N_comp },
-      { title: 'นักคิดสร้างสรรค์', icon: '/img/idea.png',   score: F_comp + N_comp },
-      { title: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png', score: T_comp + S_comp },
-      { title: 'นักประสานงาน',     icon: '/img/make.png',   score: F_comp + S_comp },
-    ];
-
-    let title: string, desc: string, jobs: string[];
-    let icon: string;
-    if (T && !S) {
-      // นักวิเคราะห์ (T + N)
-      title = 'นักวิเคราะห์';
-      desc = 'คุณคิดเชิงระบบ ชอบวิเคราะห์ปัญหาเชิงลึก และมองหาโซลูชันที่มีประสิทธิภาพสูงสุด มีความสามารถในการคิดเชิงนามธรรมและออกแบบระบบที่ซับซ้อนได้ดี';
-      jobs = ['Data Analyst', 'Data Engineer', 'Backend Developer', 'Software Architect', 'AI/ML Engineer', 'Security Engineer'];
-      icon = '/img/brain.png';
-    } else if (!T && !S) {
-      // นักคิดสร้างสรรค์ (F + N)
-      title = 'นักคิดสร้างสรรค์';
-      desc = 'คุณมีจินตนาการสูง ชอบคิดนอกกรอบ และสร้างสิ่งใหม่ที่มีความหมาย เข้าใจความต้องการของผู้ใช้และแปลงเป็นประสบการณ์ที่ดีได้อย่างเป็นธรรมชาติ';
-      jobs = ['UI/UX Designer', 'Frontend Developer', 'Product Manager', 'Product Designer', 'Creative Technologist'];
-      icon = '/img/idea.png';
-    } else if (T && S) {
-      // ผู้ปฏิบัติการ (T + S)
-      title = 'ผู้ปฏิบัติการ';
-      desc = 'คุณทำงานได้จริงจัง มีความแม่นยำสูง และพึ่งพาข้อเท็จจริงในการตัดสินใจ ชอบแก้ปัญหาที่จับต้องได้และเห็นผลลัพธ์ที่ชัดเจน เป็นคนที่ทีมวางใจได้';
-      jobs = ['DevOps Engineer', 'System Administrator', 'QA Engineer', 'Database Administrator', 'Infrastructure Engineer'];
-      icon = '/img/pencil.png';
-    } else {
-      // นักประสานงาน (F + S)
-      title = 'นักประสานงาน';
-      desc = 'คุณทำงานเป็นทีมได้ดีเยี่ยม เข้าใจความต้องการของผู้คน และสร้างบรรยากาศการทำงานที่ดี มีทักษะการสื่อสารและการประสานงานที่โดดเด่น';
-      jobs = ['Project Manager', 'Scrum Master', 'Business Analyst', 'Tech Lead', 'Customer Success Manager'];
-      icon = '/img/make.png';
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch('/api/analyze-type', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          answers,
+          questions: questions.map(({ id, text }) => ({ id, text })),
+        }),
+      });
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      setJobResult(data);
+      setShowPopup(true);
+    } catch {
+      alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsAnalyzing(false);
     }
-
-    setJobResult({ title, description: desc, jobs, icon, typeScores });
-    setShowPopup(true);
   };
 
   // --- เพิ่ม: ปิด popup แล้วกลับ templates ---
@@ -242,13 +206,21 @@ const ProgrammingQuestionnaire = () => {
           </div>
         ))}
 
-        {/* ปุ่มยืนยัน */}
         <div className="flex justify-center mt-8">
-          {/* --- แก้: เพิ่ม onClick ตรวจสอบและแสดง popup --- */}
           <button
             onClick={handleSubmit}
-            className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl text-xl hover:bg-[#3b3161] transition-colors shadow-lg" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>
-            ถัดไป
+            disabled={isAnalyzing}
+            className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl text-xl hover:bg-[#3b3161] transition-colors shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-3"
+            style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>
+            {isAnalyzing ? (
+              <>
+                <svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+                กำลังวิเคราะห์...
+              </>
+            ) : 'ถัดไป'}
           </button>
         </div>
         </div>
@@ -284,10 +256,10 @@ const ProgrammingQuestionnaire = () => {
                       <div className="flex-1 bg-gray-100 rounded-full h-2.5">
                         <div
                           className="bg-[#4B3E7A] h-2.5 rounded-full transition-all duration-500"
-                          style={{ width: `${(t.score / 11) * 100}%` }}
+                          style={{ width: `${t.score}%` }}
                         />
                       </div>
-                      <span className="text-sm font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}/11</span>
+                      <span className="text-sm font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}</span>
                     </div>
                   ))}
                 </div>
