@@ -32,7 +32,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1D324B] flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-[#1D324B] flex items-center justify-center p-4 font-sans" style={{ fontFamily: 'var(--font-geologica), sans-serif' }}>
       <div className="bg-white w-full max-w-[500px] rounded-[24px] overflow-hidden shadow-2xl flex flex-col items-center px-8 pb-8 pt-4 md:px-12 md:pb-12 md:pt-4">
         <div className="w-full flex justify-center -mt-24 mb-2">
           <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[420px] h-auto object-contain drop-shadow-lg"
