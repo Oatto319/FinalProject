@@ -11,8 +11,9 @@ const LABEL_TO_ID: Record<string, string> = {
   'design / creative': 'design',
 };
 
-// GET /api/rooms/:roomId/member-types?groupId=1   → types เฉพาะกลุ่มนั้น
-// GET /api/rooms/:roomId/member-types             → types ทุกคนในห้อง (host view)
+// GET /api/rooms/:roomId/member-types?groupId=1    → types เฉพาะกลุ่มนั้น
+// GET /api/rooms/:roomId/member-types              → types ทุกคนในห้อง (post-match)
+// GET /api/rooms/:roomId/member-types?source=members → types ทุกคนในห้อง (pre-match, waiting)
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
@@ -21,6 +22,7 @@ export async function GET(
   const { roomId } = await params;
   const { searchParams } = new URL(req.url);
   const groupIdParam = searchParams.get('groupId');
+  const source       = searchParams.get('source');
 
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ types: {} }, { status: 404 });
@@ -28,13 +30,19 @@ export async function GET(
   const rawTemplate = (room.template ?? 'programming').toLowerCase();
   const templateKey = LABEL_TO_ID[rawTemplate] ?? rawTemplate;
 
-  // ถ้าระบุ groupId → ดึงเฉพาะกลุ่มนั้น, ถ้าไม่ระบุ → ดึงทุกกลุ่มในห้อง
-  const allGroups: { members: { name: string; gmail?: string; role?: string }[] }[] =
-    groupIdParam !== null
-      ? (room.matchedGroups ?? []).filter((g: { id: number }) => g.id === parseInt(groupIdParam))
-      : (room.matchedGroups ?? []);
+  let allMembers: { name: string; gmail?: string; role?: string }[];
 
-  const allMembers = allGroups.flatMap((g) => g.members);
+  if (source === 'members') {
+    // Pre-match: read directly from room.members
+    allMembers = (room.members ?? []) as { name: string; gmail?: string; role?: string }[];
+  } else {
+    // Post-match: read from matchedGroups
+    const allGroups: { members: { name: string; gmail?: string; role?: string }[] }[] =
+      groupIdParam !== null
+        ? (room.matchedGroups ?? []).filter((g: { id: number }) => g.id === parseInt(groupIdParam))
+        : (room.matchedGroups ?? []);
+    allMembers = allGroups.flatMap((g) => g.members);
+  }
 
   const types: Record<string, { title: string; icon: string; description: string; jobs: string[] }> = {};
 

@@ -10,7 +10,15 @@ interface MBTIResult { title: string; icon: string; description: string; jobs: s
 
 
 const GROUP_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
-const ROLE_ICONS: Record<string, string> = { 'นักวิเคราะห์': '/img/brain.png', 'นักสร้างสรรค์': '/img/idea.png', 'ผู้ปฏิบัติ': '/img/pencil.png', 'ผู้ประสานงาน': '/img/make.png' };
+const ROLE_ICONS: Record<string, string> = {
+  'นักวิเคราะห์': '/img/brain.png',    'นักคิดสร้างสรรค์': '/img/idea.png',
+  'ผู้ปฏิบัติการ': '/img/pencil.png',  'นักประสานงาน': '/img/make.png',
+  'นักสื่อสาร': '/img/make.png',       'นักแก้ปัญหา': '/img/brain.png',
+  'ผู้ฟัง': '/img/idea.png',           'นักพูด': '/img/idea.png',
+  'นักวิจัย': '/img/brain.png',        'นักออกแบบ': '/img/pencil.png',
+  'ผู้ประสานงาน': '/img/make.png',     'นักสร้างสรรค์': '/img/idea.png',
+  'ผู้ปฏิบัติ': '/img/pencil.png',
+};
 const TEMPLATE_COLORS: Record<string, string> = { programming: '#FFAAAA', service: '#71EFB8', presentation: '#EAFF48', design: '#8C71EF' };
 
 const GroupResultPage = () => {
@@ -18,6 +26,7 @@ const GroupResultPage = () => {
   const [selectedReq, setSelectedReq]         = useState<{id:number;name:string} | null>(null);
   const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostAvatarSeed?: number; hostRole?: string; members?: {name:string}[] } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
+  const [isManualRoom, setIsManualRoom]        = useState(false);
   const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
 
@@ -37,11 +46,16 @@ const GroupResultPage = () => {
       setGroups(data.room.matchedGroups);
       setRoom({ ...r, ...data.room });
 
-      // ดึง MBTI types ของทุกคนในห้องผ่าน endpoint เดียวกับ myteam
-      const typesRes = await fetch(`/api/rooms/${roomId}/member-types`);
-      if (typesRes.ok) {
-        const typesData = await typesRes.json();
-        setMemberTypeOverrides(typesData.types ?? {});
+      const manual = data.room.matchMode === 'selection';
+      setIsManualRoom(manual);
+
+      // manual mode ใช้ member.role โดยตรง ไม่ต้อง fetch MBTI types
+      if (!manual) {
+        const typesRes = await fetch(`/api/rooms/${roomId}/member-types`);
+        if (typesRes.ok) {
+          const typesData = await typesRes.json();
+          setMemberTypeOverrides(typesData.types ?? {});
+        }
       }
     };
     load();
@@ -102,8 +116,7 @@ const GroupResultPage = () => {
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
                     const typeOverride = memberTypeOverrides[member.name];
-                    const roleTitle = typeOverride?.title ?? (member.role !== 'ไม่ระบุ' ? member.role : undefined);
-                    const roleIcon  = typeOverride?.icon ?? (roleTitle ? ROLE_ICONS[roleTitle] ?? null : null);
+                    const assignedRole = member.role && member.role !== 'ไม่ระบุ' ? member.role : undefined;
                     const isLeader  = group.leaderId === member.name;
                     return (
                       <div key={mIdx} className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border-2 border-transparent hover:border-yellow-400 transition-all">
@@ -117,15 +130,19 @@ const GroupResultPage = () => {
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {isLeader && <div className="w-16 h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
-                          {typeOverride ? (
+                          {isManualRoom ? (
+                            assignedRole && ROLE_ICONS[assignedRole] ? (
+                              <button
+                                onClick={() => setMbtiPopup({ name: member.name, type: { title: assignedRole, icon: ROLE_ICONS[assignedRole], description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
+                                className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
+                                <img src={ROLE_ICONS[assignedRole]} alt={assignedRole} className="w-full h-full object-contain" />
+                              </button>
+                            ) : <div className="w-12 h-12 rounded-full bg-gray-100" />
+                          ) : typeOverride ? (
                             <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
                               className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
                               <img src={typeOverride.icon} alt={typeOverride.title} className="w-full h-full object-contain" />
                             </button>
-                          ) : roleIcon ? (
-                            <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
-                              <img src={roleIcon} alt={roleTitle ?? ''} className="w-8 h-8 object-contain opacity-60" />
-                            </div>
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-gray-100" />
                           )}

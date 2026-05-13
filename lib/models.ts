@@ -42,6 +42,7 @@ const RoomSchema = new Schema({
   members:        { type: [RoomMemberSchema], default: [] },
   readyUsers:     { type: [String], default: [] },
   matchDone:      { type: Boolean, default: false },
+  matchMode:      { type: String, default: 'auto' },
   matchedGroups:  { type: [MatchedGroupSchema], default: [] },
   votes:          { type: Schema.Types.Mixed, default: {} },
 }, { timestamps: true });

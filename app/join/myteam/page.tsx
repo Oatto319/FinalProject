@@ -26,6 +26,7 @@ export default function MyTeamPage() {
   const [memberRoles, setMemberRoles] = useState<Record<string, string>>({});
 const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
   const [roomDeleted, setRoomDeleted] = useState(false);
+  const [isManualRoom, setIsManualRoom]   = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName]     = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
@@ -52,18 +53,27 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     const room = data.room;
     setIsMatched(!!room.matchDone);
     setTeamMembers(room.members ?? []);
+    const isManual = room.matchMode === 'selection';
+    setIsManualRoom(isManual);
     if (room.matchedGroups?.length) {
       const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => (userGmail && m.gmail === userGmail) || m.name === userName));
       if (mine) {
         setMyGroup(mine);
         groupIdRef.current = mine.id;
 
-        if (!memberTypesFetchedRef.current) {
-          memberTypesFetchedRef.current = true;
-          const currentUserRaw = localStorage.getItem('currentUser');
-          const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
+        const currentUserRaw = localStorage.getItem('currentUser');
+        const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
 
-          // ดึง type ของทุกคนในกลุ่มด้วย 1 API call (server query)
+        // manual mode ใช้ member.role โดยตรง ไม่ต้อง fetch memberTypes จาก API
+        if (!isManual && !memberTypesFetchedRef.current) {
+          memberTypesFetchedRef.current = true;
+
+          const roles: Record<string, string> = {};
+          if (currentUserLocal?.name && currentUserLocal?.role) {
+            roles[currentUserLocal.name] = currentUserLocal.role;
+          }
+          setMemberRoles(roles);
+
           const typesRes = await fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`);
           const types: Record<string, MBTIResult> = typesRes.ok ? (await typesRes.json()).types ?? {} : {};
 
@@ -85,14 +95,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
             }
           }
 
-          const roles: Record<string, string> = {};
-          if (currentUserLocal?.name && currentUserLocal?.role) {
-            roles[currentUserLocal.name] = currentUserLocal.role;
-          }
-
-          setMemberRoles(roles);
           setMemberTypes(types);
-          // retry ถ้ายังได้ type ไม่ครบ (บางคนอาจยังไม่ได้ทำแบบทดสอบ)
           if (Object.keys(types).length < mine.members.length) {
             memberTypesFetchedRef.current = false;
           }
@@ -291,7 +294,16 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               </div>
                             </div>
                           )}
-                          {mbtiType ? (
+                          {isManualRoom ? (
+                            member.role && member.role !== 'ไม่ระบุ' ? (
+                              <button
+                                onClick={() => setPopup({ member, type: { title: member.role!, icon: roleIcons[member.role!] ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
+                                className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
+                              >
+                                <img src={roleIcons[member.role!] ?? '/img/brain.png'} alt={member.role} className="w-full h-full object-contain" />
+                              </button>
+                            ) : <div className="w-16 h-16 rounded-full bg-gray-100" />
+                          ) : mbtiType ? (
                             <button onClick={() => setPopup({ member, type: mbtiType })} className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
                               <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
                             </button>
@@ -423,7 +435,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
               <div className="flex items-center gap-3">
                 <img src={popup.type.icon} alt={popup.type.title} className="w-24 h-24 object-contain" />
                 <div>
-                  <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพ</p>
+                  <p className="text-xs text-gray-400 font-medium">{isManualRoom ? 'บทบาทในทีม' : 'ประเภทบุคลิกภาพ'}</p>
                   <p className="text-xl font-black text-[#4B3E7A]">{popup.type.title}</p>
                   <p className="text-sm text-gray-500 font-medium">{popup.member.name}</p>
                 </div>

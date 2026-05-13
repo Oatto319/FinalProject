@@ -28,24 +28,25 @@ const MatchingPage = () => {
 
       const template = (room.template ?? 'programming').toLowerCase();
 
-      // ดึง MBTI type ของแต่ละ member จาก MongoDB
+      // ดึง MBTI type + typeScores ของแต่ละ member จาก MongoDB
       const memberTypeMap: Record<string, string> = {};
+      const memberScoreMap: Record<string, Record<string, number>> = {};
       await Promise.all(
         members.map(async (m) => {
           try {
-            // ถ้าไม่มี gmail ให้ fallback ค้นหาด้วย name แทน
             const url = m.gmail
               ? `/api/users?gmail=${encodeURIComponent(m.gmail)}`
               : `/api/users?name=${encodeURIComponent(m.name)}`;
             const res = await fetch(url);
             const data = await res.json();
             const types: Record<string, { title?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
-            let typeTitle = types[template]?.title;
-            if (!typeTitle) {
-              const fallback = Object.values(types).find((t) => t?.title);
-              typeTitle = fallback?.title;
-            }
-            if (typeTitle) memberTypeMap[m.name] = typeTitle;
+            let typeData = types[template];
+            if (!typeData) typeData = Object.values(types).find((t) => t?.title);
+            if (typeData?.title) memberTypeMap[m.name] = typeData.title;
+            // เก็บ typeScores สำหรับ secondary matching
+            const scores: Record<string, number> = {};
+            (typeData?.typeScores ?? []).forEach((ts) => { scores[ts.title] = ts.score; });
+            memberScoreMap[m.name] = scores;
           } catch { /* ไม่มี type */ }
         })
       );
@@ -71,27 +72,67 @@ const MatchingPage = () => {
         for (let i = 0; i < maxLen; i++) typeArrays.forEach((arr) => { if (arr[i]) interleaved.push(arr[i]); });
         interleaved.forEach((m, idx) => { groups[idx % numGroups].members.push(m); });
       } else {
-        const byType: Record<string, (typeof members[0] & { role: string })[]> = {};
-        members.forEach((m) => {
-          const t = getMemberTypeLocal(m.name);
-          if (!byType[t]) byType[t] = [];
-          byType[t].push({ ...m, role: t });
-        });
-        for (let g = 0; g < numGroups; g++) {
-          Object.entries(typeComposition).forEach(([typeKey, count]) => {
-            const pool = byType[typeKey] ?? [];
-            for (let c = 0; c < count && pool.length > 0; c++) groups[g].members.push(pool.shift()!);
+        // ── Manual / selection mode ──────────────────────────────────────
+
+        // หา member ในกลุ่ม unassigned ที่มี secondary score สูงสุดสำหรับ typeKey
+        const findBestSecondary = (
+          pool: (typeof members[0] & { role: string })[],
+          typeKey: string
+        ): number => {
+          let bestIdx = -1, bestScore = -Infinity;
+          pool.forEach((m, i) => {
+            const score = memberScoreMap[m.name]?.[typeKey] ?? 0;
+            if (score > bestScore) { bestScore = score; bestIdx = i; }
           });
+          return bestIdx;
+        };
+
+        const hasComposition = Object.values(typeComposition).some((v) => v > 0);
+
+        if (hasComposition) {
+          // pool ที่ยังไม่ถูก assign
+          const unassigned: (typeof members[0] & { role: string })[] =
+            members.map((m) => ({ ...m, role: getMemberTypeLocal(m.name) }));
+
+          for (let g = 0; g < numGroups; g++) {
+            for (const [typeKey, count] of Object.entries(typeComposition)) {
+              if (!count) continue;
+              for (let c = 0; c < count && unassigned.length > 0; c++) {
+                // Phase 1: หา member ที่มี primary type ตรงกับ typeKey
+                let idx = unassigned.findIndex((m) => getMemberTypeLocal(m.name) === typeKey);
+                // Phase 2: ถ้าไม่มี primary → หาคนที่มี secondary score สูงสุดสำหรับ typeKey
+                if (idx === -1) idx = findBestSecondary(unassigned, typeKey);
+                if (idx === -1) break;
+                const [member] = unassigned.splice(idx, 1);
+                // กำหนด role ตาม slot ที่ถูก assign (ไม่ใช่ primary type เดิม)
+                groups[g].members.push({ ...member, role: typeKey });
+              }
+            }
+          }
+
+          // member ที่เหลือ → กลุ่มที่เล็กที่สุด (ใช้ primary type เดิม)
+          for (const m of unassigned) {
+            const smallest = groups.reduce((a, b) => (a.members.length <= b.members.length ? a : b));
+            smallest.members.push(m);
+          }
+        } else {
+          // ไม่ได้ตั้ง composition → interleave ตาม type
+          const byType: Record<string, (typeof members[0] & { role: string })[]> = {};
+          for (const m of members) {
+            const t = getMemberTypeLocal(m.name);
+            if (!byType[t]) byType[t] = [];
+            byType[t].push({ ...m, role: t });
+          }
+          const typeArrays = Object.values(byType);
+          const interleaved: (typeof members[0] & { role: string })[] = [];
+          const maxLen = Math.max(...typeArrays.map((a) => a.length), 0);
+          for (let i = 0; i < maxLen; i++) typeArrays.forEach((arr) => { if (arr[i]) interleaved.push(arr[i]); });
+          interleaved.forEach((m, idx) => { groups[idx % numGroups].members.push(m); });
         }
-        const assigned = new Set(groups.flatMap((g) => g.members.map((m) => m.name)));
-        members.filter((m) => !assigned.has(m.name)).forEach((m) => {
-          const smallest = groups.reduce((a, b) => a.members.length <= b.members.length ? a : b);
-          smallest.members.push({ ...m, role: getMemberTypeLocal(m.name) });
-        });
       }
 
       // บันทึกผลลัพธ์ไปยัง MongoDB
-      const matchPayload = JSON.stringify({ matchedGroups: groups, matchDone: true });
+      const matchPayload = JSON.stringify({ matchedGroups: groups, matchDone: true, matchMode: pending.matchMode ?? 'auto' });
       let saveRes = await fetch(`/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
