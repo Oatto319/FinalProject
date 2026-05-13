@@ -62,10 +62,20 @@ const App = () => {
           {/* My Type Button */}
           <div
             onClick={() => router.push('/mytype')}
-            className="bg-[#7ECECA] rounded-[20px] h-64 cursor-pointer shadow-[0_8px_0_0_#4AABAB] hover:shadow-[0_4px_0_0_#4AABAB] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex items-center justify-center gap-6 p-8"
+            className="bg-white rounded-[20px] h-64 cursor-pointer shadow-[0_8px_0_0_#d1d5db] hover:shadow-[0_4px_0_0_#d1d5db] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all relative flex items-center justify-center overflow-hidden"
           >
-            <h1 className="text-5xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(74,171,171,0.5)]">My Type</h1>
-            <img src="/img/brain.png" alt="My Type" className="h-48 w-auto object-contain drop-shadow-lg" />
+            {/* วงกลมสีเขียวมิ้นกลาง */}
+            <div className="w-52 h-52 bg-[#7ECECA] rounded-full flex items-center justify-center z-10">
+              <h1 className="text-4xl text-[#2B6B6B] tracking-tight">MY TYPE</h1>
+            </div>
+            {/* Brain - บนซ้าย ใหญ่ เอียงซ้าย */}
+            <img src="/img/brain.png" alt="brain" className="absolute top-4 left-10 w-28 h-28 object-contain z-20 -rotate-[30deg]" />
+            {/* Idea - บนขวา ใหญ่ เอียงขวา */}
+            <img src="/img/idea.png" alt="idea" className="absolute top-8 right-14 w-20 h-20 object-contain z-20 rotate-[30deg]" />
+            {/* Pencil - ล่างซ้าย กลาง เอียงขวา */}
+            <img src="/img/pencil.png" alt="pencil" className="absolute bottom-4 left-28 w-14 h-14 object-contain z-20 rotate-[20deg]" />
+            {/* Gear - ล่างขวา เล็ก */}
+            <img src="/img/make.png" alt="make" className="absolute bottom-6 right-32 w-10 h-10 object-contain z-20 -rotate-6" />
           </div>
 
           {/* Quiz Button */}
