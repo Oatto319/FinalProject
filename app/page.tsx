@@ -20,7 +20,7 @@ const App = () => {
   if (!ready) return null;
 
   return (
-    <div className="min-h-screen bg-gray-300 font-sans flex flex-col">
+    <div className="min-h-screen bg-[#E8E8E8] font-sans flex flex-col">
       <Navbar />
 
       <main className="px-4 py-4 flex justify-center">
