@@ -13,11 +13,22 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ room
   return NextResponse.json({ messages });
 }
 
+const MAX_MSG_LENGTH = 2000;
+
 // POST /api/rooms/:roomId/messages → send message (body must include groupId)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   await connectDB();
   const { roomId } = await params;
-  const body = await req.json();
-  const msg = await Message.create({ ...body, roomId });
+  const { groupId, sender, text, time, avatarSeed } = await req.json();
+
+  if (!sender || !text || groupId === undefined) {
+    return NextResponse.json({ error: 'sender, text, groupId required' }, { status: 400 });
+  }
+  if (typeof text !== 'string' || text.trim().length === 0) {
+    return NextResponse.json({ error: 'text must be non-empty string' }, { status: 400 });
+  }
+  const safeText = text.slice(0, MAX_MSG_LENGTH);
+
+  const msg = await Message.create({ roomId, groupId, sender, text: safeText, time: time ?? new Date().toISOString(), avatarSeed: avatarSeed ?? 0 });
   return NextResponse.json({ message: msg.toObject() }, { status: 201 });
 }

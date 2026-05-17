@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/mongodb';
 import { User, Room } from '@/lib/models';
 
-// GET /api/users?gmail=xxx&password=xxx  → login
-// GET /api/users?gmail=xxx              → check duplicate
-// GET /api/users?name=xxx               → lookup by name (fallback)
+function safeUser(u: Record<string, unknown>) {
+  const obj = { ...u };
+  delete obj.password;
+  return obj;
+}
+
+// GET /api/users?gmail=xxx  → check duplicate / lookup
+// GET /api/users?name=xxx   → lookup by name (fallback)
+// POST /api/users/login     → login (password check moved to POST)
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
-  const gmail    = searchParams.get('gmail')?.toLowerCase();
-  const password = searchParams.get('password');
-  const name     = searchParams.get('name');
+  const gmail = searchParams.get('gmail')?.toLowerCase();
+  const name  = searchParams.get('name');
 
   if (!gmail && !name) return NextResponse.json({ error: 'gmail or name required' }, { status: 400 });
 
@@ -19,24 +25,48 @@ export async function GET(req: NextRequest) {
     : await User.findOne({ name });
   if (!user) return NextResponse.json({ user: null });
 
-  if (password !== undefined) {
-    if (user.password !== password) return NextResponse.json({ user: null });
-  }
-
-  return NextResponse.json({ user: user.toObject() });
+  return NextResponse.json({ user: safeUser(user.toObject()) });
 }
 
 // POST /api/users → register
+// POST /api/users (body: {action:'login', gmail, password}) → login
 export async function POST(req: NextRequest) {
   await connectDB();
   const body = await req.json();
-  const { name, gender, gmail, password, avatarSeed, role } = body;
+
+  if (body.action === 'login') {
+    const { gmail, password } = body;
+    if (!gmail || !password) return NextResponse.json({ user: null }, { status: 400 });
+    const user = await User.findOne({ gmail: gmail.toLowerCase() });
+    if (!user) return NextResponse.json({ user: null });
+
+    const isHashed = user.password.startsWith('$2b$') || user.password.startsWith('$2a$');
+    let passwordOk: boolean;
+    if (isHashed) {
+      passwordOk = await bcrypt.compare(password, user.password);
+    } else {
+      // graceful migration: บัญชีเก่าที่ยังเป็น plaintext
+      passwordOk = user.password === password;
+      if (passwordOk) {
+        // อัปเกรดเป็น hash โดยอัตโนมัติเมื่อ login สำเร็จ
+        const hashed = await bcrypt.hash(password, 10);
+        await User.updateOne({ gmail: user.gmail }, { $set: { password: hashed } });
+      }
+    }
+
+    if (!passwordOk) return NextResponse.json({ user: null });
+    return NextResponse.json({ user: safeUser(user.toObject()) });
+  }
+
+  const { name, gender, gmail, password, avatarSeed } = body;
+  if (!name || !gmail || !password) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 });
 
   const existing = await User.findOne({ gmail: gmail.toLowerCase() });
   if (existing) return NextResponse.json({ error: 'Gmail นี้ถูกใช้งานแล้ว' }, { status: 409 });
 
-  const user = await User.create({ name, gender, gmail: gmail.toLowerCase(), password, avatarSeed: avatarSeed ?? 1, role: role ?? 'user' });
-  return NextResponse.json({ user: user.toObject() }, { status: 201 });
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await User.create({ name, gender, gmail: gmail.toLowerCase(), password: hashedPassword, avatarSeed: avatarSeed ?? 1, role: 'user' });
+  return NextResponse.json({ user: safeUser(user.toObject()) }, { status: 201 });
 }
 
 // PATCH /api/users → update profile
@@ -50,9 +80,14 @@ export async function PATCH(req: NextRequest) {
   const oldUser = await User.findOne({ gmail: lowerGmail });
   if (!oldUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
+  // Blacklist: ห้าม override password, gmail — อนุญาต role เฉพาะค่า valid
+  const { password: _pw, gmail: _g, role: rawRole, ...safeUpdates } = updates;
+  if (rawRole !== undefined) {
+    if (rawRole === 'user' || rawRole === 'host') safeUpdates.role = rawRole;
+  }
   const user = await User.findOneAndUpdate(
     { gmail: lowerGmail },
-    { $set: updates },
+    { $set: safeUpdates },
     { new: true }
   );
 
@@ -98,5 +133,5 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  return NextResponse.json({ user: user!.toObject() });
+  return NextResponse.json({ user: safeUser(user!.toObject()) });
 }

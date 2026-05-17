@@ -47,23 +47,40 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ roo
 }
 
 // PATCH /api/rooms/:roomId → update room (members, readyUsers, matchDone, matchedGroups)
+const ALLOWED_ROOM_PATCH_FIELDS = new Set([
+  'members', 'readyUsers', 'matchDone', 'matchedGroups',
+  'votes', 'matchMode', 'title', 'description',
+]);
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   await connectDB();
   const { roomId } = await params;
   const body = await req.json();
+
+  const patch: Record<string, unknown> = {};
+  for (const key of Object.keys(body)) {
+    if (ALLOWED_ROOM_PATCH_FIELDS.has(key)) patch[key] = body[key];
+  }
+  if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
+
   const room = await Room.findOneAndUpdate(
     { roomId },
-    { $set: body },
+    { $set: patch },
     { new: true }
   );
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
   return NextResponse.json({ room: room.toObject() });
 }
 
-// DELETE /api/rooms/:roomId → delete room
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
+// DELETE /api/rooms/:roomId → delete room (ต้องส่ง hostName มายืนยันความเป็นเจ้าของ)
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   await connectDB();
   const { roomId } = await params;
+  const { hostName } = await req.json().catch(() => ({})) as { hostName?: string };
+  if (!hostName) return NextResponse.json({ error: 'hostName required' }, { status: 400 });
+  const room = await Room.findOne({ roomId });
+  if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+  if (room.hostName !== hostName) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   await Room.deleteOne({ roomId });
   return NextResponse.json({ ok: true });
 }

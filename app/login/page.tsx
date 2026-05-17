@@ -19,7 +19,11 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/users?gmail=${encodeURIComponent(gmail.trim())}&password=${encodeURIComponent(password)}`);
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', gmail: gmail.trim(), password }),
+      });
       const data = await res.json();
       if (!data.user) { setError('Gmail หรือรหัสผ่านไม่ถูกต้อง'); return; }
       localStorage.setItem('currentUser', JSON.stringify(data.user));

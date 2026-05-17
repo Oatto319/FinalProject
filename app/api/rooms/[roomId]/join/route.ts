@@ -11,7 +11,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
 
-  const alreadyIn = room.members.some((m: { name: string }) => m.name === member.name);
+  // ใช้ gmail เป็น unique identifier ถ้ามี ไม่อย่างนั้นใช้ name
+  const alreadyIn = member.gmail
+    ? room.members.some((m: { gmail?: string }) => m.gmail && m.gmail === member.gmail)
+    : room.members.some((m: { name: string }) => m.name === member.name);
   if (!alreadyIn) {
     room.members.push(member);
     await room.save();

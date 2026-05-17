@@ -49,7 +49,11 @@ export async function connectDB() {
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 0,
     connectTimeoutMS: 10000,
-  }).then((m) => m);
+  }).then((m) => m).catch((err) => {
+    // reset ให้ request ถัดไป retry ได้
+    cached.promise = null;
+    throw err;
+  });
 
   cached.conn = await cached.promise;
   return cached.conn;

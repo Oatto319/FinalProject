@@ -40,7 +40,7 @@ const MatchingPage = () => {
             const res = await fetch(url);
             const data = await res.json();
             const types: Record<string, { title?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
-            let typeData = types[template];
+            let typeData: { title?: string; typeScores?: { title: string; score: number }[] } | undefined = types[template];
             if (!typeData) typeData = Object.values(types).find((t) => t?.title);
             if (typeData?.title) memberTypeMap[m.name] = typeData.title;
             // เก็บ typeScores สำหรับ secondary matching
