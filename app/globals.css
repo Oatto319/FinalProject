@@ -30,6 +30,11 @@ body {
   to   { opacity: 1; }
 }
 
+@keyframes circleReveal {
+  from { clip-path: circle(0% at var(--ox) var(--oy)); }
+  to   { clip-path: circle(150% at var(--ox) var(--oy)); }
+}
+
 h1, h2, h3, h4 {
   font-family: var(--font-luckiest-guy), Arial, Helvetica, sans-serif;
   letter-spacing: 0.05em;

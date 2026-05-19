@@ -4,10 +4,31 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from './navbar/page';
 
+type RevealState = {
+  x: number; y: number;
+  color: string; textColor: string;
+  label: string; route: string;
+};
+
+const SCATTERED_TEXT = [
+  { top: '6%',  left: '4%',  fontSize: '7rem',  rotate: '-18deg', opacity: 0.18 },
+  { top: '3%',  left: '55%', fontSize: '3.5rem', rotate: '12deg',  opacity: 0.14 },
+  { top: '8%',  left: '78%', fontSize: '5.5rem', rotate: '-8deg',  opacity: 0.20 },
+  { top: '28%', left: '2%',  fontSize: '3rem',   rotate: '22deg',  opacity: 0.13 },
+  { top: '32%', left: '60%', fontSize: '8rem',   rotate: '-14deg', opacity: 0.16 },
+  { top: '48%', left: '18%', fontSize: '5rem',   rotate: '10deg',  opacity: 0.18 },
+  { top: '52%', left: '75%', fontSize: '3.5rem', rotate: '-20deg', opacity: 0.14 },
+  { top: '65%', left: '5%',  fontSize: '6rem',   rotate: '16deg',  opacity: 0.20 },
+  { top: '68%', left: '48%', fontSize: '4rem',   rotate: '-6deg',  opacity: 0.15 },
+  { top: '80%', left: '22%', fontSize: '9rem',   rotate: '-12deg', opacity: 0.17 },
+  { top: '82%', left: '72%', fontSize: '4.5rem', rotate: '18deg',  opacity: 0.13 },
+  { top: '90%', left: '50%', fontSize: '3rem',   rotate: '-25deg', opacity: 0.15 },
+];
+
 const App = () => {
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [reveal, setReveal] = useState<{ x: number; y: number; color: string; route: string } | null>(null);
+  const [reveal, setReveal] = useState<RevealState | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -18,15 +39,15 @@ const App = () => {
     }
   }, [router]);
 
-  const handleReveal = (e: React.MouseEvent, color: string, route: string) => {
-    setReveal({ x: e.clientX, y: e.clientY, color, route });
+  const handleReveal = (e: React.MouseEvent, color: string, textColor: string, label: string, route: string) => {
+    setReveal({ x: e.clientX, y: e.clientY, color, textColor, label, route });
   };
 
   useEffect(() => {
     if (!reveal) return;
     const timer = setTimeout(() => {
       router.push(reveal.route);
-    }, 600);
+    }, 700);
     return () => clearTimeout(timer);
   }, [reveal, router]);
 
@@ -51,9 +72,34 @@ const App = () => {
               backgroundColor: reveal.color,
               ['--ox' as string]: `${reveal.x}px`,
               ['--oy' as string]: `${reveal.y}px`,
-              animation: 'circleReveal 0.6s cubic-bezier(0.4,0,0.2,1) forwards',
+              animation: 'circleReveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards',
+              overflow: 'hidden',
             }}
-          />
+          >
+            {SCATTERED_TEXT.map((s, i) => (
+              <span
+                key={i}
+                style={{
+                  position: 'absolute',
+                  top: s.top,
+                  left: s.left,
+                  fontSize: s.fontSize,
+                  transform: `rotate(${s.rotate})`,
+                  opacity: s.opacity,
+                  color: reveal.textColor,
+                  fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.03em',
+                  whiteSpace: 'nowrap',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
+                }}
+              >
+                {reveal.label}
+              </span>
+            ))}
+          </div>
         )}
 
         <Navbar />
@@ -66,7 +112,7 @@ const App = () => {
             {/* Create Button (Yellow) */}
             <button
               className="h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
-              onClick={(e) => handleReveal(e, '#FFDB10', '/templates?mode=create')}
+              onClick={(e) => handleReveal(e, '#FFDB10', '#A88200', 'Create', '/templates?mode=create')}
             >
               <h1 className="text-5xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)]">Create</h1>
               <p className="text-[#A88200] font-bold text-sm not-italic tracking-normal" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>สร้างห้อง</p>
@@ -75,7 +121,7 @@ const App = () => {
             {/* Join Button (Blue) */}
             <button
               className="h-36 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
-              onClick={(e) => handleReveal(e, '#74D1FF', '/join/roomid')}
+              onClick={(e) => handleReveal(e, '#74D1FF', '#2D85A0', 'Join', '/join/roomid')}
             >
               <h1 className="text-5xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)]">Join</h1>
               <p className="text-[#2D85A0] font-bold text-sm not-italic tracking-normal" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เข้าร่วมด้วยรหัส</p>
@@ -84,7 +130,7 @@ const App = () => {
             {/* Team Button (Purple) */}
             <button
               className="h-36 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
-              onClick={(e) => handleReveal(e, '#7F5CFF', '/join/myprojects')}
+              onClick={(e) => handleReveal(e, '#7F5CFF', '#4D34B8', 'Team', '/join/myprojects')}
             >
               <h1 className="text-5xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)]">Team</h1>
               <p className="text-[#4D34B8] font-bold text-sm not-italic tracking-normal" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ทีมของฉัน</p>
