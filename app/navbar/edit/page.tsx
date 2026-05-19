@@ -101,7 +101,7 @@ export default function EditProfilePage() {
             </button>
           </div>
 
-          <p className="text-lg font-bold text-gray-800">{name || user.name}</p>
+          <p className="text-lg text-gray-800">{name || user.name}</p>
 
           <button
             onClick={handleSave} disabled={loading}

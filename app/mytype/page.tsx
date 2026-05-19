@@ -67,7 +67,7 @@ const MyTypePage = () => {
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
 
-      <div className="flex-1 bg-white rounded-[24px] shadow-xl overflow-hidden flex flex-col relative border-b-8 border-gray-300">
+      <div className="flex-1 bg-white rounded-[24px] overflow-hidden flex flex-col relative border-b-8 border-gray-300">
 
         {/* Content Grid */}
         <div className="p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6">
