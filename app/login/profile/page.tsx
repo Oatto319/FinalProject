@@ -87,7 +87,7 @@ function ProfilePageInner() {
           ))}
         </div>
         <div className="flex justify-between items-center mt-12">
-          <button onClick={() => router.back()} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+          <button onClick={() => router.back()} className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95">
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
           <button onClick={handleConfirm} disabled={loading}
