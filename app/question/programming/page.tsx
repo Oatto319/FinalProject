@@ -135,7 +135,7 @@ const ProgrammingQuestionnaire = () => {
       <div className="w-full max-w-5xl flex items-start gap-4 mt-4 px-4 md:px-0">
         <button
           onClick={() => router.back()}
-          className="flex-shrink-0 mt-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+          className="flex-shrink-0 mt-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
