@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     }
 
     const rooms = await Room.find({ $or: orConditions })
-      .select('roomId title description totalMembers groupSize template hostName hostAvatarSeed members matchDone createdAt')
+      .select('roomId title description totalMembers groupSize template hostName hostAvatarSeed members matchDone matchMode createdAt')
       .sort({ createdAt: -1 });
     return NextResponse.json({ rooms: rooms.map((r) => r.toObject()) });
   } catch (err) {

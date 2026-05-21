@@ -42,12 +42,11 @@ const GroupResultPage = () => {
       const res = await fetch(`/api/rooms/${roomId}`);
       if (!res.ok) return;
       const data = await res.json();
-      if (!data.room?.matchedGroups) return;
-      setGroups(data.room.matchedGroups);
-      setRoom({ ...r, ...data.room });
-
+      if (!data.room) return;
       const manual = data.room.matchMode === 'selection';
       setIsManualRoom(manual);
+      setRoom({ ...r, ...data.room });
+      if (data.room.matchedGroups?.length) setGroups(data.room.matchedGroups);
 
       // manual mode ใช้ member.role โดยตรง ไม่ต้อง fetch MBTI types
       if (!manual) {

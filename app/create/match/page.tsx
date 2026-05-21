@@ -30,6 +30,7 @@ const MatchPage = () => {
     if (data.room) {
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
+      if (data.room.matchMode) setMatchMode(data.room.matchMode);
     }
   };
 
@@ -37,12 +38,14 @@ const MatchPage = () => {
     const raw = localStorage.getItem('currentUser');
     if (raw) setUser(JSON.parse(raw));
     const pendingRaw = localStorage.getItem('pendingRoom');
-    if (pendingRaw) setMatchMode(JSON.parse(pendingRaw).matchMode ?? '');
+    const pendingMode = pendingRaw ? (JSON.parse(pendingRaw).matchMode ?? '') : '';
 
     const roomRaw = localStorage.getItem('currentRoom');
     if (roomRaw) {
       const r: CurrentRoom = JSON.parse(roomRaw);
       setRoom(r);
+      const roomMode = (r as { matchMode?: string }).matchMode ?? '';
+      setMatchMode(roomMode || pendingMode);
       fetchRoom(getRoomId(r));
     }
   }, []);
