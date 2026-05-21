@@ -9,7 +9,7 @@ interface RoomData {
   roomId: string; title: string; description: string; totalMembers: number;
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number;
   hostRole?: string; members: { name: string; avatarSeed: number; gmail: string }[];
-  matchDone?: boolean; createdAt?: string;
+  matchDone?: boolean; matchMode?: string; createdAt?: string;
 }
 
 const TEMPLATE_COLORS: Record<string, string> = {
@@ -59,7 +59,13 @@ export default function MyProjectsPage() {
     localStorage.setItem('currentRoom', JSON.stringify({ ...room, id: room.roomId }));
     const isHost = room.hostName === user?.name;
     if (isHost) {
-      router.push(room.matchDone ? '/create/group' : '/create/match');
+      if (room.matchDone) {
+        router.push('/create/group');
+      } else if (room.matchMode === 'selection') {
+        router.push('/create/manual');
+      } else {
+        router.push('/create/match');
+      }
     } else {
       router.push(room.matchDone ? '/join/myteam' : '/join/myroom');
     }

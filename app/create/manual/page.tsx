@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Copy, Settings, Plus, X } from 'lucide-react';
+import { Copy, Settings, Plus, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface RoomMember { name: string; avatarSeed: number; gmail: string; }
@@ -157,7 +157,16 @@ const ManualPage = () => {
       <Navbar />
       <div className="w-full max-w-6xl px-4 mt-4 pb-12">
         <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
-          <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/')}
+              className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95"
+              title="กลับหน้าหลัก"
+            >
+              <Home size={18} />
+            </button>
+            <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
+          </div>
           <div className="flex items-center gap-3">
             <button
               onClick={handleCopy}
