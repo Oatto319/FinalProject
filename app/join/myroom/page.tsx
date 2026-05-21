@@ -40,6 +40,7 @@ export default function MyRoomPage() {
       }
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
+      if (data.room.matchMode) setMatchMode(data.room.matchMode);
     }
   };
 

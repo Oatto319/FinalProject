@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Copy } from 'lucide-react';
+import { Copy, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 interface RoomMember { name: string; avatarSeed: number; gmail: string; }
@@ -30,7 +30,15 @@ const MatchPage = () => {
     if (data.room) {
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
-      if (data.room.matchMode) setMatchMode(data.room.matchMode);
+      // ใช้ DB matchMode เฉพาะเมื่อเป็นค่าที่ไม่ใช่ default ('auto')
+      // หรือเมื่อ localStorage ไม่มีค่า — ป้องกัน default DB override ค่า localStorage
+      const pendingRaw = localStorage.getItem('pendingRoom');
+      const localMode = pendingRaw ? (JSON.parse(pendingRaw).matchMode ?? '') : '';
+      if (data.room.matchMode && data.room.matchMode !== 'auto') {
+        setMatchMode(data.room.matchMode);
+      } else if (!localMode && data.room.matchMode) {
+        setMatchMode(data.room.matchMode);
+      }
     }
   };
 
@@ -58,7 +66,8 @@ const MatchPage = () => {
 
   const readyCount   = readyUsers.length;
   const totalMembers = room?.totalMembers ?? members.length;
-  const isAllReady   = members.length > 0 && readyCount >= members.length;
+  const isFull       = members.length >= totalMembers && totalMembers > 0;
+  const isAllReady   = isFull && readyCount >= members.length && members.length > 0;
 
   const handleCopy = () => {
     if (!room) return;
@@ -72,7 +81,16 @@ const MatchPage = () => {
       <Navbar />
       <div className="w-full max-w-6xl px-4 mt-4 pb-12">
         <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
-          <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/')}
+              className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95"
+              title="กลับหน้าหลัก"
+            >
+              <Home size={18} />
+            </button>
+            <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
+          </div>
           <button
             onClick={handleCopy}
             className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white text-[#4B3E7A] hover:bg-white/90"
@@ -148,7 +166,18 @@ const MatchPage = () => {
             </div>
 
             <div className="flex-1 flex flex-col justify-end">
-              {!isAllReady ? (
+              {!isFull ? (
+                <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
+                  <div className="flex-[3] flex flex-col items-center justify-center gap-1 px-4">
+                    <span className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase opacity-30 select-none">WAITING</span>
+                    <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">รอคนเข้าห้องให้ครบ</span>
+                  </div>
+                  <div className="flex-[2] bg-gray-400 flex flex-col items-center justify-center text-white">
+                    <span className="text-6xl font-black leading-none">{members.length}/{totalMembers}</span>
+                    <span className="text-xs font-bold uppercase mt-2 tracking-widest opacity-80">คน</span>
+                  </div>
+                </div>
+              ) : !isAllReady ? (
                 <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
                   <div className="flex-[3] flex items-center justify-center">
                     <span className="text-[#4B3E7A] text-6xl font-black italic tracking-tighter uppercase opacity-30 select-none">READY</span>

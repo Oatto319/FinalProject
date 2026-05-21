@@ -63,6 +63,13 @@ const ManualPage = () => {
     if (data.room) {
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
+      const pendingRaw2 = localStorage.getItem('pendingRoom');
+      const localMode2 = pendingRaw2 ? (JSON.parse(pendingRaw2).matchMode ?? '') : '';
+      if (data.room.matchMode && data.room.matchMode !== 'auto') {
+        setMatchMode(data.room.matchMode);
+      } else if (!localMode2 && data.room.matchMode) {
+        setMatchMode(data.room.matchMode);
+      }
     }
     if (isHost) {
       const typesRes = await fetch(`/api/rooms/${roomId}/member-types?source=members`);
@@ -107,7 +114,8 @@ const ManualPage = () => {
 
   const readyCount   = readyUsers.length;
   const totalMembers = room?.totalMembers ?? members.length;
-  const isAllReady   = members.length > 0 && readyCount >= members.length;
+  const isFull       = members.length >= totalMembers && totalMembers > 0;
+  const isAllReady   = isFull && readyCount >= members.length && members.length > 0;
 
   const tsTotal     = Object.values(tsCounts).reduce((a, b) => a + b, 0);
   const tsGroupSize = room?.groupSize ?? 4;
@@ -240,7 +248,18 @@ const ManualPage = () => {
             </div>
 
             <div className="flex-1 flex flex-col justify-end">
-              {!isAllReady ? (
+              {!isFull ? (
+                <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
+                  <div className="flex-[3] flex flex-col items-center justify-center gap-1 px-4">
+                    <span className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase opacity-30 select-none">WAITING</span>
+                    <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">รอคนเข้าห้องให้ครบ</span>
+                  </div>
+                  <div className="flex-[2] bg-gray-400 flex flex-col items-center justify-center text-white">
+                    <span className="text-6xl font-black leading-none">{members.length}/{totalMembers}</span>
+                    <span className="text-xs font-bold uppercase mt-2 tracking-widest opacity-80">คน</span>
+                  </div>
+                </div>
+              ) : !isAllReady ? (
                 <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
                   <div className="flex-[3] flex items-center justify-center">
                     <span className="text-[#4B3E7A] text-6xl font-black italic tracking-tighter uppercase opacity-30 select-none">READY</span>

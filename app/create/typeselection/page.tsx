@@ -25,11 +25,25 @@ export default function TypeSelectionPage() {
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selected) return;
+
+    // บันทึกลง localStorage
     const raw = localStorage.getItem('pendingRoom');
     const room = raw ? JSON.parse(raw) : {};
     localStorage.setItem('pendingRoom', JSON.stringify({ ...room, matchMode: selected }));
+
+    // บันทึกลง DB ด้วย เพื่อให้ทุกหน้าอ่านได้ถูกต้อง
+    const roomRaw = localStorage.getItem('currentRoom');
+    if (roomRaw) {
+      const currentRoom = JSON.parse(roomRaw);
+      const roomId = currentRoom.roomId ?? currentRoom.id;
+      await fetch(`/api/rooms/${roomId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ matchMode: selected }),
+      });
+    }
 
     if (selected === 'selection') {
       router.push('/create/manual');
