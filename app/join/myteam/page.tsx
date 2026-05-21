@@ -64,8 +64,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
         const currentUserRaw = localStorage.getItem('currentUser');
         const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
 
-        // manual mode ใช้ member.role โดยตรง ไม่ต้อง fetch memberTypes จาก API
-        if (!isManual && !memberTypesFetchedRef.current) {
+        if (!memberTypesFetchedRef.current) {
           memberTypesFetchedRef.current = true;
 
           const roles: Record<string, string> = {};
@@ -294,18 +293,16 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               </div>
                             </div>
                           )}
-                          {isManualRoom ? (
-                            member.role && member.role !== 'ไม่ระบุ' ? (
-                              <button
-                                onClick={() => setPopup({ member, type: { title: member.role!, icon: roleIcons[member.role!] ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                                className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
-                              >
-                                <img src={roleIcons[member.role!] ?? '/img/brain.png'} alt={member.role} className="w-full h-full object-contain" />
-                              </button>
-                            ) : <div className="w-16 h-16 rounded-full bg-gray-100" />
-                          ) : mbtiType ? (
+                          {mbtiType ? (
                             <button onClick={() => setPopup({ member, type: mbtiType })} className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
                               <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
+                            </button>
+                          ) : isManualRoom && member.role && member.role !== 'ไม่ระบุ' ? (
+                            <button
+                              onClick={() => setPopup({ member, type: { title: member.role!, icon: roleIcons[member.role!] ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
+                              className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
+                            >
+                              <img src={roleIcons[member.role!] ?? '/img/brain.png'} alt={member.role} className="w-full h-full object-contain" />
                             </button>
                           ) : (
                             <div className="w-16 h-16 rounded-full bg-gray-100" />
