@@ -263,7 +263,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {showRole && (
+                              {!isManualRoom && showRole && (
                                 <div className="flex items-center gap-1">
                                   {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
                                   <p className="text-xs text-gray-500 font-medium">{member.role}</p>
