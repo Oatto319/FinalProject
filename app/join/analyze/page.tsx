@@ -54,7 +54,7 @@ export default function AnalyzePage() {
       let members: RoomMember[] = [];
       if (dbRoom.matchedGroups?.length) {
         const mine: MatchedGroup = dbRoom.matchedGroups.find(
-          (g: MatchedGroup) => g.members.some((m) => m.name === currentUser.name)
+          (g: MatchedGroup) => g.members.some((m) => (currentUser.gmail && m.gmail === currentUser.gmail) || m.name === currentUser.name)
         );
         if (mine) {
           members = mine.members;
@@ -69,10 +69,6 @@ export default function AnalyzePage() {
           }
         }
       }
-      if (members.length === 0) {
-        members = dbRoom.members ?? [];
-      }
-
       const withScores = members.map((m: RoomMember) => ({
         name: m.name,
         avatarSeed: m.avatarSeed,
@@ -84,8 +80,9 @@ export default function AnalyzePage() {
 
     load();
 
-    const timer = setTimeout(() => setIsAnalyzing(false), 2500);
-    return () => clearTimeout(timer);
+    const interval = setInterval(load, 2000);
+    const timer = setTimeout(() => { setIsAnalyzing(false); clearInterval(interval); }, 2500);
+    return () => { clearTimeout(timer); clearInterval(interval); };
   }, []);
 
   const bestFitIdx = teamMembers.reduce(

@@ -25,7 +25,7 @@ export default function VotePage() {
   const router = useRouter();
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [myGroup, setMyGroup] = useState<MatchedGroup | null>(null);
-  const [user, setUser] = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [user, setUser] = useState<{ name: string; avatarSeed: number; gmail?: string } | null>(null);
   const [voted, setVoted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [groupVotes, setGroupVotes] = useState<Record<string, string>>({});
@@ -34,7 +34,7 @@ export default function VotePage() {
   const roomIdRef = useRef<string>('');
   const typesFetchedRef = useRef(false);
 
-  const fetchGroup = async (roomId: string, userName: string) => {
+  const fetchGroup = async (roomId: string, userName: string, userGmail?: string) => {
     const res = await fetch(`/api/rooms/${roomId}`);
     if (!res.ok) return;
     const data = await res.json();
@@ -42,7 +42,7 @@ export default function VotePage() {
     const room = data.room;
     if (room.matchedGroups?.length) {
       const mine: MatchedGroup = room.matchedGroups.find(
-        (g: MatchedGroup) => g.members.some((m) => m.name === userName)
+        (g: MatchedGroup) => g.members.some((m) => (userGmail && m.gmail === userGmail) || m.name === userName)
       );
       if (mine) {
         setMyGroup(mine);
@@ -74,8 +74,8 @@ export default function VotePage() {
     const roomId = room.roomId ?? room.id;
     roomIdRef.current = roomId;
 
-    fetchGroup(roomId, currentUser.name);
-    const interval = setInterval(() => fetchGroup(roomId, currentUser.name), 2000);
+    fetchGroup(roomId, currentUser.name, currentUser.gmail);
+    const interval = setInterval(() => fetchGroup(roomId, currentUser.name, currentUser.gmail), 2000);
     return () => clearInterval(interval);
   }, []);
 
