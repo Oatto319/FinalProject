@@ -66,7 +66,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
   const room = await Room.findOneAndUpdate(
     { roomId },
     { $set: patch },
-    { new: true }
+    { returnDocument: 'after' }
   );
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
   return NextResponse.json({ room: room.toObject() });

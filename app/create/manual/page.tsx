@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Copy, Settings, Plus, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
@@ -53,6 +53,7 @@ const ManualPage = () => {
   const [tsCounts, setTsCounts]   = useState<Record<string, number>>({});
   const [tsWarning, setTsWarning] = useState('');
   const [memberTypes, setMemberTypes] = useState<Record<string, { title: string; icon: string }>>({});
+  const lastMemberCountRef = useRef(-1);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -61,7 +62,8 @@ const ManualPage = () => {
     if (!res.ok) return;
     const data = await res.json();
     if (data.room) {
-      setMembers(data.room.members ?? []);
+      const newMembers: RoomMember[] = data.room.members ?? [];
+      setMembers(newMembers);
       setReadyUsers(data.room.readyUsers ?? []);
       const pendingRaw2 = localStorage.getItem('pendingRoom');
       const localMode2 = pendingRaw2 ? (JSON.parse(pendingRaw2).matchMode ?? '') : '';
@@ -70,12 +72,14 @@ const ManualPage = () => {
       } else if (!localMode2 && data.room.matchMode) {
         setMatchMode(data.room.matchMode);
       }
-    }
-    if (isHost) {
-      const typesRes = await fetch(`/api/rooms/${roomId}/member-types?source=members`);
-      if (typesRes.ok) {
-        const typesData = await typesRes.json();
-        setMemberTypes(typesData.types ?? {});
+      // Fetch member-types only when member count changes
+      if (isHost && newMembers.length !== lastMemberCountRef.current) {
+        lastMemberCountRef.current = newMembers.length;
+        const typesRes = await fetch(`/api/rooms/${roomId}/member-types?source=members`);
+        if (typesRes.ok) {
+          const typesData = await typesRes.json();
+          setMemberTypes(typesData.types ?? {});
+        }
       }
     }
   };

@@ -88,7 +88,7 @@ export async function PATCH(req: NextRequest) {
   const user = await User.findOneAndUpdate(
     { gmail: lowerGmail },
     { $set: safeUpdates },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (updates.name && updates.name !== oldUser.name) {

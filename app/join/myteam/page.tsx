@@ -152,7 +152,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   }, [isLoadingMessages]);
 
   const handleSend = async () => {
-    if (!message.trim() || !user || !roomIdRef.current) return;
+    if (!message.trim() || !user || !roomIdRef.current || groupIdRef.current === null) return;
     const now = new Date();
     const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
     const optimistic: ChatMessage = { id: Date.now().toString(), sender: user.name, text: message.trim(), time, avatarSeed: user.avatarSeed };

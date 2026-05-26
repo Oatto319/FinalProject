@@ -31,6 +31,7 @@ export default function VotePage() {
   const [groupVotes, setGroupVotes] = useState<Record<string, string>>({});
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
+  const [voteError, setVoteError] = useState('');
   const roomIdRef = useRef<string>('');
   const typesFetchedRef = useRef(false);
 
@@ -82,6 +83,7 @@ export default function VotePage() {
   const handleVote = async () => {
     if (!selectedMember || !myGroup || !user || !roomIdRef.current || submitting) return;
     setSubmitting(true);
+    setVoteError('');
     try {
       // Load current votes from DB
       const res = await fetch(`/api/rooms/${roomIdRef.current}`);
@@ -122,6 +124,7 @@ export default function VotePage() {
       if (!patchRes.ok) {
         const err = await patchRes.json().catch(() => ({}));
         console.error('Vote save failed:', err);
+        setVoteError('บันทึกโหวตไม่สำเร็จ กรุณาลองใหม่');
         return;
       }
 
@@ -275,6 +278,9 @@ export default function VotePage() {
                 );
               })()}
 
+              {voteError && (
+                <p className="mt-3 text-red-500 text-sm font-bold">{voteError}</p>
+              )}
               <p className="mt-6 text-gray-500 text-sm font-bold italic opacity-60">
                 * เลือกสมาชิกหนึ่งคนเพื่อโหวตเป็นหัวหน้ากลุ่ม
               </p>

@@ -46,11 +46,12 @@ export default function MyProjectsPage() {
     if (!deleteTarget) return;
     if (deleteInput !== deleteTarget.title) { setDeleteError('ชื่อห้องไม่ตรง กรุณาพิมพ์ใหม่'); return; }
 
-    await fetch(`/api/rooms/${deleteTarget.roomId}`, {
+    const res = await fetch(`/api/rooms/${deleteTarget.roomId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hostName: user?.name }),
     });
+    if (!res.ok) { setDeleteError('เกิดข้อผิดพลาด ไม่สามารถลบห้องได้ กรุณาลองใหม่'); return; }
     setJoinedRooms((prev) => prev.filter((r) => r.roomId !== deleteTarget.roomId));
     setDeleteTarget(null); setDeleteInput(''); setDeleteError('');
   };

@@ -25,7 +25,7 @@ export default function MyRoomPage() {
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
-  const fetchRoom = async (roomId: string) => {
+  const fetchRoom = async (roomId: string, checkReadyFor?: string) => {
     const res = await fetch(`/api/rooms/${roomId}`);
     if (!res.ok) {
       setRoomDeleted(true);
@@ -41,6 +41,9 @@ export default function MyRoomPage() {
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
       if (data.room.matchMode) setMatchMode(data.room.matchMode);
+      if (checkReadyFor) {
+        setIsReady((data.room.readyUsers ?? []).includes(checkReadyFor));
+      }
     }
   };
 
@@ -55,23 +58,17 @@ export default function MyRoomPage() {
     if (roomRaw) {
       const r: CurrentRoom = JSON.parse(roomRaw);
       setRoom(r);
-      fetchRoom(getRoomId(r)).then(() => {
-        // เช็ค ready status ของ user จาก server
-        const userRaw = localStorage.getItem('currentUser');
-        if (!userRaw) return;
-        const u = JSON.parse(userRaw);
-        fetch(`/api/rooms/${getRoomId(r)}`)
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.room) setIsReady((data.room.readyUsers ?? []).includes(u.name));
-          });
-      });
+      const u = JSON.parse(localStorage.getItem('currentUser') ?? '{}');
+      fetchRoom(getRoomId(r), u.name);
     }
   }, []);
 
   useEffect(() => {
     if (!room) return;
-    const interval = setInterval(() => fetchRoom(getRoomId(room)), 2000);
+    const interval = setInterval(() => {
+      const u = JSON.parse(localStorage.getItem('currentUser') ?? '{}');
+      fetchRoom(getRoomId(room), u.name);
+    }, 2000);
     return () => clearInterval(interval);
   }, [room]);
 

@@ -30,28 +30,41 @@ async function resolveMongoSRV(uri: string): Promise<string> {
   return `mongodb://${username}:${password}@${hosts}/${dbname}?ssl=true&${txtOptions}&retryWrites=true&w=majority`;
 }
 
-let cached = (global as any).mongoose as { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+  resolvedUri: string | null;
+}
+
+let cached = (global as any).mongoose as MongooseCache;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null, resolvedUri: null };
 }
 
 export async function connectDB() {
+  // Already connected
   if (cached.conn && mongoose.connection.readyState === 1) return cached.conn;
 
-  cached.conn = null;
-  cached.promise = null;
+  // Connection in-flight — wait instead of creating duplicate
+  if (cached.promise) {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  }
 
-  const uri = await resolveMongoSRV(MONGODB_URI);
+  // Resolve SRV once per process lifetime (not every request)
+  if (!cached.resolvedUri) {
+    cached.resolvedUri = await resolveMongoSRV(MONGODB_URI);
+  }
 
-  cached.promise = mongoose.connect(uri, {
+  cached.promise = mongoose.connect(cached.resolvedUri, {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 0,
     connectTimeoutMS: 10000,
   }).then((m) => m).catch((err) => {
-    // reset ให้ request ถัดไป retry ได้
     cached.promise = null;
+    cached.resolvedUri = null;
     throw err;
   });
 

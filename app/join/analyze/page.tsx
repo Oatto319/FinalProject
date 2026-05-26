@@ -73,7 +73,7 @@ export default function AnalyzePage() {
         name: m.name,
         avatarSeed: m.avatarSeed,
         role: m.role,
-        score: 75 + (m.avatarSeed % 25),
+        score: 75 + ((m.avatarSeed ?? 1) % 25),
       }));
       setTeamMembers(withScores);
     };
