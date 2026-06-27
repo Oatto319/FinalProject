@@ -92,7 +92,7 @@ function ProfilePageInner() {
           </button>
           <button onClick={handleConfirm} disabled={loading}
             className={`px-12 py-4 rounded-[20px] font-bold text-xl transition-all ${loading ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]' : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}`}>
-            {loading ? 'กำลังบันทึก...' : 'Confirm'}
+            {loading ? 'กำลังบันทึกผล...' : 'Confirm'}
           </button>
         </div>
       </div>
