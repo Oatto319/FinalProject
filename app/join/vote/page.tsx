@@ -85,41 +85,10 @@ export default function VotePage() {
     setSubmitting(true);
     setVoteError('');
     try {
-      // Load current votes from DB
-      const res = await fetch(`/api/rooms/${roomIdRef.current}`);
-      if (!res.ok) return;
-      const data = await res.json();
-      const room = data.room;
-
-      const groupKey = String(myGroup.id);
-      const existingVotes: Record<string, string> = room.votes?.[groupKey] ?? {};
-      const updatedVotes = { ...existingVotes, [user.name]: selectedMember };
-
-      // Count winner (guard against empty tally)
-      const tally: Record<string, number> = {};
-      Object.values(updatedVotes).forEach((name) => {
-        tally[name] = (tally[name] ?? 0) + 1;
-      });
-      const entries = Object.entries(tally);
-      const winner = entries.length > 0
-        ? entries.reduce((a, b) => b[1] >= a[1] ? b : a)[0]
-        : selectedMember;
-
-      // Update matchedGroups with leaderId
-      const updatedGroups = (room.matchedGroups ?? []).map((g: MatchedGroup) => {
-        if (g.id !== myGroup.id) return g;
-        return { ...g, leaderId: winner };
-      });
-
-      const newVotes = { ...(room.votes ?? {}), [groupKey]: updatedVotes };
-
       const patchRes = await fetch(`/api/rooms/${roomIdRef.current}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          votes: newVotes,
-          matchedGroups: updatedGroups,
-        }),
+        body: JSON.stringify({ action: 'vote', groupId: myGroup.id, targetName: selectedMember }),
       });
       if (!patchRes.ok) {
         const err = await patchRes.json().catch(() => ({}));

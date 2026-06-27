@@ -1,24 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Room } from '@/lib/models';
+import { getSessionUser } from '@/lib/auth';
 
-// POST /api/rooms/:roomId/join → add member to room
+// POST /api/rooms/:roomId/join → add the session user to the room (atomic, capacity-checked)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   await connectDB();
-  const { roomId } = await params;
-  const member = await req.json(); // { name, avatarSeed, gmail }
+  const sessionUser = await getSessionUser(req);
+  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const { roomId } = await params;
+  const member = { name: sessionUser.name, avatarSeed: sessionUser.avatarSeed, gmail: sessionUser.gmail };
+
+  const joined = await Room.findOneAndUpdate(
+    {
+      roomId,
+      'members.gmail': { $ne: member.gmail },
+      $expr: { $lt: [{ $size: '$members' }, '$totalMembers'] },
+    },
+    { $push: { members: member } },
+    { new: true }
+  );
+
+  if (joined) return NextResponse.json({ room: joined.toObject() });
+
+  // Either room doesn't exist, already joined, or full — figure out which.
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
 
-  // ใช้ gmail เป็น unique identifier ถ้ามี ไม่อย่างนั้นใช้ name
-  const alreadyIn = member.gmail
-    ? room.members.some((m: { gmail?: string }) => m.gmail && m.gmail === member.gmail)
-    : room.members.some((m: { name: string }) => m.name === member.name);
-  if (!alreadyIn) {
-    room.members.push(member);
-    await room.save();
-  }
+  const alreadyIn = room.members.some((m: { gmail?: string }) => m.gmail === member.gmail);
+  if (alreadyIn) return NextResponse.json({ room: room.toObject() });
 
-  return NextResponse.json({ room: room.toObject() });
+  return NextResponse.json({ error: 'ห้องเต็มแล้ว' }, { status: 409 });
 }

@@ -34,12 +34,9 @@ export default function JoinCheckPage() {
     if (!user || !room) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/rooms/${room.roomId}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: user.name, avatarSeed: user.avatarSeed, gmail: user.gmail ?? '' }),
-      });
+      const res = await fetch(`/api/rooms/${room.roomId}/join`, { method: 'POST' });
       const data = await res.json();
+      if (!res.ok) { alert(data.error ?? 'เข้าร่วมห้องไม่สำเร็จ'); return; }
       const updatedRoom = data.room ?? room;
       // เก็บ currentRoom ไว้ navigate (ใช้ id เพื่อความเข้ากันได้)
       localStorage.setItem('currentRoom', JSON.stringify({ ...updatedRoom, id: updatedRoom.roomId }));

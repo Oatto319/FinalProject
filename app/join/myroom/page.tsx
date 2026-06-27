@@ -80,7 +80,7 @@ export default function MyRoomPage() {
       const res = await fetch(`/api/rooms/${getRoomId(room)}/ready`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userName: user.name, isReady: newStatus }),
+        body: JSON.stringify({ isReady: newStatus }),
       });
       const data = await res.json();
       setReadyUsers(data.readyUsers ?? []);

@@ -2,16 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/mongodb';
 import { User, Room } from '@/lib/models';
+import { createSessionToken, getSessionUser, SESSION_COOKIE } from '@/lib/auth';
 
 function safeUser(u: Record<string, unknown>) {
   const obj = { ...u };
   delete obj.password;
+  delete obj.sessionToken;
   return obj;
+}
+
+function setSessionCookie(res: NextResponse, token: string) {
+  res.cookies.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 30,
+  });
 }
 
 // GET /api/users?gmail=xxx  → check duplicate / lookup
 // GET /api/users?name=xxx   → lookup by name (fallback)
-// POST /api/users/login     → login (password check moved to POST)
 export async function GET(req: NextRequest) {
   await connectDB();
   const { searchParams } = new URL(req.url);
@@ -55,7 +66,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!passwordOk) return NextResponse.json({ user: null });
-    return NextResponse.json({ user: safeUser(user.toObject()) });
+
+    const token = createSessionToken();
+    await User.updateOne({ _id: user._id }, { $set: { sessionToken: token } });
+
+    const res = NextResponse.json({ user: safeUser(user.toObject()) });
+    setSessionCookie(res, token);
+    return res;
   }
 
   const { name, gender, gmail, password, avatarSeed } = body;
@@ -65,23 +82,29 @@ export async function POST(req: NextRequest) {
   if (existing) return NextResponse.json({ error: 'Gmail นี้ถูกใช้งานแล้ว' }, { status: 409 });
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, gender, gmail: gmail.toLowerCase(), password: hashedPassword, avatarSeed: avatarSeed ?? 1, role: 'user' });
-  return NextResponse.json({ user: safeUser(user.toObject()) }, { status: 201 });
+  const token = createSessionToken();
+  const user = await User.create({
+    name, gender, gmail: gmail.toLowerCase(), password: hashedPassword,
+    avatarSeed: avatarSeed ?? 1, role: 'user', sessionToken: token,
+  });
+
+  const res = NextResponse.json({ user: safeUser(user.toObject()) }, { status: 201 });
+  setSessionCookie(res, token);
+  return res;
 }
 
-// PATCH /api/users → update profile
+// PATCH /api/users → update own profile (target user comes from the session, never from the body)
 export async function PATCH(req: NextRequest) {
   await connectDB();
+  const sessionUser = await getSessionUser(req);
+  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const body = await req.json();
-  const { gmail, ...updates } = body;
-  if (!gmail) return NextResponse.json({ error: 'gmail required' }, { status: 400 });
+  const lowerGmail = sessionUser.gmail;
+  const oldName: string = sessionUser.name;
 
-  const lowerGmail = gmail.toLowerCase();
-  const oldUser = await User.findOne({ gmail: lowerGmail });
-  if (!oldUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-
-  // Blacklist: ห้าม override password, gmail — อนุญาต role เฉพาะค่า valid
-  const { password: _pw, gmail: _g, role: rawRole, ...safeUpdates } = updates;
+  // Blacklist: ห้าม override password, gmail, sessionToken — อนุญาต role เฉพาะค่า valid
+  const { password: _pw, gmail: _g, sessionToken: _st, role: rawRole, ...safeUpdates } = body;
   if (rawRole !== undefined) {
     if (rawRole === 'user' || rawRole === 'host') safeUpdates.role = rawRole;
   }
@@ -91,9 +114,8 @@ export async function PATCH(req: NextRequest) {
     { returnDocument: 'after' }
   );
 
-  if (updates.name && updates.name !== oldUser.name) {
-    const oldName: string = oldUser.name;
-    const newName: string = updates.name;
+  if (body.name && body.name !== oldName) {
+    const newName: string = body.name;
 
     // Update member name inside room member arrays
     await Room.updateMany(

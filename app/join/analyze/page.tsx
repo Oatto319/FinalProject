@@ -26,7 +26,6 @@ export default function AnalyzePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; score: number; role?: string }[]>([]);
   const [roomIdState, setRoomIdState] = useState('');
-  const [matchedGroups, setMatchedGroups] = useState<MatchedGroup[]>([]);
   const [myGroupId, setMyGroupId] = useState<number | null>(null);
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
@@ -48,8 +47,6 @@ export default function AnalyzePage() {
       const data = await res.json();
       if (!data.room) return;
       const dbRoom = data.room;
-
-      setMatchedGroups(dbRoom.matchedGroups ?? []);
 
       let members: RoomMember[] = [];
       if (dbRoom.matchedGroups?.length) {
@@ -93,17 +90,12 @@ export default function AnalyzePage() {
   const handleConfirm = async () => {
     if (isAnalyzing) return;
     const leader = teamMembers[bestFitIdx];
-    if (!leader || !roomIdState) return;
-
-    const updatedGroups = matchedGroups.map((g) => {
-      if (g.id !== myGroupId) return g;
-      return { ...g, leaderId: leader.name };
-    });
+    if (!leader || !roomIdState || myGroupId === null) return;
 
     await fetch(`/api/rooms/${roomIdState}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matchedGroups: updatedGroups }),
+      body: JSON.stringify({ action: 'setLeader', groupId: myGroupId, leaderName: leader.name }),
     });
 
     router.push('/join/myteam');

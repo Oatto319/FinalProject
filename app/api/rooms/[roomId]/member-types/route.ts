@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Room, User } from '@/lib/models';
+import { getSessionUser, isRoomHost, isRoomMember } from '@/lib/auth';
 
 const LABEL_TO_ID: Record<string, string> = {
   'programming': 'programming',
@@ -19,6 +20,9 @@ export async function GET(
   { params }: { params: Promise<{ roomId: string }> }
 ) {
   await connectDB();
+  const sessionUser = await getSessionUser(req);
+  if (!sessionUser) return NextResponse.json({ types: {} }, { status: 401 });
+
   const { roomId } = await params;
   const { searchParams } = new URL(req.url);
   const groupIdParam = searchParams.get('groupId');
@@ -26,6 +30,11 @@ export async function GET(
 
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ types: {} }, { status: 404 });
+
+  const caller = { gmail: sessionUser.gmail, name: sessionUser.name };
+  if (!isRoomHost(caller, room) && !isRoomMember(caller, room)) {
+    return NextResponse.json({ types: {} }, { status: 403 });
+  }
 
   const rawTemplate = (room.template ?? 'programming').toLowerCase();
   const templateKey = LABEL_TO_ID[rawTemplate] ?? rawTemplate;

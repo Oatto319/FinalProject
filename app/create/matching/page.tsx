@@ -132,7 +132,7 @@ const MatchingPage = () => {
       }
 
       // บันทึกผลลัพธ์ไปยัง MongoDB
-      const matchPayload = JSON.stringify({ matchedGroups: groups, matchDone: true, matchMode: pending.matchMode ?? 'auto' });
+      const matchPayload = JSON.stringify({ action: 'match', matchedGroups: groups, matchMode: pending.matchMode ?? 'auto' });
       let saveRes = await fetch(`/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

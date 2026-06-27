@@ -9,6 +9,7 @@ const UserSchema = new Schema({
   avatarSeed: { type: Number, default: 1 },
   role:       { type: String, default: 'user' },
   types:      { type: Schema.Types.Mixed, default: {} },
+  sessionToken: { type: String, default: null, index: true },
 }, { timestamps: true });
 
 UserSchema.index({ name: 1 });
@@ -38,6 +39,7 @@ const RoomSchema = new Schema({
   groupSize:      { type: Number, required: true },
   template:       { type: String, default: 'PROGRAMMING' },
   hostName:       { type: String, required: true },
+  hostGmail:      { type: String, default: '' },
   hostAvatarSeed: { type: Number, default: 0 },
   members:        { type: [RoomMemberSchema], default: [] },
   readyUsers:     { type: [String], default: [] },

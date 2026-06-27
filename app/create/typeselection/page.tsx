@@ -41,7 +41,7 @@ export default function TypeSelectionPage() {
       await fetch(`/api/rooms/${roomId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ matchMode: selected }),
+        body: JSON.stringify({ action: 'settings', matchMode: selected }),
       });
     }
 

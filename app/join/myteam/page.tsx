@@ -165,7 +165,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     await fetch(`/api/rooms/${roomIdRef.current}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sender: user.name, text: optimistic.text, time, avatarSeed: user.avatarSeed, groupId: groupIdRef.current ?? 0 }),
+      body: JSON.stringify({ text: optimistic.text, time, avatarSeed: user.avatarSeed, groupId: groupIdRef.current ?? 0 }),
     });
   };
 
@@ -173,15 +173,10 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
 
   const handleSaveName = async () => {
     if (!editingName.trim() || !myGroup || !roomIdRef.current) return;
-    const res = await fetch(`/api/rooms/${roomIdRef.current}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    const groups: MatchedGroup[] = data.room?.matchedGroups ?? [];
-    const updated = groups.map((g) => g.id === myGroup.id ? { ...g, name: editingName.trim() } : g);
     await fetch(`/api/rooms/${roomIdRef.current}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ matchedGroups: updated }),
+      body: JSON.stringify({ action: 'renameTeam', groupId: myGroup.id, name: editingName.trim() }),
     });
     setMyGroup((prev) => prev ? { ...prev, name: editingName.trim() } : prev);
     setIsEditingName(false);
