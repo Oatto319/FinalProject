@@ -39,7 +39,6 @@ function TemplatesContent() {
       textColor: 'text-[#FF4573]',
       shadowColor: 'rgba(255,69,115,0.4)',
       route: '/question/service',
-      comingSoon: true,
     },
     {
       id: 'presentation',
@@ -50,7 +49,6 @@ function TemplatesContent() {
       textColor: 'text-[#21871C]',
       shadowColor: 'rgba(33,135,28,0.4)',
       route: '/question/presentation',
-      comingSoon: true,
     },
     {
       id: 'design',
@@ -61,7 +59,6 @@ function TemplatesContent() {
       textColor: 'text-white',
       shadowColor: 'rgba(109,88,185,0.5)',
       route: '/question/design',
-      comingSoon: true,
     },
   ];
 
@@ -104,7 +101,7 @@ function TemplatesContent() {
                       }));
                       router.push('/create/createroom');
                     } else {
-                      item.id === 'programming' && router.push(item.route);
+                      router.push(item.route);
                     }
                   }}
                   className={`${item.bgColor} rounded-[22px] p-2 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative mx-6 ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
