@@ -6,6 +6,7 @@ import { ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
 
 type MBTIResult = {
+  code?: string;
   title: string;
   description: string;
   jobs: string[];
@@ -70,7 +71,7 @@ const ServiceTypePage = () => {
                 <div className="flex items-center gap-4">
                   <img src={result.icon} alt={result.title} className="w-20 h-20 object-contain flex-shrink-0" />
                   <div>
-                    <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพการทำงาน</p>
+                    <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพการทำงาน{result.code ? ` · ${result.code}` : ''}</p>
                     <p className="text-2xl font-black text-[#4B3E7A]">{result.title}</p>
                     {result.completedAt && (
                       <p className="text-xs text-gray-300 mt-1">ทำเมื่อ {new Date(result.completedAt).toLocaleDateString('th-TH')}</p>
@@ -90,16 +91,16 @@ const ServiceTypePage = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">คะแนนแต่ละประเภท</p>
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">สัดส่วนแต่ละมิติบุคลิกภาพ</p>
                   <div className="flex flex-col gap-3">
                     {result.typeScores.map((t) => (
                       <div key={t.title} className="flex items-center gap-3">
                         <img src={t.icon} alt={t.title} className="w-6 h-6 object-contain flex-shrink-0" />
-                        <span className="text-xs font-bold text-[#1A2E44] w-28 flex-shrink-0">{t.title}</span>
+                        <span className="text-xs font-bold text-[#1A2E44] w-40 flex-shrink-0">{t.title}</span>
                         <div className="flex-1 bg-gray-100 rounded-full h-2">
-                          <div className="bg-[#4B3E7A] h-2 rounded-full" style={{ width: `${(t.score / 11) * 100}%` }} />
+                          <div className="bg-[#4B3E7A] h-2 rounded-full" style={{ width: `${t.score}%` }} />
                         </div>
-                        <span className="text-xs font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}/11</span>
+                        <span className="text-xs font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}%</span>
                       </div>
                     ))}
                   </div>
