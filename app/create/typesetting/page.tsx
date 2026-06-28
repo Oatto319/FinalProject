@@ -3,42 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Plus, Minus } from 'lucide-react';
-
-const TYPES_BY_TEMPLATE: Record<string, { key: string; label: string; icon: string }[]> = {
-  programming: [
-    { key: 'นักวิเคราะห์',    label: 'นักวิเคราะห์',    icon: '/img/brain.png' },
-    { key: 'นักคิดสร้างสรรค์', label: 'นักคิดสร้างสรรค์', icon: '/img/idea.png' },
-    { key: 'ผู้ปฏิบัติการ',    label: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png' },
-    { key: 'นักประสานงาน',     label: 'นักประสานงาน',     icon: '/img/make.png' },
-  ],
-  service: [
-    { key: 'นักสื่อสาร',    label: 'นักสื่อสาร',    icon: '/img/make.png' },
-    { key: 'นักแก้ปัญหา',  label: 'นักแก้ปัญหา',  icon: '/img/brain.png' },
-    { key: 'ผู้ฟัง',        label: 'ผู้ฟัง',        icon: '/img/idea.png' },
-    { key: 'ผู้ปฏิบัติการ', label: 'ผู้ปฏิบัติการ', icon: '/img/pencil.png' },
-  ],
-  presentation: [
-    { key: 'นักพูด',       label: 'นักพูด',       icon: '/img/idea.png' },
-    { key: 'นักวิจัย',     label: 'นักวิจัย',     icon: '/img/brain.png' },
-    { key: 'นักออกแบบ',    label: 'นักออกแบบ',    icon: '/img/pencil.png' },
-    { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
-  ],
-  design: [
-    { key: 'นักสร้างสรรค์', label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
-    { key: 'นักวิเคราะห์',  label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
-    { key: 'ผู้ปฏิบัติ',    label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
-    { key: 'ผู้ประสานงาน',  label: 'ผู้ประสานงาน',  icon: '/img/make.png' },
-  ],
-};
-
-const DEFAULT_TYPES = TYPES_BY_TEMPLATE.programming;
+import { GROUPS } from '@/lib/mbti';
 
 export default function TypeSelectionPage() {
   const router = useRouter();
   const [groupSize, setGroupSize] = useState(4);
-  const [types, setTypes] = useState(DEFAULT_TYPES);
   const [counts, setCounts] = useState<Record<string, number>>(
-    Object.fromEntries(DEFAULT_TYPES.map((t) => [t.key, 0]))
+    Object.fromEntries(GROUPS.map((g) => [g.key, 0]))
   );
   const [warning, setWarning] = useState('');
 
@@ -50,11 +21,6 @@ export default function TypeSelectionPage() {
       (pendingParsed?.groupSize) ||
       (current && JSON.parse(current).groupSize);
     if (size) setGroupSize(Number(size));
-
-    const template = (pendingParsed?.template ?? 'programming').toLowerCase();
-    const resolvedTypes = TYPES_BY_TEMPLATE[template] ?? DEFAULT_TYPES;
-    setTypes(resolvedTypes);
-    setCounts(Object.fromEntries(resolvedTypes.map((t) => [t.key, 0])));
   }, []);
 
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -85,11 +51,11 @@ export default function TypeSelectionPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
 
-      {/* Decorative icons — corners */}
-      <img src="/img/brain.png"  alt="" className="absolute top-6  left-6  w-28 h-28 object-contain opacity-90 pointer-events-none" />
-      <img src="/img/idea.png"   alt="" className="absolute top-6  right-6 w-28 h-28 object-contain opacity-90 pointer-events-none" />
-      <img src="/img/pencil.png" alt="" className="absolute bottom-6 left-6  w-24 h-24 object-contain opacity-90 pointer-events-none" />
-      <img src="/img/make.png"   alt="" className="absolute bottom-6 right-6 w-24 h-24 object-contain opacity-90 pointer-events-none" />
+      {/* Decorative group labels — corners */}
+      <span className="absolute top-6  left-6  text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: GROUPS[0].color }}>{GROUPS[0].label}</span>
+      <span className="absolute top-6  right-6 text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: GROUPS[1].color }}>{GROUPS[1].label}</span>
+      <span className="absolute bottom-6 left-6  text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: GROUPS[2].color }}>{GROUPS[2].label}</span>
+      <span className="absolute bottom-6 right-6 text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: GROUPS[3].color }}>{GROUPS[3].label}</span>
 
       {/* Title */}
       <h1 className="text-5xl font-black uppercase tracking-tight text-[#2D3E50] mb-8"
@@ -108,23 +74,23 @@ export default function TypeSelectionPage() {
         {/* Types grid */}
         <div className="bg-[#E8EAF3] rounded-2xl p-6">
           <div className="grid grid-cols-4 gap-4">
-            {/* Icons row */}
-            {types.map((t) => (
-              <div key={t.key} className="flex flex-col items-center gap-1">
-                <div className="w-14 h-14 flex items-center justify-center">
-                  <img src={t.icon} alt={t.label} className="w-12 h-12 object-contain" />
+            {/* Labels row */}
+            {GROUPS.map((g) => (
+              <div key={g.key} className="flex flex-col items-center gap-1">
+                <div className="w-14 h-14 flex items-center justify-center rounded-full" style={{ backgroundColor: `${g.color}1A` }}>
+                  <span className="text-xs font-black" style={{ color: g.color }}>{g.label.slice(0, 2)}</span>
                 </div>
                 <span className="text-[10px] font-bold text-[#3D3D6B] text-center leading-tight">
-                  {t.label}
+                  {g.label}
                 </span>
               </div>
             ))}
 
             {/* Plus buttons row */}
-            {types.map((t) => (
-              <div key={t.key + '-plus'} className="flex justify-center">
+            {GROUPS.map((g) => (
+              <div key={g.key + '-plus'} className="flex justify-center">
                 <button
-                  onClick={() => increment(t.key)}
+                  onClick={() => increment(g.key)}
                   disabled={total >= groupSize}
                   className="w-10 h-10 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
                 >
@@ -134,13 +100,13 @@ export default function TypeSelectionPage() {
             ))}
 
             {/* Count boxes row */}
-            {types.map((t) => (
-              <div key={t.key + '-count'} className="flex justify-center">
+            {GROUPS.map((g) => (
+              <div key={g.key + '-count'} className="flex justify-center">
                 <button
-                  onClick={() => decrement(t.key)}
+                  onClick={() => decrement(g.key)}
                   className="w-12 h-12 rounded-xl bg-[#8B8FAD] text-white text-xl font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
                 >
-                  {counts[t.key]}
+                  {counts[g.key]}
                 </button>
               </div>
             ))}

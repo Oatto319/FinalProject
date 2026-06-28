@@ -44,7 +44,7 @@ export async function GET(
     allMembers = allGroups.flatMap((g) => g.members);
   }
 
-  const types: Record<string, { title: string; icon: string; description: string; jobs: string[] }> = {};
+  const types: Record<string, { fullCode: string; groupLabel: string; group: string; description: string; jobs: string[] }> = {};
 
   // Batch fetch — 1-2 queries แทน N queries
   const gmails  = allMembers.filter((m) => m.gmail).map((m) => m.gmail!.toLowerCase());
@@ -67,14 +67,15 @@ export async function GET(
 
     // fallback: ลองดู template อื่นถ้าไม่มี template ของห้อง
     if (!typeResult) {
-      typeResult = Object.values(userTypes).find((t: unknown) => (t as { icon?: string })?.icon);
+      typeResult = Object.values(userTypes).find((t: unknown) => (t as { fullCode?: string })?.fullCode);
     }
 
-    if (typeResult && (typeResult as { icon?: string }).icon) {
-      const t = typeResult as { title: string; icon: string; description?: string; jobs?: string[] };
+    if (typeResult && (typeResult as { fullCode?: string }).fullCode) {
+      const t = typeResult as { fullCode: string; groupLabel: string; group: string; description?: string; jobs?: string[] };
       types[member.name] = {
-        title: t.title,
-        icon: t.icon,
+        fullCode: t.fullCode,
+        groupLabel: t.groupLabel,
+        group: t.group,
         description: t.description ?? '',
         jobs: t.jobs ?? [],
       };

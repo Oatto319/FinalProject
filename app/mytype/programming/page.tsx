@@ -4,15 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
-
-type MBTIResult = {
-  title: string;
-  description: string;
-  jobs: string[];
-  icon: string;
-  typeScores: { title: string; icon: string; score: number }[];
-  completedAt: string;
-};
+import { AXIS_LABELS, GROUP_COLORS, type MBTIResult } from '@/lib/mbti';
 
 const TEMPLATE = {
   id: 'programming',
@@ -68,10 +60,18 @@ const ProgrammingTypePage = () => {
             ) : result ? (
               <div className="flex flex-col gap-6">
                 <div className="flex items-center gap-4">
-                  <img src={result.icon} alt={result.title} className="w-20 h-20 object-contain flex-shrink-0" />
+                  <div
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${GROUP_COLORS[result.group]}1A` }}
+                  >
+                    <span className="text-lg font-black tracking-wide" style={{ color: GROUP_COLORS[result.group] }}>
+                      {result.fullCode}
+                    </span>
+                  </div>
                   <div>
                     <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพการทำงาน</p>
-                    <p className="text-2xl font-black text-[#4B3E7A]">{result.title}</p>
+                    <p className="text-2xl font-black text-[#4B3E7A]">{result.fullCode}</p>
+                    <p className="text-xs font-bold text-gray-500">{result.groupLabel}</p>
                     {result.completedAt && (
                       <p className="text-xs text-gray-300 mt-1">ทำเมื่อ {new Date(result.completedAt).toLocaleDateString('th-TH')}</p>
                     )}
@@ -79,6 +79,7 @@ const ProgrammingTypePage = () => {
                 </div>
 
                 <p className="text-gray-500 text-sm leading-relaxed">{result.description}</p>
+                <p className="text-gray-400 text-xs leading-relaxed italic">{result.variantNote}</p>
 
                 <div>
                   <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
@@ -90,18 +91,21 @@ const ProgrammingTypePage = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">คะแนนแต่ละประเภท</p>
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">คะแนนแต่ละแกน</p>
                   <div className="flex flex-col gap-3">
-                    {result.typeScores.map((t) => (
-                      <div key={t.title} className="flex items-center gap-3">
-                        <img src={t.icon} alt={t.title} className="w-6 h-6 object-contain flex-shrink-0" />
-                        <span className="text-xs font-bold text-[#1A2E44] w-28 flex-shrink-0">{t.title}</span>
-                        <div className="flex-1 bg-gray-100 rounded-full h-2">
-                          <div className="bg-[#4B3E7A] h-2 rounded-full" style={{ width: `${(t.score / 11) * 100}%` }} />
+                    {(Object.keys(AXIS_LABELS) as (keyof typeof AXIS_LABELS)[]).map((key) => {
+                      const labels = AXIS_LABELS[key];
+                      const pct = result.axisScores[key];
+                      return (
+                        <div key={key} className="flex items-center gap-3">
+                          <span className="text-xs font-black text-[#4B3E7A] w-4 flex-shrink-0">{labels.posLetter}</span>
+                          <div className="flex-1 bg-gray-100 rounded-full h-2">
+                            <div className="bg-[#4B3E7A] h-2 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-xs font-black text-gray-400 w-4 flex-shrink-0 text-right">{labels.negLetter}</span>
                         </div>
-                        <span className="text-xs font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}/11</span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 

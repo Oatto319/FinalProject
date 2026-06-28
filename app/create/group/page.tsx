@@ -4,22 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { GROUP_COLORS, GROUP_LABELS, type GroupKey } from '@/lib/mbti';
 
 interface RoomMember { name: string; avatarSeed: number; gmail: string; role?: string; }
 interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; }
-interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+interface MBTIResult { fullCode: string; groupLabel: string; group: GroupKey; description: string; jobs: string[]; }
 
-
-const GROUP_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
-const ROLE_ICONS: Record<string, string> = {
-  'นักวิเคราะห์': '/img/brain.png',    'นักคิดสร้างสรรค์': '/img/idea.png',
-  'ผู้ปฏิบัติการ': '/img/pencil.png',  'นักประสานงาน': '/img/make.png',
-  'นักสื่อสาร': '/img/make.png',       'นักแก้ปัญหา': '/img/brain.png',
-  'ผู้ฟัง': '/img/idea.png',           'นักพูด': '/img/idea.png',
-  'นักวิจัย': '/img/brain.png',        'นักออกแบบ': '/img/pencil.png',
-  'ผู้ประสานงาน': '/img/make.png',     'นักสร้างสรรค์': '/img/idea.png',
-  'ผู้ปฏิบัติ': '/img/pencil.png',
-};
+const TEAM_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
 const TEMPLATE_COLORS: Record<string, string> = { programming: '#FFAAAA', service: '#71EFB8', presentation: '#EAFF48', design: '#8C71EF' };
 
 const GroupResultPage = () => {
@@ -117,7 +108,7 @@ const GroupResultPage = () => {
             groups.map((group, idx) => (
               <div key={group.id} className="flex flex-col">
                 {idx > 0 && <div className="border-t-2 border-dashed border-gray-200 my-2" />}
-                <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-8 py-2 rounded-full font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
+                <div className={`inline-block self-start ${TEAM_COLORS[idx % TEAM_COLORS.length]} text-white px-8 py-2 rounded-full font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
                   {group.name}
                 </div>
                 <div className="bg-[#E8E8E8] border-2 border-[#E8E8E8] rounded-[20px] p-4 flex flex-col gap-3">
@@ -139,17 +130,19 @@ const GroupResultPage = () => {
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {isLeader && <div className="w-16 h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
                           {isManualRoom ? (
-                            assignedRole && ROLE_ICONS[assignedRole] ? (
+                            assignedRole ? (
                               <button
-                                onClick={() => setMbtiPopup({ name: member.name, type: { title: assignedRole, icon: ROLE_ICONS[assignedRole], description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                                className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
-                                <img src={ROLE_ICONS[assignedRole]} alt={assignedRole} className="w-full h-full object-contain" />
+                                onClick={() => setMbtiPopup({ name: member.name, type: { fullCode: GROUP_LABELS[assignedRole as GroupKey], groupLabel: GROUP_LABELS[assignedRole as GroupKey], group: assignedRole as GroupKey, description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
+                                className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
+                                style={{ backgroundColor: `${GROUP_COLORS[assignedRole as GroupKey]}26` }}>
+                                <span className="text-[10px] font-black" style={{ color: GROUP_COLORS[assignedRole as GroupKey] }}>{GROUP_LABELS[assignedRole as GroupKey].slice(0, 2)}</span>
                               </button>
                             ) : <div className="w-12 h-12 rounded-full bg-gray-100" />
                           ) : typeOverride ? (
                             <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
-                              className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
-                              <img src={typeOverride.icon} alt={typeOverride.title} className="w-full h-full object-contain" />
+                              className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
+                              style={{ backgroundColor: `${GROUP_COLORS[typeOverride.group]}26` }}>
+                              <span className="text-[10px] font-black" style={{ color: GROUP_COLORS[typeOverride.group] }}>{typeOverride.fullCode}</span>
                             </button>
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-gray-100" />
@@ -175,8 +168,14 @@ const GroupResultPage = () => {
               </button>
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
-              <img src={mbtiPopup.type.icon} alt={mbtiPopup.type.title} className="w-24 h-24 object-contain" />
-              <p className="font-black text-[#4B3E7A] text-xl">{mbtiPopup.type.title}</p>
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                style={{ backgroundColor: `${GROUP_COLORS[mbtiPopup.type.group]}1A` }}
+              >
+                <span className="text-lg font-black" style={{ color: GROUP_COLORS[mbtiPopup.type.group] }}>{mbtiPopup.type.fullCode}</span>
+              </div>
+              <p className="font-black text-[#4B3E7A] text-xl">{mbtiPopup.type.fullCode}</p>
+              <p className="text-xs font-bold text-gray-500 -mt-3">{mbtiPopup.type.groupLabel}</p>
               {mbtiPopup.type.description && <p className="text-gray-500 text-sm text-center leading-relaxed">{mbtiPopup.type.description}</p>}
               {mbtiPopup.type.jobs && mbtiPopup.type.jobs.length > 0 && (
                 <div className="flex flex-wrap gap-2 justify-center">

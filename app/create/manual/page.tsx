@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { Copy, Settings, Plus, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { GROUPS } from '@/lib/mbti';
 
 interface RoomMember { name: string; avatarSeed: number; gmail: string; }
 interface CurrentRoom {
@@ -22,37 +23,9 @@ const ManualPage = () => {
   const [copied, setCopied]           = useState(false);
   const [showTypeSetting, setShowTypeSetting] = useState(false);
 
-  // Type Setting popup state
-  const TYPES_BY_TEMPLATE: Record<string, { key: string; label: string; icon: string }[]> = {
-    programming: [
-      { key: 'นักวิเคราะห์',    label: 'นักวิเคราะห์',    icon: '/img/brain.png' },
-      { key: 'นักคิดสร้างสรรค์', label: 'นักคิดสร้างสรรค์', icon: '/img/idea.png' },
-      { key: 'ผู้ปฏิบัติการ',    label: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png' },
-      { key: 'นักประสานงาน',     label: 'นักประสานงาน',     icon: '/img/make.png' },
-    ],
-    service: [
-      { key: 'นักสื่อสาร',    label: 'นักสื่อสาร',    icon: '/img/make.png' },
-      { key: 'นักแก้ปัญหา',  label: 'นักแก้ปัญหา',  icon: '/img/brain.png' },
-      { key: 'ผู้ฟัง',        label: 'ผู้ฟัง',        icon: '/img/idea.png' },
-      { key: 'ผู้ปฏิบัติการ', label: 'ผู้ปฏิบัติการ', icon: '/img/pencil.png' },
-    ],
-    presentation: [
-      { key: 'นักพูด',       label: 'นักพูด',       icon: '/img/idea.png' },
-      { key: 'นักวิจัย',     label: 'นักวิจัย',     icon: '/img/brain.png' },
-      { key: 'นักออกแบบ',    label: 'นักออกแบบ',    icon: '/img/pencil.png' },
-      { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
-    ],
-    design: [
-      { key: 'นักสร้างสรรค์', label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
-      { key: 'นักวิเคราะห์',  label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
-      { key: 'ผู้ปฏิบัติ',    label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
-      { key: 'ผู้ประสานงาน',  label: 'ผู้ประสานงาน',  icon: '/img/make.png' },
-    ],
-  };
-  const [tsTypes, setTsTypes]     = useState(TYPES_BY_TEMPLATE.programming);
   const [tsCounts, setTsCounts]   = useState<Record<string, number>>({});
   const [tsWarning, setTsWarning] = useState('');
-  const [memberTypes, setMemberTypes] = useState<Record<string, { title: string; icon: string }>>({});
+  const [memberTypes, setMemberTypes] = useState<Record<string, { fullCode: string; groupLabel: string }>>({});
   const lastMemberCountRef = useRef(-1);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
@@ -99,12 +72,9 @@ const ManualPage = () => {
       const isHost = parsedUser?.name === r.hostName;
       fetchRoom(getRoomId(r), isHost);
 
-      // Init type setting from template
-      const template = (pending?.template ?? r.template ?? 'programming').toLowerCase();
-      const resolvedTypes = TYPES_BY_TEMPLATE[template] ?? TYPES_BY_TEMPLATE.programming;
-      setTsTypes(resolvedTypes);
+      // Init type setting (universal 4 groups, regardless of template)
       const savedCounts = pending?.typeComposition ?? {};
-      const initCounts = Object.fromEntries(resolvedTypes.map((t) => [t.key, savedCounts[t.key] ?? 0]));
+      const initCounts = Object.fromEntries(GROUPS.map((g) => [g.key, savedCounts[g.key] ?? 0]));
       setTsCounts(initCounts);
     }
   }, []);
@@ -210,8 +180,9 @@ const ManualPage = () => {
                       <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
                       {user?.name === room?.hostName && memberTypes[member.name] && (
                         <div className="flex items-center gap-1 mt-1">
-                          <img src={memberTypes[member.name].icon} alt="" className="w-4 h-4 object-contain" />
-                          <span className="text-[10px] font-bold text-[#4B3E7A]">{memberTypes[member.name].title}</span>
+                          <span className="text-[10px] font-bold text-[#4B3E7A]">
+                            {memberTypes[member.name].fullCode} · {memberTypes[member.name].groupLabel}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -326,21 +297,21 @@ const ManualPage = () => {
 
               <div className="bg-[#E8EAF3] rounded-2xl p-5">
                 <div className="grid grid-cols-4 gap-3">
-                  {/* Icons row */}
-                  {tsTypes.map((t) => (
-                    <div key={t.key} className="flex flex-col items-center gap-1">
-                      <div className="w-12 h-12 flex items-center justify-center">
-                        <img src={t.icon} alt={t.label} className="w-10 h-10 object-contain" />
+                  {/* Labels row */}
+                  {GROUPS.map((g) => (
+                    <div key={g.key} className="flex flex-col items-center gap-1">
+                      <div className="w-12 h-12 flex items-center justify-center rounded-full" style={{ backgroundColor: `${g.color}1A` }}>
+                        <span className="text-[10px] font-black" style={{ color: g.color }}>{g.label.slice(0, 2)}</span>
                       </div>
-                      <span className="text-[9px] font-bold text-[#3D3D6B] text-center leading-tight">{t.label}</span>
+                      <span className="text-[9px] font-bold text-[#3D3D6B] text-center leading-tight">{g.label}</span>
                     </div>
                   ))}
 
                   {/* Plus buttons row */}
-                  {tsTypes.map((t) => (
-                    <div key={t.key + '-plus'} className="flex justify-center">
+                  {GROUPS.map((g) => (
+                    <div key={g.key + '-plus'} className="flex justify-center">
                       <button
-                        onClick={() => tsIncrement(t.key)}
+                        onClick={() => tsIncrement(g.key)}
                         disabled={tsTotal >= tsGroupSize}
                         className="w-9 h-9 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
                       >
@@ -350,13 +321,13 @@ const ManualPage = () => {
                   ))}
 
                   {/* Count boxes row */}
-                  {tsTypes.map((t) => (
-                    <div key={t.key + '-count'} className="flex justify-center">
+                  {GROUPS.map((g) => (
+                    <div key={g.key + '-count'} className="flex justify-center">
                       <button
-                        onClick={() => tsDecrement(t.key)}
+                        onClick={() => tsDecrement(g.key)}
                         className="w-11 h-11 rounded-xl bg-[#8B8FAD] text-white text-lg font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
                       >
-                        {tsCounts[t.key] ?? 0}
+                        {tsCounts[g.key] ?? 0}
                       </button>
                     </div>
                   ))}

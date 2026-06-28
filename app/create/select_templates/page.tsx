@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { GROUPS } from '@/lib/mbti';
 
 const TEMPLATES = [
   {
@@ -11,12 +12,6 @@ const TEMPLATES = [
     description: 'สำหรับทีมพัฒนาซอฟต์แวร์ วิเคราะห์ระบบ และงานสายเทคนิค',
     bgColor: 'bg-[#FF9B9B]',
     textColor: 'text-[#4A4E69]',
-    types: [
-      { label: 'นักวิเคราะห์',    icon: '/img/brain.png' },
-      { label: 'นักคิดสร้างสรรค์', icon: '/img/idea.png' },
-      { label: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png' },
-      { label: 'นักประสานงาน',     icon: '/img/make.png' },
-    ],
   },
   {
     id: 'service',
@@ -24,12 +19,6 @@ const TEMPLATES = [
     description: 'สำหรับทีมที่ต้องติดต่อสื่อสารและให้บริการลูกค้า',
     bgColor: 'bg-[#76EAD7]',
     textColor: 'text-[#FF4D8D]',
-    types: [
-      { label: 'นักสื่อสาร',   icon: '/img/make.png' },
-      { label: 'นักแก้ปัญหา',  icon: '/img/brain.png' },
-      { label: 'ผู้ฟัง',       icon: '/img/idea.png' },
-      { label: 'ผู้ปฏิบัติการ', icon: '/img/pencil.png' },
-    ],
   },
   {
     id: 'presentation',
@@ -37,12 +26,6 @@ const TEMPLATES = [
     description: 'สำหรับทีมนำเสนองาน สื่อสารและโน้มน้าวผู้ฟัง',
     bgColor: 'bg-[#D4E24D]',
     textColor: 'text-[#2D6A4F]',
-    types: [
-      { label: 'นักพูด',        icon: '/img/idea.png' },
-      { label: 'นักวิจัย',      icon: '/img/brain.png' },
-      { label: 'นักออกแบบ',     icon: '/img/pencil.png' },
-      { label: 'ผู้ประสานงาน',  icon: '/img/make.png' },
-    ],
   },
   {
     id: 'design',
@@ -50,12 +33,6 @@ const TEMPLATES = [
     description: 'สำหรับทีมออกแบบ UI/UX คอนเทนต์ และงานสร้างสรรค์',
     bgColor: 'bg-[#9D8BFF]',
     textColor: 'text-white',
-    types: [
-      { label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
-      { label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
-      { label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
-      { label: 'ผู้ประสานงาน',  icon: '/img/make.png' },
-    ],
   },
 ];
 
@@ -74,7 +51,6 @@ export default function SelectTemplatesPage() {
       ...room,
       template: selected,
       templateLabel: template.label,
-      templateTypes: template.types.map((t) => t.label),
     }));
 
     // อัปเดต currentRoom ให้มี template ด้วย
@@ -146,12 +122,11 @@ export default function SelectTemplatesPage() {
                   {tmpl.description}
                 </p>
 
-                {/* Types */}
+                {/* Groups */}
                 <div className="flex gap-3 mt-1 flex-wrap">
-                  {tmpl.types.map((type) => (
-                    <div key={type.label} className="flex items-center gap-1.5 bg-white/50 rounded-full px-3 py-1">
-                      <img src={type.icon} alt={type.label} className="w-4 h-4 object-contain" />
-                      <span className="text-[11px] font-bold text-[#2D3E50]">{type.label}</span>
+                  {GROUPS.map((g) => (
+                    <div key={g.key} className="flex items-center gap-1.5 bg-white/50 rounded-full px-3 py-1">
+                      <span className="text-[11px] font-bold" style={{ color: g.color }}>{g.label}</span>
                     </div>
                   ))}
                 </div>

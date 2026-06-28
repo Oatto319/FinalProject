@@ -28,9 +28,8 @@ const MatchingPage = () => {
 
       const template = (room.template ?? 'programming').toLowerCase();
 
-      // ดึง MBTI type + typeScores ของแต่ละ member จาก MongoDB
+      // ดึงกลุ่ม MBTI (4 กลุ่มใหญ่ — เก็บเป็น group key เช่น 'analyst') ของแต่ละ member จาก MongoDB
       const memberTypeMap: Record<string, string> = {};
-      const memberScoreMap: Record<string, Record<string, number>> = {};
       await Promise.all(
         members.map(async (m) => {
           try {
@@ -39,14 +38,10 @@ const MatchingPage = () => {
               : `/api/users?name=${encodeURIComponent(m.name)}`;
             const res = await fetch(url);
             const data = await res.json();
-            const types: Record<string, { title?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
-            let typeData: { title?: string; typeScores?: { title: string; score: number }[] } | undefined = types[template];
-            if (!typeData) typeData = Object.values(types).find((t) => t?.title);
-            if (typeData?.title) memberTypeMap[m.name] = typeData.title;
-            // เก็บ typeScores สำหรับ secondary matching
-            const scores: Record<string, number> = {};
-            (typeData?.typeScores ?? []).forEach((ts) => { scores[ts.title] = ts.score; });
-            memberScoreMap[m.name] = scores;
+            const types: Record<string, { group?: string }> = data.user?.types ?? {};
+            let typeData: { group?: string } | undefined = types[template];
+            if (!typeData) typeData = Object.values(types).find((t) => t?.group);
+            if (typeData?.group) memberTypeMap[m.name] = typeData.group;
           } catch { /* ไม่มี type */ }
         })
       );
@@ -74,19 +69,6 @@ const MatchingPage = () => {
       } else {
         // ── Manual / selection mode ──────────────────────────────────────
 
-        // หา member ในกลุ่ม unassigned ที่มี secondary score สูงสุดสำหรับ typeKey
-        const findBestSecondary = (
-          pool: (typeof members[0] & { role: string })[],
-          typeKey: string
-        ): number => {
-          let bestIdx = -1, bestScore = -Infinity;
-          pool.forEach((m, i) => {
-            const score = memberScoreMap[m.name]?.[typeKey] ?? 0;
-            if (score > bestScore) { bestScore = score; bestIdx = i; }
-          });
-          return bestIdx;
-        };
-
         const hasComposition = Object.values(typeComposition).some((v) => v > 0);
 
         if (hasComposition) {
@@ -98,13 +80,12 @@ const MatchingPage = () => {
             for (const [typeKey, count] of Object.entries(typeComposition)) {
               if (!count) continue;
               for (let c = 0; c < count && unassigned.length > 0; c++) {
-                // Phase 1: หา member ที่มี primary type ตรงกับ typeKey
+                // Phase 1: หา member ที่มีกลุ่มตรงกับ typeKey
                 let idx = unassigned.findIndex((m) => getMemberTypeLocal(m.name) === typeKey);
-                // Phase 2: ถ้าไม่มี primary → หาคนที่มี secondary score สูงสุดสำหรับ typeKey
-                if (idx === -1) idx = findBestSecondary(unassigned, typeKey);
-                if (idx === -1) break;
+                // Phase 2: ถ้าไม่มีใครอยู่กลุ่มนี้เลย → ดึงคนแรกที่เหลือมาเติม slot ไปก่อน
+                if (idx === -1) idx = 0;
                 const [member] = unassigned.splice(idx, 1);
-                // กำหนด role ตาม slot ที่ถูก assign (ไม่ใช่ primary type เดิม)
+                // กำหนด role ตาม slot ที่ถูก assign (ไม่ใช่กลุ่มเดิมของตัวเอง)
                 groups[g].members.push({ ...member, role: typeKey });
               }
             }
