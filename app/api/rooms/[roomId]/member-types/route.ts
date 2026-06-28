@@ -46,9 +46,10 @@ export async function GET(
     allMembers = (room.members ?? []) as { name: string; gmail?: string; role?: string }[];
   } else {
     // Post-match: read from matchedGroups
+    const groupId = groupIdParam !== null ? parseInt(groupIdParam, 10) : null;
     const allGroups: { members: { name: string; gmail?: string; role?: string }[] }[] =
-      groupIdParam !== null
-        ? (room.matchedGroups ?? []).filter((g: { id: number }) => g.id === parseInt(groupIdParam))
+      groupId !== null && !Number.isNaN(groupId)
+        ? (room.matchedGroups ?? []).filter((g: { id: number }) => g.id === groupId)
         : (room.matchedGroups ?? []);
     allMembers = allGroups.flatMap((g) => g.members);
   }

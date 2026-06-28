@@ -72,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
     case 'settings': {
       if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       const patch: Record<string, unknown> = {};
-      for (const key of ['title', 'description', 'matchMode'] as const) {
+      for (const key of ['title', 'description', 'matchMode', 'typeComposition'] as const) {
         if (body[key] !== undefined) patch[key] = body[key];
       }
       if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });

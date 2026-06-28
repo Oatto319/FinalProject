@@ -1,10 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const MatchingPage = () => {
   const router = useRouter();
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     const runMatchAndRedirect = async () => {
@@ -24,7 +25,8 @@ const MatchingPage = () => {
       const pendingRaw = localStorage.getItem('pendingRoom');
       const pending = pendingRaw ? JSON.parse(pendingRaw) : {};
       const matchMode: string = pending.matchMode ?? 'auto';
-      const typeComposition: Record<string, number> = pending.typeComposition ?? {};
+      // typeComposition มาจาก DB เสมอ (host บันทึกผ่าน popup Type Settings ใน /create/manual)
+      const typeComposition: Record<string, number> = room.typeComposition ?? {};
 
       const template = (room.template ?? 'programming').toLowerCase();
 
@@ -110,9 +112,11 @@ const MatchingPage = () => {
             }
           }
 
-          // member ที่เหลือ → กลุ่มที่เล็กที่สุด (ใช้ primary type เดิม)
+          // member ที่เหลือ → ใส่กลุ่มที่ยังไม่ครบ groupSize ก่อน (ใช้ primary type เดิม)
           for (const m of unassigned) {
-            const smallest = groups.reduce((a, b) => (a.members.length <= b.members.length ? a : b));
+            const underCap = groups.filter((g) => g.members.length < groupSize);
+            const pool = underCap.length > 0 ? underCap : groups;
+            const smallest = pool.reduce((a, b) => (a.members.length <= b.members.length ? a : b));
             smallest.members.push(m);
           }
         } else {
@@ -147,10 +151,11 @@ const MatchingPage = () => {
         });
       }
 
+      if (!saveRes.ok) { setSaveError(true); return; }
       router.push('/create/group');
     };
 
-    const timer = setTimeout(runMatchAndRedirect, 3000);
+    const timer = setTimeout(() => { runMatchAndRedirect(); }, 3000);
     return () => clearTimeout(timer);
   }, [router]);
 
@@ -164,17 +169,31 @@ const MatchingPage = () => {
       {/* Text */}
       <h1 className="text-white text-5xl font-black tracking-tighter mb-12">Matching</h1>
 
-      {/* Bouncing dots */}
-      <div className="flex gap-4 justify-center mb-8">
-        {[0, 0.15, 0.3, 0.45, 0.6].map((delay, i) => (
-          <div key={i}
-            className="w-4 h-4 rounded-full bg-blue-400/80 animate-bounce"
-            style={{ animationDelay: `${delay}s` }}
-          ></div>
-        ))}
-      </div>
+      {saveError ? (
+        <>
+          <p className="text-red-300 text-sm font-bold mb-6">บันทึกผลการจับกลุ่มไม่สำเร็จ กรุณาลองใหม่</p>
+          <button
+            onClick={() => router.back()}
+            className="bg-white text-[#1A2E44] px-8 py-3 rounded-2xl font-bold hover:bg-gray-100 transition-colors"
+          >
+            กลับไปลองใหม่
+          </button>
+        </>
+      ) : (
+        <>
+          {/* Bouncing dots */}
+          <div className="flex gap-4 justify-center mb-8">
+            {[0, 0.15, 0.3, 0.45, 0.6].map((delay, i) => (
+              <div key={i}
+                className="w-4 h-4 rounded-full bg-blue-400/80 animate-bounce"
+                style={{ animationDelay: `${delay}s` }}
+              ></div>
+            ))}
+          </div>
 
-      <p className="text-gray-400 text-sm font-medium tracking-widest">กำลังจัดกลุ่ม กรุณารอสักครู่</p>
+          <p className="text-gray-400 text-sm font-medium tracking-widest">กำลังจัดกลุ่ม กรุณารอสักครู่</p>
+        </>
+      )}
 
     </div>
   );

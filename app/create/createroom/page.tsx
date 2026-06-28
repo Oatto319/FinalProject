@@ -74,11 +74,16 @@ export default function CreateRoomPage() {
         members: [],
       };
 
-      await fetch('/api/rooms', {
+      const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(roomData),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? 'สร้างห้องไม่สำเร็จ กรุณาลองใหม่');
+        return;
+      }
 
       // เก็บ currentRoom ใน localStorage สำหรับ navigate
       const roomForLocal = { ...roomData, id: roomId };

@@ -73,8 +73,8 @@ export default function TypeSelectionPage() {
 
   const handleCreate = () => {
     if (total < groupSize) {
-      setWarning(`ยังเลือกไม่ครบ (${total}/${groupSize}) — กด Create อีกครั้งเพื่อดำเนินการต่อ`);
-      if (!warning) return;
+      setWarning(`ยังเลือกไม่ครบ (${total}/${groupSize})`);
+      return;
     }
     const raw = localStorage.getItem('pendingRoom');
     const room = raw ? JSON.parse(raw) : {};

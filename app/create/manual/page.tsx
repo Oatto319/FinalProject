@@ -54,6 +54,7 @@ const ManualPage = () => {
   const [tsWarning, setTsWarning] = useState('');
   const [memberTypes, setMemberTypes] = useState<Record<string, { title: string; icon: string }>>({});
   const lastMemberCountRef = useRef(-1);
+  const tsLoadedRef = useRef(false);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -81,6 +82,15 @@ const ManualPage = () => {
           setMemberTypes(typesData.types ?? {});
         }
       }
+
+      // โหลด typeComposition จาก DB ครั้งแรกที่ fetch สำเร็จ (ไม่ทับค่าที่ host กำลังแก้อยู่ในรอบ poll ถัดไป)
+      if (!tsLoadedRef.current) {
+        tsLoadedRef.current = true;
+        const savedComposition = data.room.typeComposition as Record<string, number> | undefined;
+        if (savedComposition && Object.keys(savedComposition).length > 0) {
+          setTsCounts((prev) => ({ ...prev, ...savedComposition }));
+        }
+      }
     }
   };
 
@@ -99,13 +109,11 @@ const ManualPage = () => {
       const isHost = parsedUser?.name === r.hostName;
       fetchRoom(getRoomId(r), isHost);
 
-      // Init type setting from template
+      // Init type setting from template (ค่าจริงจะถูกโหลดทับจาก DB ใน fetchRoom เมื่อ fetch สำเร็จ)
       const template = (pending?.template ?? r.template ?? 'programming').toLowerCase();
       const resolvedTypes = TYPES_BY_TEMPLATE[template] ?? TYPES_BY_TEMPLATE.programming;
       setTsTypes(resolvedTypes);
-      const savedCounts = pending?.typeComposition ?? {};
-      const initCounts = Object.fromEntries(resolvedTypes.map((t) => [t.key, savedCounts[t.key] ?? 0]));
-      setTsCounts(initCounts);
+      setTsCounts(Object.fromEntries(resolvedTypes.map((t) => [t.key, 0])));
     }
   }, []);
 
@@ -136,14 +144,18 @@ const ManualPage = () => {
     setTsWarning('');
   };
 
-  const tsSave = () => {
+  const tsSave = async () => {
     if (tsTotal < tsGroupSize) {
       setTsWarning(`ยังเลือกไม่ครบ (${tsTotal}/${tsGroupSize})`);
       return;
     }
-    const raw = localStorage.getItem('pendingRoom');
-    const pendingData = raw ? JSON.parse(raw) : {};
-    localStorage.setItem('pendingRoom', JSON.stringify({ ...pendingData, typeComposition: tsCounts }));
+    if (!room) return;
+    const res = await fetch(`/api/rooms/${getRoomId(room)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'settings', typeComposition: tsCounts }),
+    });
+    if (!res.ok) { setTsWarning('บันทึกไม่สำเร็จ กรุณาลองใหม่'); return; }
     setTsWarning('');
     setShowTypeSetting(false);
     if (isAllReady) router.push('/create/matching');
@@ -285,10 +297,7 @@ const ManualPage = () => {
               ) : (
                 <button
                   onClick={() => {
-                    const raw = localStorage.getItem('pendingRoom');
-                    const pending = raw ? JSON.parse(raw) : {};
-                    const hasComp = Object.values(pending.typeComposition ?? {}).some((v) => (v as number) > 0);
-                    if (!hasComp) { setShowTypeSetting(true); return; }
+                    if (tsTotal <= 0) { setShowTypeSetting(true); return; }
                     router.push('/create/matching');
                   }}
                   className="w-full relative group transition-transform active:scale-95">

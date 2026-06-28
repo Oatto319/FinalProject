@@ -61,9 +61,13 @@ ${qa}
       }],
     });
 
-    const raw = message.content[0].type === 'text' ? message.content[0].text.trim() : '{}';
+    const raw = message.content[0]?.type === 'text' ? message.content[0].text.trim() : '';
     const jsonMatch = raw.match(/\{[^}]+\}/);
-    const scores: Record<string, number> = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+    if (!jsonMatch) {
+      console.error('analyze-type: no JSON found in model response:', raw);
+      return NextResponse.json({ error: 'failed' }, { status: 502 });
+    }
+    const scores: Record<string, number> = JSON.parse(jsonMatch[0]);
 
     // ตรวจสอบว่า key ครบ ถ้าไม่มีให้ default 0
     for (const name of TYPE_NAMES) {
