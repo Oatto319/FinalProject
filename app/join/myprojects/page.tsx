@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, CheckCircle2, Clock, Trash2 } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
 interface RoomData {
   roomId: string; title: string; description: string; totalMembers: number;
-  groupSize: number; template: string; hostName: string; hostAvatarSeed: number;
-  hostRole?: string; members: { name: string; avatarSeed: number; gmail: string }[];
+  groupSize: number; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null;
+  hostRole?: string; members: { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string }[];
   matchDone?: boolean; matchMode?: string; createdAt?: string;
 }
 
@@ -110,7 +111,7 @@ export default function MyProjectsPage() {
                         {/* Host profile */}
                         <div className="flex items-center gap-3 mb-4">
                           <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
-                            <img src={`/img/p${room.hostAvatarSeed || 1}.PNG`} alt={room.hostName} className="w-full h-full object-contain" />
+                            <img src={resolveAvatar({ avatarSeed: room.hostAvatarSeed, avatarImage: room.hostAvatarImage })} alt={room.hostName} className="w-full h-full object-contain" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">

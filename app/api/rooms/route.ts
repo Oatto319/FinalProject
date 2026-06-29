@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
       hostName: sessionUser.name,
       hostGmail: sessionUser.gmail,
       hostAvatarSeed: sessionUser.avatarSeed,
+      hostAvatarImage: sessionUser.avatarImage,
     });
     return NextResponse.json({ room: room.toObject() }, { status: 201 });
   } catch (err: unknown) {

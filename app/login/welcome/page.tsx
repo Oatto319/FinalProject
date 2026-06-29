@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { resolveAvatar } from '@/lib/avatar';
 
 interface User {
   name: string;
   gender: string;
   avatarSeed: number;
+  avatarImage?: string | null;
 }
 
 export default function WelcomePage() {
@@ -24,9 +26,7 @@ export default function WelcomePage() {
     }
   }, [router]);
 
-  const avatarUrl = user
-    ? `/img/p${user.avatarSeed || 1}.PNG`
-    : '';
+  const avatarUrl = user ? resolveAvatar(user) : '';
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center relative overflow-hidden font-sans">

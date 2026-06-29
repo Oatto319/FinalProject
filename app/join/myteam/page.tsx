@@ -4,19 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Edit2, Home, Info, Send, User, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
-interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; }
-interface RoomMember { name: string; avatarSeed: number; gmail: string; role?: string; }
+interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; avatarImage?: string | null; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; totalMembers: number;
-  groupSize: number; template: string; hostName: string; hostAvatarSeed: number; members: RoomMember[];
+  groupSize: number; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
 }
 interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
 
 export default function MyTeamPage() {
   const router = useRouter();
-  const [user, setUser]               = useState<{ name: string; avatarSeed: number; gmail?: string } | null>(null);
+  const [user, setUser]               = useState<{ name: string; avatarSeed: number; avatarImage?: string | null; gmail?: string } | null>(null);
   const [teamMembers, setTeamMembers] = useState<RoomMember[]>([]);
   const [myGroup, setMyGroup]         = useState<MatchedGroup | null>(null);
   const [message, setMessage]         = useState('');
@@ -155,7 +156,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     if (!message.trim() || !user || !roomIdRef.current || groupIdRef.current === null) return;
     const now = new Date();
     const time = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const optimistic: ChatMessage = { id: Date.now().toString(), sender: user.name, text: message.trim(), time, avatarSeed: user.avatarSeed };
+    const optimistic: ChatMessage = { id: Date.now().toString(), sender: user.name, text: message.trim(), time, avatarSeed: user.avatarSeed, avatarImage: user.avatarImage };
     setMessages((prev) => [...prev, optimistic]);
     setMessage('');
     setTimeout(() => {
@@ -165,7 +166,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     await fetch(`/api/rooms/${roomIdRef.current}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: optimistic.text, time, avatarSeed: user.avatarSeed, groupId: groupIdRef.current ?? 0 }),
+      body: JSON.stringify({ text: optimistic.text, time, avatarSeed: user.avatarSeed, avatarImage: user.avatarImage, groupId: groupIdRef.current ?? 0 }),
     });
   };
 
@@ -235,7 +236,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                   {(myGroup?.members ?? teamMembers).map((member, idx) => {
                     const isCurrentUser = (user?.gmail && member.gmail === user.gmail) || member.name === user?.name;
                     const displayName = isCurrentUser ? (user?.name ?? member.name) : member.name;
-                    const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
+                    const avatarUrl = resolveAvatar(member);
                     const showRole = member.role && member.role !== 'ไม่ระบุ';
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
                     const mbtiType = memberTypes[member.name];
@@ -349,8 +350,8 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                       <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 self-end">
                         <img
                           src={(() => {
-                            const seed = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender)?.avatarSeed ?? msg.avatarSeed;
-                            return `/img/p${seed || 1}.PNG`;
+                            const found = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender);
+                            return found ? resolveAvatar(found) : resolveAvatar({ avatarSeed: msg.avatarSeed, avatarImage: msg.avatarImage });
                           })()}
                           alt={msg.sender}
                           className="w-full h-full object-contain"

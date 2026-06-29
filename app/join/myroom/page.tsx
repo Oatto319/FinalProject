@@ -4,17 +4,18 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Copy } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
-interface RoomMember { name: string; avatarSeed: number; gmail: string; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; description: string;
   totalMembers: number; groupSize: number; template: string;
-  hostName: string; hostAvatarSeed: number; hostRole?: string; members: RoomMember[];
+  hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; hostRole?: string; members: RoomMember[];
 }
 
 export default function MyRoomPage() {
   const router = useRouter();
-  const [user, setUser]             = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [user, setUser]             = useState<{ name: string; avatarSeed: number; avatarImage?: string | null } | null>(null);
   const [room, setRoom]             = useState<CurrentRoom | null>(null);
   const [members, setMembers]       = useState<RoomMember[]>([]);
   const [isReady, setIsReady]       = useState(false);
@@ -126,7 +127,7 @@ export default function MyRoomPage() {
             ) : (
               members.map((member, idx) => {
                 const isMe = member.name === user?.name;
-                const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
+                const avatarUrl = resolveAvatar(member);
                 return (
                   <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isMe ? 'border-[#7096D1]' : 'border-transparent'}`}>
                     <div className="flex items-center gap-4">
@@ -155,7 +156,7 @@ export default function MyRoomPage() {
             <div className="bg-white rounded-[20px] p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
-                  <img src={`/img/p${room?.hostAvatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
+                  <img src={room ? resolveAvatar({ avatarSeed: room.hostAvatarSeed, avatarImage: room.hostAvatarImage }) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

@@ -1,15 +1,50 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { ChevronLeft, Upload } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+
+const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024; // 5MB raw upload limit, before compression
+const IMPORTED_IMAGE_MAX_SIDE = 320;
+
+function readImportedImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('ไฟล์นี้ไม่ใช่รูปภาพที่ใช้ได้'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height) {
+          if (width > IMPORTED_IMAGE_MAX_SIDE) { height = Math.round(height * (IMPORTED_IMAGE_MAX_SIDE / width)); width = IMPORTED_IMAGE_MAX_SIDE; }
+        } else if (height > IMPORTED_IMAGE_MAX_SIDE) {
+          width = Math.round(width * (IMPORTED_IMAGE_MAX_SIDE / height)); height = IMPORTED_IMAGE_MAX_SIDE;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('เบราว์เซอร์ไม่รองรับ')); return; }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function ProfilePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromEdit = searchParams.get('from') === 'edit';
   const [selectedAvatar, setSelectedAvatar] = useState(7);
+  const [customImage, setCustomImage] = useState<string | null>(null);
+  const [useCustom, setUseCustom] = useState(false);
+  const [importError, setImportError] = useState('');
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const avatars = Array.from({ length: 30 }, (_, i) => ({
     id: i + 1,
@@ -21,24 +56,45 @@ function ProfilePageInner() {
       const raw = localStorage.getItem('currentUser');
       if (raw) {
         const u = JSON.parse(raw);
-        if (u.avatarSeed) setSelectedAvatar(u.avatarSeed);
+        if (u.avatarImage) { setCustomImage(u.avatarImage); setUseCustom(true); }
+        else if (u.avatarSeed) setSelectedAvatar(u.avatarSeed);
       }
     }
   }, [fromEdit]);
 
+  const handleImportClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImportError('');
+    if (!file.type.startsWith('image/')) { setImportError('กรุณาเลือกไฟล์รูปภาพ'); return; }
+    if (file.size > MAX_IMPORT_FILE_BYTES) { setImportError('ไฟล์ใหญ่เกินไป (จำกัด 5MB)'); return; }
+    try {
+      const dataUrl = await readImportedImage(file);
+      setCustomImage(dataUrl);
+      setUseCustom(true);
+    } catch {
+      setImportError('นำเข้ารูปไม่สำเร็จ กรุณาลองใหม่');
+    }
+  };
+
   const handleConfirm = async () => {
     setLoading(true);
     try {
+      const avatarImage = useCustom ? customImage : null;
+
       if (fromEdit) {
         const raw = localStorage.getItem('currentUser');
         if (!raw) { router.replace('/login'); return; }
         const currentUser = JSON.parse(raw);
-        const updated = { ...currentUser, avatarSeed: selectedAvatar };
+        const updated = { ...currentUser, avatarSeed: selectedAvatar, avatarImage };
 
         await fetch('/api/users', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gmail: currentUser.gmail, avatarSeed: selectedAvatar }),
+          body: JSON.stringify({ gmail: currentUser.gmail, avatarSeed: selectedAvatar, avatarImage }),
         });
 
         localStorage.setItem('currentUser', JSON.stringify(updated));
@@ -50,7 +106,7 @@ function ProfilePageInner() {
       if (!pendingRaw) { router.push('/login/register'); return; }
 
       const pending = JSON.parse(pendingRaw);
-      const newUser = { ...pending, avatarSeed: selectedAvatar };
+      const newUser = { ...pending, avatarSeed: selectedAvatar, avatarImage };
 
       const res = await fetch('/api/users', {
         method: 'POST',
@@ -77,23 +133,40 @@ function ProfilePageInner() {
       </p>
       <div className="bg-white w-full max-w-[900px] rounded-[24px] p-8 md:p-12 shadow-sm border border-gray-100">
         <div className="grid grid-cols-5 gap-4 md:gap-6 justify-items-center">
+          {customImage && (
+            <div onClick={() => setUseCustom(true)}
+              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${useCustom ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              <div className={`w-full h-full rounded-full overflow-hidden transition-all ${useCustom ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
+                <img src={customImage} alt="รูปของคุณ" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          )}
           {avatars.map((avatar) => (
-            <div key={avatar.id} onClick={() => setSelectedAvatar(avatar.id)}
-              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
-              <div className={`w-full h-full rounded-full overflow-hidden transition-all ${selectedAvatar === avatar.id ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
+            <div key={avatar.id} onClick={() => { setUseCustom(false); setSelectedAvatar(avatar.id); }}
+              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${!useCustom && selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              <div className={`w-full h-full rounded-full overflow-hidden transition-all ${!useCustom && selectedAvatar === avatar.id ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
                 <img src={avatar.url} alt={`Avatar ${avatar.id}`} className="w-full h-full object-cover" />
               </div>
             </div>
           ))}
         </div>
+        {importError && <p className="text-red-500 text-sm text-center font-medium mt-4">{importError}</p>}
         <div className="flex justify-between items-center mt-12">
           <button onClick={() => router.back()} className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95">
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
-          <button onClick={handleConfirm} disabled={loading}
-            className={`px-12 py-4 rounded-[20px] font-bold text-xl transition-all ${loading ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]' : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}`}>
-            {loading ? 'กำลังบันทึก...' : 'Confirm'}
-          </button>
+          <div className="flex items-center gap-4">
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <button onClick={handleImportClick} type="button"
+              className="flex items-center gap-2 px-6 py-4 rounded-[20px] font-bold text-lg bg-white text-[#2D3E50] border-2 border-[#2D3E50] transition-all hover:bg-gray-50 active:scale-95">
+              <Upload size={20} strokeWidth={2.5} />
+              Import
+            </button>
+            <button onClick={handleConfirm} disabled={loading}
+              className={`px-12 py-4 rounded-[20px] font-bold text-xl transition-all ${loading ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]' : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}`}>
+              {loading ? 'กำลังบันทึก...' : 'Confirm'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

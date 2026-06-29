@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRightCircle } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
-interface RoomMember { name: string; avatarSeed: number; gmail: string; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
 interface RoomData {
   roomId: string; title: string; description: string; totalMembers: number;
-  groupSize: number; template: string; hostName: string; hostAvatarSeed: number;
+  groupSize: number; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null;
   hostRole?: string; members: RoomMember[];
 }
 
@@ -56,7 +57,7 @@ export default function JoinCheckPage() {
           <div className="bg-white rounded-[20px] p-8 shadow-sm">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100">
-                <img src={`/img/p${room?.hostAvatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
+                <img src={room ? resolveAvatar({ avatarSeed: room.hostAvatarSeed, avatarImage: room.hostAvatarImage }) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
@@ -101,7 +102,7 @@ export default function JoinCheckPage() {
                 <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
-                      <img src={`/img/p${member.avatarSeed || 1}.PNG`} alt={member.name} className="w-full h-full object-contain" />
+                      <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <p className="font-bold text-gray-800">{member.name}</p>

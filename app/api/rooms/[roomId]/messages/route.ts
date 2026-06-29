@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { roomId } = await params;
-  const { groupId, text, time, avatarSeed } = await req.json();
+  const { groupId, text, time, avatarSeed, avatarImage } = await req.json();
 
   if (!text || groupId === undefined) {
     return NextResponse.json({ error: 'text, groupId required' }, { status: 400 });
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   const msg = await Message.create({
     roomId, groupId, sender: sessionUser.name, text: safeText,
     time: time ?? new Date().toISOString(), avatarSeed: avatarSeed ?? sessionUser.avatarSeed ?? 0,
+    avatarImage: avatarImage ?? sessionUser.avatarImage ?? null,
   });
   return NextResponse.json({ message: msg.toObject() }, { status: 201 });
 }

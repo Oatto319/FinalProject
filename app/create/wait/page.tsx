@@ -3,17 +3,18 @@
 import { useState, useEffect } from 'react';
 import { Copy } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
-interface RoomMember { name: string; avatarSeed: number; gmail: string; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; description: string;
   totalMembers: number; groupSize: number; template: string;
-  hostName: string; hostAvatarSeed: number; members: RoomMember[];
+  hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
   readyUsers?: string[];
 }
 
 const WaitingRoom = () => {
-  const [user, setUser]           = useState<{ name: string; avatarSeed: number } | null>(null);
+  const [user, setUser]           = useState<{ name: string; avatarSeed: number; avatarImage?: string | null } | null>(null);
   const [room, setRoom]           = useState<CurrentRoom | null>(null);
   const [members, setMembers]     = useState<RoomMember[]>([]);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
@@ -78,7 +79,7 @@ const WaitingRoom = () => {
                 <div key={idx} className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border border-transparent hover:border-white transition-all">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border-2 border-white">
-                      <img src={`/img/p${member.avatarSeed || 1}.PNG`} alt={member.name} className="w-full h-full object-contain" />
+                      <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-700 leading-tight">{member.name}</h4>
@@ -97,7 +98,7 @@ const WaitingRoom = () => {
             <div className="bg-white rounded-[20px] p-8 shadow-sm flex flex-col gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
-                  <img src={`/img/p${user?.avatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
+                  <img src={user ? resolveAvatar(user) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

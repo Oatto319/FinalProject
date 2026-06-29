@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     return res;
   }
 
-  const { name, gender, gmail, password, avatarSeed } = body;
+  const { name, gender, gmail, password, avatarSeed, avatarImage } = body;
   if (!name || !gmail || !password) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 });
 
   const existing = await User.findOne({ gmail: gmail.toLowerCase() });
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
   const token = createSessionToken();
   const user = await User.create({
     name, gender, gmail: gmail.toLowerCase(), password: hashedPassword,
-    avatarSeed: avatarSeed ?? 1, role: 'user', sessionToken: token,
+    avatarSeed: avatarSeed ?? 1, avatarImage: avatarImage ?? null, role: 'user', sessionToken: token,
   });
 
   const res = NextResponse.json({ user: safeUser(user.toObject()) }, { status: 201 });

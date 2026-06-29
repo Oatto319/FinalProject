@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
-interface RoomMember { name: string; avatarSeed: number; gmail: string; role?: string; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; }
 interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
 
@@ -26,7 +27,7 @@ const GroupResultPage = () => {
   const router = useRouter();
   const [showModal, setShowModal]             = useState(false);
   const [selectedReq, setSelectedReq]         = useState<{id:number;name:string} | null>(null);
-  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostAvatarSeed?: number; hostRole?: string; members?: {name:string}[] } | null>(null);
+  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[] } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
   const [isManualRoom, setIsManualRoom]        = useState(false);
   const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, MBTIResult>>({});
@@ -80,7 +81,7 @@ const GroupResultPage = () => {
               {/* Host profile */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
-                  <img src={`/img/p${room?.hostAvatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
+                  <img src={room ? resolveAvatar({ avatarSeed: room.hostAvatarSeed, avatarImage: room.hostAvatarImage }) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
@@ -122,7 +123,7 @@ const GroupResultPage = () => {
                 </div>
                 <div className="bg-[#E8E8E8] border-2 border-[#E8E8E8] rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
-                    const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
+                    const avatarUrl = resolveAvatar(member);
                     const typeOverride = memberTypeOverrides[member.name];
                     const assignedRole = member.role && member.role !== 'ไม่ระบุ' ? member.role : undefined;
                     const isLeader  = group.leaderId === member.name;

@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
 interface RoomMember {
   name: string;
   avatarSeed: number;
+  avatarImage?: string | null;
   gmail: string;
   role?: string;
 }
@@ -153,7 +155,7 @@ export default function VotePage() {
                     <div className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
                       {members.map((member) => {
                         const isMe = member.name === user?.name;
-                        const avatarUrl = `/img/p${member.avatarSeed || 1}.PNG`;
+                        const avatarUrl = resolveAvatar(member);
                         const mbtiType = memberTypes[member.name];
                         const voteCount = tally[member.name] ?? 0;
                         const isLeading = voteCount > 0 && voteCount === maxVotes;
@@ -199,10 +201,10 @@ export default function VotePage() {
                                   {Object.entries(groupVotes)
                                     .filter(([, votedFor]) => votedFor === member.name)
                                     .map(([voter]) => {
-                                      const seed = members.find((m) => m.name === voter)?.avatarSeed ?? 1;
+                                      const voterMember = members.find((m) => m.name === voter);
                                       return (
                                         <div key={voter} className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-gray-100">
-                                          <img src={`/img/p${seed}.PNG`} alt={voter} className="w-full h-full object-contain" />
+                                          <img src={voterMember ? resolveAvatar(voterMember) : '/img/p1.PNG'} alt={voter} className="w-full h-full object-contain" />
                                         </div>
                                       );
                                     })}

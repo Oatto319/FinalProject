@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LucideMessageCircle } from 'lucide-react';
+import { resolveAvatar } from '@/lib/avatar';
 
 interface User {
   name: string;
   gender: string;
   avatarSeed: number;
+  avatarImage?: string | null;
   role?: string;
 }
 
@@ -32,7 +34,7 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
 
   if (!user) return null;
 
-  const avatarUrl = `/img/p${user.avatarSeed || 1}.PNG`;
+  const avatarUrl = resolveAvatar(user);
 
   const displaySubtitle = subtitle ?? user.role ?? user.gender;
 

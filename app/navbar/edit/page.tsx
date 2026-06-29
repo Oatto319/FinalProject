@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Pencil, LogOut } from 'lucide-react';
+import { resolveAvatar } from '@/lib/avatar';
 
-interface User { name: string; gender: string; avatarSeed: number; role?: string; password?: string; gmail?: string; }
+interface User { name: string; gender: string; avatarSeed: number; avatarImage?: string | null; role?: string; password?: string; gmail?: string; }
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function EditProfilePage() {
 
   if (!user) return null;
 
-  const currentAvatarUrl = `/img/p${user.avatarSeed || 1}.PNG`;
+  const currentAvatarUrl = resolveAvatar(user);
 
   return (
     <div className="min-h-screen bg-gray-200 font-sans flex items-start justify-center p-6 pt-10">

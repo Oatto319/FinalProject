@@ -21,34 +21,45 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ room
   // Build gmail list from members
   const gmails: string[] = (roomObj.members ?? []).map((m: { gmail: string }) => m.gmail).filter(Boolean);
 
-  // Fetch latest avatarSeed for all members + host in one go
+  // Fetch latest avatarSeed/avatarImage for all members + host in one go
   const [users, hostUser] = await Promise.all([
-    gmails.length > 0 ? User.find({ gmail: { $in: gmails } }, { gmail: 1, avatarSeed: 1, _id: 0 }) : Promise.resolve([]),
-    User.findOne({ name: roomObj.hostName }, { avatarSeed: 1, _id: 0 }),
+    gmails.length > 0 ? User.find({ gmail: { $in: gmails } }, { gmail: 1, avatarSeed: 1, avatarImage: 1, _id: 0 }) : Promise.resolve([]),
+    User.findOne({ name: roomObj.hostName }, { avatarSeed: 1, avatarImage: 1, _id: 0 }),
   ]);
 
   const seedMap = new Map<string, number>(
     (users as { gmail: string; avatarSeed: number }[]).map((u) => [u.gmail, u.avatarSeed])
   );
+  const imageMap = new Map<string, string | null>(
+    (users as { gmail: string; avatarImage: string | null }[]).map((u) => [u.gmail, u.avatarImage])
+  );
 
   // Patch members
   if (roomObj.members) {
-    roomObj.members = roomObj.members.map((m: { gmail: string; avatarSeed: number }) => ({
+    roomObj.members = roomObj.members.map((m: { gmail: string; avatarSeed: number; avatarImage?: string | null }) => ({
       ...m,
       avatarSeed: seedMap.get(m.gmail) ?? m.avatarSeed,
+      avatarImage: imageMap.has(m.gmail) ? imageMap.get(m.gmail) : m.avatarImage,
     }));
   }
 
   // Patch matchedGroups members
   if (roomObj.matchedGroups) {
-    roomObj.matchedGroups = roomObj.matchedGroups.map((g: { members: { gmail: string; avatarSeed: number }[] }) => ({
+    roomObj.matchedGroups = roomObj.matchedGroups.map((g: { members: { gmail: string; avatarSeed: number; avatarImage?: string | null }[] }) => ({
       ...g,
-      members: g.members.map((m) => ({ ...m, avatarSeed: seedMap.get(m.gmail) ?? m.avatarSeed })),
+      members: g.members.map((m) => ({
+        ...m,
+        avatarSeed: seedMap.get(m.gmail) ?? m.avatarSeed,
+        avatarImage: imageMap.has(m.gmail) ? imageMap.get(m.gmail) : m.avatarImage,
+      })),
     }));
   }
 
   // Patch host
-  if (hostUser) roomObj.hostAvatarSeed = (hostUser as { avatarSeed: number }).avatarSeed;
+  if (hostUser) {
+    roomObj.hostAvatarSeed = (hostUser as { avatarSeed: number }).avatarSeed;
+    roomObj.hostAvatarImage = (hostUser as { avatarImage: string | null }).avatarImage;
+  }
 
   return NextResponse.json({ room: roomObj });
 }

@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Sparkles, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { resolveAvatar } from '@/lib/avatar';
 
 interface RoomMember {
   name: string;
   avatarSeed: number;
+  avatarImage?: string | null;
   gmail: string;
   role?: string;
 }
@@ -24,7 +26,7 @@ interface MBTIResult { title: string; icon: string; description: string; jobs: s
 export default function AnalyzePage() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
-  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; score: number; role?: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; avatarImage?: string | null; score: number; role?: string }[]>([]);
   const [roomIdState, setRoomIdState] = useState('');
   const [myGroupId, setMyGroupId] = useState<number | null>(null);
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
@@ -69,6 +71,7 @@ export default function AnalyzePage() {
       const withScores = members.map((m: RoomMember) => ({
         name: m.name,
         avatarSeed: m.avatarSeed,
+        avatarImage: m.avatarImage,
         role: m.role,
         score: 75 + ((m.avatarSeed ?? 1) % 25),
       }));
@@ -164,7 +167,7 @@ export default function AnalyzePage() {
                     <div className="relative w-24 h-24 md:w-28 md:h-28">
                       <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
                         <img
-                          src={`/img/p${member.avatarSeed || 1}.PNG`}
+                          src={resolveAvatar(member)}
                           alt={member.name}
                           className="w-full h-full object-contain"
                         />

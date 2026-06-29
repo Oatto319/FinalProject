@@ -5,17 +5,18 @@ import { useState, useEffect, useRef } from 'react';
 import { Copy, Settings, Plus, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { TYPES_BY_TEMPLATE } from '@/lib/type-composition';
+import { resolveAvatar } from '@/lib/avatar';
 
-interface RoomMember { name: string; avatarSeed: number; gmail: string; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; description: string;
   totalMembers: number; groupSize: number; template: string;
-  hostName: string; hostAvatarSeed: number; members: RoomMember[];
+  hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
 }
 
 const ManualPage = () => {
   const router = useRouter();
-  const [user, setUser]             = useState<{ name: string; avatarSeed: number; role?: string } | null>(null);
+  const [user, setUser]             = useState<{ name: string; avatarSeed: number; avatarImage?: string | null; role?: string } | null>(null);
   const [room, setRoom]             = useState<CurrentRoom | null>(null);
   const [members, setMembers]       = useState<RoomMember[]>([]);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
@@ -190,7 +191,7 @@ const ManualPage = () => {
                 <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
-                      <img src={`/img/p${member.avatarSeed || 1}.PNG`} alt={member.name} className="w-full h-full object-contain" />
+                      <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <p className="font-bold text-gray-700 leading-tight">{member.name}</p>
@@ -215,7 +216,7 @@ const ManualPage = () => {
             <div className="bg-white rounded-[20px] p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
-                  <img src={`/img/p${user?.avatarSeed || 1}.PNG`} alt="Host" className="w-full h-full object-contain" />
+                  <img src={user ? resolveAvatar(user) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
