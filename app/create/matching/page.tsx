@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { categoryKeyForCode, categoryAffinities } from '@/lib/type-composition';
 
 const MatchingPage = () => {
   const router = useRouter();
@@ -30,7 +31,9 @@ const MatchingPage = () => {
 
       const template = (room.template ?? 'programming').toLowerCase();
 
-      // ดึง MBTI type + typeScores ของแต่ละ member จาก MongoDB
+      // ดึง MBTI code + typeScores ของแต่ละ member จาก MongoDB แล้วแปลง code (16 แบบ)
+      // ให้เป็นหมวด composition ของ template นี้ (4 แบบ) ผ่าน temperament icon เดียวกับที่
+      // ใช้แสดงผลใน Type Settings popup — ดู lib/type-composition.ts
       const memberTypeMap: Record<string, string> = {};
       const memberScoreMap: Record<string, Record<string, number>> = {};
       await Promise.all(
@@ -41,14 +44,15 @@ const MatchingPage = () => {
               : `/api/users?name=${encodeURIComponent(m.name)}`;
             const res = await fetch(url);
             const data = await res.json();
-            const types: Record<string, { title?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
-            let typeData: { title?: string; typeScores?: { title: string; score: number }[] } | undefined = types[template];
-            if (!typeData) typeData = Object.values(types).find((t) => t?.title);
-            if (typeData?.title) memberTypeMap[m.name] = typeData.title;
-            // เก็บ typeScores สำหรับ secondary matching
-            const scores: Record<string, number> = {};
-            (typeData?.typeScores ?? []).forEach((ts) => { scores[ts.title] = ts.score; });
-            memberScoreMap[m.name] = scores;
+            const types: Record<string, { code?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
+            let typeData: { code?: string; typeScores?: { title: string; score: number }[] } | undefined = types[template];
+            if (!typeData) typeData = Object.values(types).find((t) => t?.code);
+            if (typeData?.code) {
+              const categoryKey = categoryKeyForCode(template, typeData.code);
+              if (categoryKey) memberTypeMap[m.name] = categoryKey;
+            }
+            // เก็บ affinity ต่อหมวด composition สำหรับ secondary matching
+            memberScoreMap[m.name] = typeData?.typeScores ? categoryAffinities(template, typeData.typeScores) : {};
           } catch { /* ไม่มี type */ }
         })
       );

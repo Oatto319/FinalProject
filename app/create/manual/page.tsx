@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { Copy, Settings, Plus, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { TYPES_BY_TEMPLATE } from '@/lib/type-composition';
 
 interface RoomMember { name: string; avatarSeed: number; gmail: string; }
 interface CurrentRoom {
@@ -23,32 +24,6 @@ const ManualPage = () => {
   const [showTypeSetting, setShowTypeSetting] = useState(false);
 
   // Type Setting popup state
-  const TYPES_BY_TEMPLATE: Record<string, { key: string; label: string; icon: string }[]> = {
-    programming: [
-      { key: 'นักวิเคราะห์',    label: 'นักวิเคราะห์',    icon: '/img/brain.png' },
-      { key: 'นักคิดสร้างสรรค์', label: 'นักคิดสร้างสรรค์', icon: '/img/idea.png' },
-      { key: 'ผู้ปฏิบัติการ',    label: 'ผู้ปฏิบัติการ',    icon: '/img/pencil.png' },
-      { key: 'นักประสานงาน',     label: 'นักประสานงาน',     icon: '/img/make.png' },
-    ],
-    service: [
-      { key: 'นักสื่อสาร',    label: 'นักสื่อสาร',    icon: '/img/make.png' },
-      { key: 'นักแก้ปัญหา',  label: 'นักแก้ปัญหา',  icon: '/img/brain.png' },
-      { key: 'ผู้ฟัง',        label: 'ผู้ฟัง',        icon: '/img/idea.png' },
-      { key: 'ผู้ปฏิบัติการ', label: 'ผู้ปฏิบัติการ', icon: '/img/pencil.png' },
-    ],
-    presentation: [
-      { key: 'นักพูด',       label: 'นักพูด',       icon: '/img/idea.png' },
-      { key: 'นักวิจัย',     label: 'นักวิจัย',     icon: '/img/brain.png' },
-      { key: 'นักออกแบบ',    label: 'นักออกแบบ',    icon: '/img/pencil.png' },
-      { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
-    ],
-    design: [
-      { key: 'นักสร้างสรรค์', label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
-      { key: 'นักวิเคราะห์',  label: 'นักวิเคราะห์',  icon: '/img/brain.png' },
-      { key: 'ผู้ปฏิบัติ',    label: 'ผู้ปฏิบัติ',    icon: '/img/pencil.png' },
-      { key: 'ผู้ประสานงาน',  label: 'ผู้ประสานงาน',  icon: '/img/make.png' },
-    ],
-  };
   const [tsTypes, setTsTypes]     = useState(TYPES_BY_TEMPLATE.programming);
   const [tsCounts, setTsCounts]   = useState<Record<string, number>>({});
   const [tsWarning, setTsWarning] = useState('');
