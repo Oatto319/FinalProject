@@ -3,34 +3,15 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { ChevronLeft, Upload } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import AvatarCropModal from './AvatarCropModal';
 
-const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024; // 5MB raw upload limit, before compression
-const IMPORTED_IMAGE_MAX_SIDE = 320;
+const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024; // 5MB raw upload limit, before cropping
 
-function readImportedImage(file: File): Promise<string> {
+function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
-    reader.onload = () => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('ไฟล์นี้ไม่ใช่รูปภาพที่ใช้ได้'));
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > height) {
-          if (width > IMPORTED_IMAGE_MAX_SIDE) { height = Math.round(height * (IMPORTED_IMAGE_MAX_SIDE / width)); width = IMPORTED_IMAGE_MAX_SIDE; }
-        } else if (height > IMPORTED_IMAGE_MAX_SIDE) {
-          width = Math.round(width * (IMPORTED_IMAGE_MAX_SIDE / height)); height = IMPORTED_IMAGE_MAX_SIDE;
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('เบราว์เซอร์ไม่รองรับ')); return; }
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.src = reader.result as string;
-    };
+    reader.onload = () => resolve(reader.result as string);
     reader.readAsDataURL(file);
   });
 }
@@ -43,6 +24,7 @@ function ProfilePageInner() {
   const [customImage, setCustomImage] = useState<string | null>(null);
   const [useCustom, setUseCustom] = useState(false);
   const [importError, setImportError] = useState('');
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,12 +54,17 @@ function ProfilePageInner() {
     if (!file.type.startsWith('image/')) { setImportError('กรุณาเลือกไฟล์รูปภาพ'); return; }
     if (file.size > MAX_IMPORT_FILE_BYTES) { setImportError('ไฟล์ใหญ่เกินไป (จำกัด 5MB)'); return; }
     try {
-      const dataUrl = await readImportedImage(file);
-      setCustomImage(dataUrl);
-      setUseCustom(true);
+      const dataUrl = await readFileAsDataUrl(file);
+      setCropSrc(dataUrl);
     } catch {
-      setImportError('นำเข้ารูปไม่สำเร็จ กรุณาลองใหม่');
+      setImportError('เปิดไฟล์ไม่สำเร็จ กรุณาลองใหม่');
     }
+  };
+
+  const handleCropApply = (dataUrl: string) => {
+    setCustomImage(dataUrl);
+    setUseCustom(true);
+    setCropSrc(null);
   };
 
   const handleConfirm = async () => {
@@ -169,6 +156,14 @@ function ProfilePageInner() {
           </div>
         </div>
       </div>
+
+      {cropSrc && (
+        <AvatarCropModal
+          imageSrc={cropSrc}
+          onCancel={() => setCropSrc(null)}
+          onApply={handleCropApply}
+        />
+      )}
     </div>
   );
 }
