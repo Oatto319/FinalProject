@@ -65,7 +65,7 @@ const ProgrammingQuestionnaire = () => {
     const sums: Record<AxisKey, number> = { EI: 0, SN: 0, TF: 0, JP: 0, AT: 0 };
     questions.forEach((q) => { sums[q.axis] += pole(answers[q.id]); });
 
-    const result = buildResult(sums);
+    const result = buildResult(sums, 'programming');
     setJobResult(result);
     setShowPopup(true);
   };
