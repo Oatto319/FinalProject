@@ -58,11 +58,11 @@ export default function TypeSelectionPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
 
-      {/* Decorative icons — corners */}
-      <img src="/img/brain.png"  alt="" className="absolute top-6  left-6  w-28 h-28 object-contain opacity-90 pointer-events-none" />
-      <img src="/img/idea.png"   alt="" className="absolute top-6  right-6 w-28 h-28 object-contain opacity-90 pointer-events-none" />
-      <img src="/img/pencil.png" alt="" className="absolute bottom-6 left-6  w-24 h-24 object-contain opacity-90 pointer-events-none" />
-      <img src="/img/make.png"   alt="" className="absolute bottom-6 right-6 w-24 h-24 object-contain opacity-90 pointer-events-none" />
+      {/* Decorative type labels — corners */}
+      {types[0] && <span className="absolute top-6 left-6 text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[0].icon) }}>{types[0].label}</span>}
+      {types[1] && <span className="absolute top-6 right-6 text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[1].icon) }}>{types[1].label}</span>}
+      {types[2] && <span className="absolute bottom-6 left-6 text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[2].icon) }}>{types[2].label}</span>}
+      {types[3] && <span className="absolute bottom-6 right-6 text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[3].icon) }}>{types[3].label}</span>}
 
       {/* Title */}
       <h1 className="text-5xl font-black uppercase tracking-tight text-[#2D3E50] mb-8"
