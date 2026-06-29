@@ -2,18 +2,21 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Edit2, Home, Info, Send, User, X } from 'lucide-react';
+import { Check, Edit2, Home, Info, Send, User, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
+import { typeColor, roleColor } from '@/lib/mbti';
+import MbtiTagLegend from '../../components/MbtiTagLegend';
+import { markMatchSeen } from '../../components/notifications';
 
 interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; avatarImage?: string | null; }
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
-interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; }
+interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; totalMembers: number;
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
 }
-interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+interface MBTIResult { code?: string; title: string; icon: string; description: string; jobs: string[]; }
 
 export default function MyTeamPage() {
   const router = useRouter();
@@ -32,6 +35,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const [editingName, setEditingName]     = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const [roomTitle, setRoomTitle] = useState('');
+  const [template, setTemplate] = useState('programming');
   const [leaderTip, setLeaderTip] = useState(false);
   const roomIdRef = useRef<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -54,6 +58,8 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     const room = data.room;
     setIsMatched(!!room.matchDone);
     setTeamMembers(room.members ?? []);
+    setTemplate(room.template ?? 'programming');
+    if (room.matchDone) markMatchSeen(roomId);
     const isManual = room.matchMode === 'selection';
     setIsManualRoom(isManual);
     if (room.matchedGroups?.length) {
@@ -90,8 +96,8 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
             const localType = localTypes[templateKey]
               ?? Object.values(localTypes).find((t: unknown) => (t as { icon?: string })?.icon);
             if (localType) {
-              const t = localType as { title: string; icon: string; description?: string; jobs?: string[] };
-              types[currentUserLocal.name] = { title: t.title, icon: t.icon, description: t.description ?? '', jobs: t.jobs ?? [] };
+              const t = localType as { code: string; title: string; icon: string; description?: string; jobs?: string[] };
+              types[currentUserLocal.name] = { code: t.code, title: t.title, icon: t.icon, description: t.description ?? '', jobs: t.jobs ?? [] };
             }
           }
 
@@ -183,6 +189,16 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     setIsEditingName(false);
   };
 
+  const handleConfirmLeader = async () => {
+    if (!myGroup || !roomIdRef.current || !user) return;
+    await fetch(`/api/rooms/${roomIdRef.current}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'confirmLeader', groupId: myGroup.id }),
+    });
+    setMyGroup((prev) => prev ? { ...prev, leaderConfirmedBy: [...(prev.leaderConfirmedBy ?? []), user.name] } : prev);
+  };
+
 
   const roleIcons: Record<string, string> = {
     'นักวิเคราะห์': '/img/brain.png',
@@ -232,6 +248,13 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
               </div>
             ) : (
               <>
+                <div className="flex items-center justify-between px-1 -mb-2">
+                  <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">สมาชิกในทีม</p>
+                  <MbtiTagLegend
+                    template={template}
+                    className="w-7 h-7 rounded-full bg-white hover:bg-gray-100 flex items-center justify-center text-[#4B3E7A] transition-all shadow-sm"
+                  />
+                </div>
                 <div className="flex flex-col gap-3">
                   {(myGroup?.members ?? teamMembers).map((member, idx) => {
                     const isCurrentUser = (user?.gmail && member.gmail === user.gmail) || member.name === user?.name;
@@ -261,7 +284,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                               {!isManualRoom && showRole && (
                                 <div className="flex items-center gap-1">
-                                  {roleIcon && <img src={roleIcon} alt={member.role} className="w-4 h-4 object-contain" />}
+                                  {roleIcon && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: roleColor(roleIcon) }} />}
                                   <p className="text-xs text-gray-500 font-medium">{member.role}</p>
                                 </div>
                               )}
@@ -290,15 +313,24 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                             </div>
                           )}
                           {mbtiType ? (
-                            <button onClick={() => setPopup({ member, type: mbtiType })} className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
-                              <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
+                            <button
+                              onClick={() => setPopup({ member, type: mbtiType })}
+                              className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                              style={{ backgroundColor: `${mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon)}26` }}
+                            >
+                              <span className="text-[11px] font-black" style={{ color: mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon) }}>
+                                {mbtiType.code ?? mbtiType.title.slice(0, 2)}
+                              </span>
                             </button>
                           ) : isManualRoom && member.role && member.role !== 'ไม่ระบุ' ? (
                             <button
                               onClick={() => setPopup({ member, type: { title: member.role!, icon: roleIcons[member.role!] ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                              className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
+                              className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                              style={{ backgroundColor: `${roleColor(roleIcons[member.role!] ?? '/img/brain.png')}26` }}
                             >
-                              <img src={roleIcons[member.role!] ?? '/img/brain.png'} alt={member.role} className="w-full h-full object-contain" />
+                              <span className="text-[10px] font-black text-center px-1" style={{ color: roleColor(roleIcons[member.role!] ?? '/img/brain.png') }}>
+                                {member.role!.slice(0, 2)}
+                              </span>
                             </button>
                           ) : (
                             <div className="w-16 h-16 rounded-full bg-gray-100" />
@@ -308,6 +340,28 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     );
                   })}
                 </div>
+
+                {myGroup?.leaderId && (
+                  <div className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm gap-3">
+                    <div>
+                      <p className="text-xs text-gray-400 font-medium">หัวหน้าทีม</p>
+                      <p className="font-bold text-gray-800">{myGroup.leaderId}</p>
+                      <p className="text-[11px] text-gray-400 mt-0.5">
+                        ยืนยันแล้ว {myGroup.leaderConfirmedBy?.length ?? 0}/{myGroup.members.length} คน
+                      </p>
+                    </div>
+                    {user && myGroup.leaderConfirmedBy?.includes(user.name) ? (
+                      <span className="text-[#608BC1] text-sm font-bold flex items-center gap-1 flex-shrink-0"><Check size={16} /> ยืนยันแล้ว</span>
+                    ) : (
+                      <button
+                        onClick={handleConfirmLeader}
+                        className="bg-[#608BC1] text-white px-4 py-2 rounded-xl font-bold text-sm hover:brightness-95 transition-all active:scale-95 flex-shrink-0"
+                      >
+                        ยืนยันหัวหน้าทีม
+                      </button>
+                    )}
+                  </div>
+                )}
               </>
             )}
 
@@ -426,7 +480,14 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <img src={popup.type.icon} alt={popup.type.title} className="w-24 h-24 object-contain" />
+                <div
+                  className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon)}1A` }}
+                >
+                  <span className="text-lg font-black" style={{ color: popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon) }}>
+                    {popup.type.code ?? popup.type.title.slice(0, 2)}
+                  </span>
+                </div>
                 <div>
                   <p className="text-xs text-gray-400 font-medium">{isManualRoom ? 'บทบาทในทีม' : 'ประเภทบุคลิกภาพ'}</p>
                   <p className="text-xl font-black text-[#4B3E7A]">{popup.type.title}</p>

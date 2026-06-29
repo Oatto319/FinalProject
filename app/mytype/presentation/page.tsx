@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
+import { typeColor } from '@/lib/mbti';
 
 type MBTIResult = {
   code?: string;
@@ -69,7 +70,12 @@ const PresentationTypePage = () => {
             ) : result ? (
               <div className="flex flex-col gap-6">
                 <div className="flex items-center gap-4">
-                  <img src={result.icon} alt={result.title} className="w-20 h-20 object-contain flex-shrink-0" />
+                  <div
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${result.code ? typeColor(result.code) : '#6D58B9'}1A` }}
+                  >
+                    <span className="text-lg font-black tracking-wide" style={{ color: result.code ? typeColor(result.code) : '#6D58B9' }}>{result.code}</span>
+                  </div>
                   <div>
                     <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพการทำงาน{result.code ? ` · ${result.code}` : ''}</p>
                     <p className="text-2xl font-black text-[#4B3E7A]">{result.title}</p>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
+import { typeColor } from '@/lib/mbti';
 
 interface RoomMember {
   name: string;
@@ -21,7 +22,7 @@ interface MatchedGroup {
   leaderId?: string;
 }
 
-interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+interface MBTIResult { code: string; title: string; icon: string; description: string; jobs: string[]; }
 
 export default function VotePage() {
   const router = useRouter();
@@ -173,13 +174,14 @@ export default function VotePage() {
                                 : isLeading ? 'border-[#FFB800]' : 'border-transparent hover:border-gray-200'}
                             `}
                           >
-                            {/* MBTI type icon — top-right corner */}
+                            {/* MBTI type badge — top-right corner */}
                             {mbtiType && (
                               <div
                                 onClick={(e) => { e.stopPropagation(); setMbtiPopup({ name: member.name, type: mbtiType }); }}
-                                className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
+                                className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                                style={{ backgroundColor: `${typeColor(mbtiType.code)}26` }}
                               >
-                                <img src={mbtiType.icon} alt={mbtiType.title} className="w-full h-full object-contain" />
+                                <span className="text-[8px] font-black" style={{ color: typeColor(mbtiType.code) }}>{mbtiType.code}</span>
                               </div>
                             )}
 
@@ -268,7 +270,12 @@ export default function VotePage() {
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <img src={mbtiPopup.type.icon} alt={mbtiPopup.type.title} className="w-14 h-14 object-contain" />
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${typeColor(mbtiPopup.type.code)}1A` }}
+                >
+                  <span className="text-xs font-black" style={{ color: typeColor(mbtiPopup.type.code) }}>{mbtiPopup.type.code}</span>
+                </div>
                 <div>
                   <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพ</p>
                   <p className="text-xl font-black text-[#4B3E7A]">{mbtiPopup.type.title}</p>

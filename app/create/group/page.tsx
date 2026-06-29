@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Home } from 'lucide-react';
+import { X, Home, Copy } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
+import { typeColor, roleColor } from '@/lib/mbti';
+import MbtiTagLegend from '../../components/MbtiTagLegend';
+import { markMatchSeen } from '../../components/notifications';
 
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
-interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; }
-interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; }
+interface MBTIResult { code?: string; title: string; icon: string; description: string; jobs: string[]; }
 
 
 const GROUP_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
@@ -32,6 +35,7 @@ const GroupResultPage = () => {
   const [isManualRoom, setIsManualRoom]        = useState(false);
   const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
+  const [copied, setCopied] = useState(false);
 
 
   useEffect(() => {
@@ -50,6 +54,7 @@ const GroupResultPage = () => {
       setIsManualRoom(manual);
       setRoom({ ...r, ...data.room });
       if (data.room.matchedGroups?.length) setGroups(data.room.matchedGroups);
+      if (data.room.matchDone) markMatchSeen(roomId);
 
       // manual mode ใช้ member.role โดยตรง ไม่ต้อง fetch MBTI types
       if (!manual) {
@@ -64,6 +69,18 @@ const GroupResultPage = () => {
   }, []);
 
   const handleRequest = () => { setShowModal(false); setSelectedReq(null); };
+
+  const handleCopyResults = () => {
+    const text = [
+      `ผลการจับกลุ่ม: ${room?.title ?? ''}`,
+      ...groups.map((g) =>
+        [`\n${g.name} (${g.members.length} คน)`, ...g.members.map((m) => `- ${m.name}${g.leaderId === m.name ? ' (หัวหน้าทีม)' : ''}`)].join('\n')
+      ),
+    ].join('\n');
+    try { navigator.clipboard.writeText(text); } catch { const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="min-h-screen bg-[#E8E8E8] font-sans flex flex-col items-center">
@@ -112,6 +129,25 @@ const GroupResultPage = () => {
         </div>
 
         <div className="lg:col-span-7 bg-white rounded-[24px] p-6 shadow-sm overflow-hidden flex flex-col gap-8">
+          {groups.length > 0 && (
+            <div className="flex items-center justify-between -mb-4">
+              <p className="text-xs font-black text-gray-400 uppercase tracking-widest">ผลการจับกลุ่ม</p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyResults}
+                  title="คัดลอกผลการจับกลุ่ม"
+                  className={`flex items-center gap-1.5 px-3 h-8 rounded-full text-xs font-bold transition-all ${copied ? 'bg-green-100 text-green-600' : 'bg-[#EDE9FF] hover:bg-[#E0D9FF] text-[#4B3E7A]'}`}
+                >
+                  <Copy size={14} />
+                  {copied ? 'คัดลอกแล้ว!' : 'คัดลอกผลลัพธ์'}
+                </button>
+                <MbtiTagLegend
+                  template={room?.template ?? 'programming'}
+                  className="w-8 h-8 rounded-full bg-[#EDE9FF] hover:bg-[#E0D9FF] flex items-center justify-center text-[#4B3E7A] transition-all"
+                />
+              </div>
+            </div>
+          )}
           {groups.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-gray-400 font-medium">ไม่พบข้อมูลกลุ่ม</div>
           ) : (
@@ -121,6 +157,11 @@ const GroupResultPage = () => {
                 <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-8 py-2 rounded-full font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
                   {group.name}
                 </div>
+                {group.leaderId && (
+                  <p className="text-xs text-gray-400 font-medium ml-2 mb-2">
+                    หัวหน้าทีม: <span className="font-bold text-gray-600">{group.leaderId}</span> — ยืนยันแล้ว {group.leaderConfirmedBy?.length ?? 0}/{group.members.length} คน
+                  </p>
+                )}
                 <div className="bg-[#E8E8E8] border-2 border-[#E8E8E8] rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = resolveAvatar(member);
@@ -143,14 +184,18 @@ const GroupResultPage = () => {
                             assignedRole && ROLE_ICONS[assignedRole] ? (
                               <button
                                 onClick={() => setMbtiPopup({ name: member.name, type: { title: assignedRole, icon: ROLE_ICONS[assignedRole], description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                                className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
-                                <img src={ROLE_ICONS[assignedRole]} alt={assignedRole} className="w-full h-full object-contain" />
+                                className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
+                                style={{ backgroundColor: `${roleColor(ROLE_ICONS[assignedRole])}26` }}>
+                                <span className="text-[10px] font-black text-center px-1" style={{ color: roleColor(ROLE_ICONS[assignedRole]) }}>{assignedRole.slice(0, 2)}</span>
                               </button>
                             ) : <div className="w-12 h-12 rounded-full bg-gray-100" />
                           ) : typeOverride ? (
                             <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
-                              className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity">
-                              <img src={typeOverride.icon} alt={typeOverride.title} className="w-full h-full object-contain" />
+                              className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
+                              style={{ backgroundColor: `${typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon)}26` }}>
+                              <span className="text-[10px] font-black" style={{ color: typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon) }}>
+                                {typeOverride.code ?? typeOverride.title.slice(0, 2)}
+                              </span>
                             </button>
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-gray-100" />
@@ -176,7 +221,14 @@ const GroupResultPage = () => {
               </button>
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
-              <img src={mbtiPopup.type.icon} alt={mbtiPopup.type.title} className="w-24 h-24 object-contain" />
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                style={{ backgroundColor: `${mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon)}1A` }}
+              >
+                <span className="text-lg font-black" style={{ color: mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon) }}>
+                  {mbtiPopup.type.code ?? mbtiPopup.type.title.slice(0, 2)}
+                </span>
+              </div>
               <p className="font-black text-[#4B3E7A] text-xl">{mbtiPopup.type.title}</p>
               {mbtiPopup.type.description && <p className="text-gray-500 text-sm text-center leading-relaxed">{mbtiPopup.type.description}</p>}
               {mbtiPopup.type.jobs && mbtiPopup.type.jobs.length > 0 && (

@@ -54,7 +54,7 @@ export async function GET(
     allMembers = allGroups.flatMap((g) => g.members);
   }
 
-  const types: Record<string, { title: string; icon: string; description: string; jobs: string[] }> = {};
+  const types: Record<string, { code: string; title: string; icon: string; description: string; jobs: string[]; typeScores: { title: string; icon: string; score: number }[] }> = {};
 
   // Batch fetch — 1-2 queries แทน N queries
   const gmails  = allMembers.filter((m) => m.gmail).map((m) => m.gmail!.toLowerCase());
@@ -81,12 +81,14 @@ export async function GET(
     }
 
     if (typeResult && (typeResult as { icon?: string }).icon) {
-      const t = typeResult as { title: string; icon: string; description?: string; jobs?: string[] };
+      const t = typeResult as { code: string; title: string; icon: string; description?: string; jobs?: string[]; typeScores?: { title: string; icon: string; score: number }[] };
       types[member.name] = {
+        code: t.code,
         title: t.title,
         icon: t.icon,
         description: t.description ?? '',
         jobs: t.jobs ?? [],
+        typeScores: t.typeScores ?? [],
       };
     }
   }

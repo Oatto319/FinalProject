@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Room } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // POST /api/rooms/:roomId/ready → toggle the session user's ready status
 export async function POST(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   await connectDB();
   const sessionUser = await getSessionUser(req);
   if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  if (!checkRateLimit(`ready:${sessionUser.gmail}`, 30, 60 * 1000)) {
+    return NextResponse.json({ error: 'กดเร็วเกินไป กรุณาลองใหม่' }, { status: 429 });
+  }
 
   const { roomId } = await params;
   const { isReady } = await req.json();

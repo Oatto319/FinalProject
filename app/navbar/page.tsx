@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LucideMessageCircle } from 'lucide-react';
 import { resolveAvatar } from '@/lib/avatar';
+import { notificationsEnabled, isMatchSeen } from '../components/notifications';
 
 interface User {
   name: string;
@@ -22,6 +23,7 @@ interface NavbarProps {
 export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [hasNotification, setHasNotification] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -31,6 +33,29 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
       setUser(JSON.parse(raw));
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const checkMatchNotification = async () => {
+      if (!notificationsEnabled()) { setHasNotification(false); return; }
+      const roomRaw = localStorage.getItem('currentRoom');
+      if (!roomRaw) { setHasNotification(false); return; }
+      const room = JSON.parse(roomRaw);
+      const roomId = room.roomId ?? room.id;
+      if (!roomId) return;
+      try {
+        const res = await fetch(`/api/rooms/${roomId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setHasNotification(!!data.room?.matchDone && !isMatchSeen(roomId));
+      } catch { /* เครือข่ายขัดข้อง — ไม่ต้องโชว์ badge */ }
+    };
+
+    checkMatchNotification();
+    const interval = setInterval(checkMatchNotification, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   if (!user) return null;
 
@@ -60,8 +85,15 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
           </div>
         </button>
 
-        <button className="bg-green-500 p-3 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95">
+        <button
+          onClick={() => router.push('/join/myprojects')}
+          title="ทีมของฉัน"
+          className="relative bg-green-500 p-3 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95"
+        >
           <LucideMessageCircle fill="currentColor" size={26} />
+          {hasNotification && (
+            <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
+          )}
         </button>
       </div>
     </header>

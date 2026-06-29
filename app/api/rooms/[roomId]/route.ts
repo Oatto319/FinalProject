@@ -4,7 +4,11 @@ import { Room, User } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
 
 interface RoomMemberLike { name: string; gmail?: string; }
-interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; }
+interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; leaderConfirmedBy?: string[]; }
+
+const TITLE_MAX_LENGTH = 100;
+const DESCRIPTION_MAX_LENGTH = 500;
+const TEAM_NAME_MAX_LENGTH = 50;
 
 // GET /api/rooms/:roomId → get room (with fresh avatarSeeds from User collection)
 export async function GET(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
@@ -82,6 +86,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
   switch (action) {
     case 'settings': {
       if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (body.title !== undefined && String(body.title).length > TITLE_MAX_LENGTH) {
+        return NextResponse.json({ error: `ชื่อห้องต้องไม่เกิน ${TITLE_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
+      }
+      if (body.description !== undefined && String(body.description).length > DESCRIPTION_MAX_LENGTH) {
+        return NextResponse.json({ error: `รายละเอียดต้องไม่เกิน ${DESCRIPTION_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
+      }
       const patch: Record<string, unknown> = {};
       for (const key of ['title', 'description', 'matchMode', 'typeComposition'] as const) {
         if (body[key] !== undefined) patch[key] = body[key];
@@ -107,6 +117,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
 
     case 'vote': {
       const { groupId, targetName } = body;
+      if (typeof groupId !== 'number' || typeof targetName !== 'string' || !targetName.trim()) {
+        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
       const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
       if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
       if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -129,9 +142,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       const entries = Object.entries(tally);
       const winner = entries.length > 0 ? entries.reduce((a, b) => (b[1] >= a[1] ? b : a))[0] : targetName;
 
+      // เปลี่ยนตัวหัวหน้าทีม → ต้องให้สมาชิกยืนยันใหม่ทั้งหมด
+      const votePatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': winner };
+      if (winner !== group.leaderId) votePatch['matchedGroups.$[g].leaderConfirmedBy'] = [];
       const final = await Room.findOneAndUpdate(
         { roomId },
-        { $set: { 'matchedGroups.$[g].leaderId': winner } },
+        { $set: votePatch },
         { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
       );
       return NextResponse.json({ room: final!.toObject() });
@@ -139,15 +155,35 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
 
     case 'setLeader': {
       const { groupId, leaderName } = body;
+      if (typeof groupId !== 'number' || typeof leaderName !== 'string' || !leaderName.trim()) {
+        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
       const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
       if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
       if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       if (!group.members.some((m) => m.name === leaderName)) {
         return NextResponse.json({ error: 'Invalid leader' }, { status: 400 });
       }
+      const setLeaderPatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': leaderName };
+      if (leaderName !== group.leaderId) setLeaderPatch['matchedGroups.$[g].leaderConfirmedBy'] = [];
       const updated = await Room.findOneAndUpdate(
         { roomId },
-        { $set: { 'matchedGroups.$[g].leaderId': leaderName } },
+        { $set: setLeaderPatch },
+        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
+      );
+      return NextResponse.json({ room: updated!.toObject() });
+    }
+
+    case 'confirmLeader': {
+      const { groupId } = body;
+      if (typeof groupId !== 'number') return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
+      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (!group.leaderId) return NextResponse.json({ error: 'ยังไม่มีหัวหน้าทีมให้ยืนยัน' }, { status: 400 });
+      const updated = await Room.findOneAndUpdate(
+        { roomId },
+        { $addToSet: { 'matchedGroups.$[g].leaderConfirmedBy': sessionUser.name } },
         { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
       );
       return NextResponse.json({ room: updated!.toObject() });
@@ -155,7 +191,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
 
     case 'renameTeam': {
       const { groupId, name } = body;
-      if (!name || !String(name).trim()) return NextResponse.json({ error: 'name required' }, { status: 400 });
+      if (typeof groupId !== 'number' || typeof name !== 'string' || !name.trim()) {
+        return NextResponse.json({ error: 'name required' }, { status: 400 });
+      }
+      if (name.trim().length > TEAM_NAME_MAX_LENGTH) {
+        return NextResponse.json({ error: `ชื่อทีมต้องไม่เกิน ${TEAM_NAME_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
+      }
       const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
       if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
       if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -163,6 +204,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         { roomId },
         { $set: { 'matchedGroups.$[g].name': String(name).trim() } },
         { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
+      );
+      return NextResponse.json({ room: updated!.toObject() });
+    }
+
+    case 'kickMember': {
+      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (room.matchDone) return NextResponse.json({ error: 'จับกลุ่มไปแล้ว ไม่สามารถเอาสมาชิกออกได้' }, { status: 400 });
+      const { memberGmail } = body;
+      if (typeof memberGmail !== 'string' || !memberGmail.trim()) {
+        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
+      const target: RoomMemberLike | undefined = (room.members ?? []).find((m: { gmail?: string }) => m.gmail === memberGmail);
+      if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+      const updated = await Room.findOneAndUpdate(
+        { roomId },
+        { $pull: { members: { gmail: memberGmail }, readyUsers: target.name } },
+        { returnDocument: 'after' }
       );
       return NextResponse.json({ room: updated!.toObject() });
     }

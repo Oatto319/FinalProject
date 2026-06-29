@@ -1,5 +1,8 @@
 import mongoose, { Schema } from 'mongoose';
 
+// ห้อง/แชทที่ไม่มีการใช้งานนานเกินไปจะถูกลบอัตโนมัติ ป้องกัน DB โตไม่จำกัด
+const RETENTION_SECONDS = 180 * 24 * 60 * 60; // 180 วัน
+
 // ─── User ───────────────────────────────────────────────
 const UserSchema = new Schema({
   name:       { type: String, required: true },
@@ -31,6 +34,7 @@ const MatchedGroupSchema = new Schema({
   name:     String,
   members:  [RoomMemberSchema],
   leaderId: String,
+  leaderConfirmedBy: { type: [String], default: [] },
 }, { _id: false });
 
 const RoomSchema = new Schema({
@@ -57,6 +61,7 @@ RoomSchema.index({ roomId: 1 });
 RoomSchema.index({ hostName: 1 });
 RoomSchema.index({ 'members.gmail': 1 });
 RoomSchema.index({ 'members.name': 1 });
+RoomSchema.index({ createdAt: 1 }, { expireAfterSeconds: RETENTION_SECONDS });
 
 export const Room = mongoose.models.Room || mongoose.model('Room', RoomSchema);
 
@@ -72,5 +77,6 @@ const MessageSchema = new Schema({
 }, { timestamps: true });
 
 MessageSchema.index({ roomId: 1, groupId: 1 });
+MessageSchema.index({ createdAt: 1 }, { expireAfterSeconds: RETENTION_SECONDS });
 
 export const Message = mongoose.models.Message || mongoose.model('Message', MessageSchema);

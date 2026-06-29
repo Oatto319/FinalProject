@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Copy, Home } from 'lucide-react';
+import { Copy, Home, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
@@ -21,6 +21,7 @@ const MatchPage = () => {
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
   const [matchMode, setMatchMode]   = useState('');
   const [copied, setCopied]         = useState(false);
+  const [kickTarget, setKickTarget] = useState<RoomMember | null>(null);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -64,6 +65,17 @@ const MatchPage = () => {
     const interval = setInterval(() => fetchRoom(getRoomId(room)), 2000);
     return () => clearInterval(interval);
   }, [room]);
+
+  const handleKick = async () => {
+    if (!kickTarget || !room) return;
+    const res = await fetch(`/api/rooms/${getRoomId(room)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'kickMember', memberGmail: kickTarget.gmail }),
+    });
+    if (res.ok) setMembers((prev) => prev.filter((m) => m.gmail !== kickTarget.gmail));
+    setKickTarget(null);
+  };
 
   const readyCount   = readyUsers.length;
   const totalMembers = room?.totalMembers ?? members.length;
@@ -122,8 +134,17 @@ const MatchPage = () => {
                       <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
                     </div>
                   </div>
-                  <div className={`px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
-                    {readyUsers.includes(member.name) ? 'ready' : 'wait'}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className={`px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
+                      {readyUsers.includes(member.name) ? 'ready' : 'wait'}
+                    </div>
+                    <button
+                      onClick={() => setKickTarget(member)}
+                      title="เอาออกจากห้อง"
+                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
                 </div>
               ))
@@ -201,6 +222,19 @@ const MatchPage = () => {
           </div>
         </div>
       </div>
+
+      {kickTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setKickTarget(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-lg font-black text-gray-800 mb-2">เอาสมาชิกออกจากห้อง</p>
+            <p className="text-gray-500 text-sm mb-6">เอา <span className="font-bold text-gray-700">{kickTarget.name}</span> ออกจากห้องนี้?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setKickTarget(null)} className="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all">ยกเลิก</button>
+              <button onClick={handleKick} className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95">เอาออก</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

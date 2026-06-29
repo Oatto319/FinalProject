@@ -15,6 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   const joined = await Room.findOneAndUpdate(
     {
       roomId,
+      matchDone: { $ne: true },
       'members.gmail': { $ne: member.gmail },
       $expr: { $lt: [{ $size: '$members' }, '$totalMembers'] },
     },
@@ -24,12 +25,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
 
   if (joined) return NextResponse.json({ room: joined.toObject() });
 
-  // Either room doesn't exist, already joined, or full — figure out which.
+  // Either room doesn't exist, already joined, full, or already matched — figure out which.
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
 
   const alreadyIn = room.members.some((m: { gmail?: string }) => m.gmail === member.gmail);
   if (alreadyIn) return NextResponse.json({ room: room.toObject() });
+
+  if (room.matchDone) return NextResponse.json({ error: 'ห้องนี้จับกลุ่มไปแล้ว ไม่สามารถเข้าร่วมได้' }, { status: 409 });
 
   return NextResponse.json({ error: 'ห้องเต็มแล้ว' }, { status: 409 });
 }

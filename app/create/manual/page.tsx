@@ -6,6 +6,7 @@ import { Copy, Settings, Plus, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { TYPES_BY_TEMPLATE } from '@/lib/type-composition';
 import { resolveAvatar } from '@/lib/avatar';
+import { typeColor, roleColor } from '@/lib/mbti';
 
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
 interface CurrentRoom {
@@ -23,12 +24,13 @@ const ManualPage = () => {
   const [matchMode, setMatchMode]   = useState('');
   const [copied, setCopied]           = useState(false);
   const [showTypeSetting, setShowTypeSetting] = useState(false);
+  const [kickTarget, setKickTarget] = useState<RoomMember | null>(null);
 
   // Type Setting popup state
   const [tsTypes, setTsTypes]     = useState(TYPES_BY_TEMPLATE.programming);
   const [tsCounts, setTsCounts]   = useState<Record<string, number>>({});
   const [tsWarning, setTsWarning] = useState('');
-  const [memberTypes, setMemberTypes] = useState<Record<string, { title: string; icon: string }>>({});
+  const [memberTypes, setMemberTypes] = useState<Record<string, { code: string; title: string; icon: string }>>({});
   const lastMemberCountRef = useRef(-1);
   const tsLoadedRef = useRef(false);
 
@@ -137,6 +139,17 @@ const ManualPage = () => {
     if (isAllReady) router.push('/create/matching');
   };
 
+  const handleKick = async () => {
+    if (!kickTarget || !room) return;
+    const res = await fetch(`/api/rooms/${getRoomId(room)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'kickMember', memberGmail: kickTarget.gmail }),
+    });
+    if (res.ok) setMembers((prev) => prev.filter((m) => m.gmail !== kickTarget.gmail));
+    setKickTarget(null);
+  };
+
   const handleCopy = () => {
     if (!room) return;
     try { navigator.clipboard.writeText(getRoomId(room)); } catch { const el = document.createElement("textarea"); el.value = getRoomId(room); document.body.appendChild(el); el.select(); document.execCommand("copy"); document.body.removeChild(el); }
@@ -198,14 +211,30 @@ const ManualPage = () => {
                       <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
                       {user?.name === room?.hostName && memberTypes[member.name] && (
                         <div className="flex items-center gap-1 mt-1">
-                          <img src={memberTypes[member.name].icon} alt="" className="w-4 h-4 object-contain" />
+                          <span
+                            className="text-[10px] font-black px-1.5 py-0.5 rounded"
+                            style={{ color: typeColor(memberTypes[member.name].code), backgroundColor: `${typeColor(memberTypes[member.name].code)}1A` }}
+                          >
+                            {memberTypes[member.name].code}
+                          </span>
                           <span className="text-[10px] font-bold text-[#4B3E7A]">{memberTypes[member.name].title}</span>
                         </div>
                       )}
                     </div>
                   </div>
-                  <div className={`px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
-                    {readyUsers.includes(member.name) ? 'ready' : 'wait'}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className={`px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
+                      {readyUsers.includes(member.name) ? 'ready' : 'wait'}
+                    </div>
+                    {user?.name === room?.hostName && (
+                      <button
+                        onClick={() => setKickTarget(member)}
+                        title="เอาออกจากห้อง"
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-500 flex items-center justify-center transition-all flex-shrink-0"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))
@@ -314,8 +343,8 @@ const ManualPage = () => {
                   {/* Icons row */}
                   {tsTypes.map((t) => (
                     <div key={t.key} className="flex flex-col items-center gap-1">
-                      <div className="w-12 h-12 flex items-center justify-center">
-                        <img src={t.icon} alt={t.label} className="w-10 h-10 object-contain" />
+                      <div className="w-12 h-12 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}1A` }}>
+                        <span className="text-[10px] font-black" style={{ color: roleColor(t.icon) }}>{t.label.slice(0, 2)}</span>
                       </div>
                       <span className="text-[9px] font-bold text-[#3D3D6B] text-center leading-tight">{t.label}</span>
                     </div>
@@ -362,6 +391,19 @@ const ManualPage = () => {
               >
                 Save
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {kickTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setKickTarget(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-lg font-black text-gray-800 mb-2">เอาสมาชิกออกจากห้อง</p>
+            <p className="text-gray-500 text-sm mb-6">เอา <span className="font-bold text-gray-700">{kickTarget.name}</span> ออกจากห้องนี้?</p>
+            <div className="flex gap-3">
+              <button onClick={() => setKickTarget(null)} className="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all">ยกเลิก</button>
+              <button onClick={handleKick} className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95">เอาออก</button>
             </div>
           </div>
         </div>

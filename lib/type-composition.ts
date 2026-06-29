@@ -1,4 +1,4 @@
-import { typeIcon } from './mbti';
+import { typeIcon, letterAffinity } from './mbti';
 
 export type TypeOption = { key: string; label: string; icon: string };
 
@@ -43,16 +43,6 @@ export function resolveTemplateTypes(template: string): TypeOption[] {
 export function categoryKeyForCode(template: string, code: string): string | null {
   const icon = typeIcon(code);
   return resolveTemplateTypes(template).find((o) => o.icon === icon)?.key ?? null;
-}
-
-const AXIS_PARTNER: Record<string, string> = { E: 'I', I: 'E', S: 'N', N: 'S', T: 'F', F: 'T', J: 'P', P: 'J' };
-
-/** 0-100 affinity toward `letter`, derived from whichever axis bar covers that letter's axis. */
-function letterAffinity(typeScores: { title: string; score: number }[], letter: string): number {
-  const partner = AXIS_PARTNER[letter];
-  const bar = typeScores.find((b) => b.title[0] === letter || b.title[0] === partner);
-  if (!bar) return 50;
-  return bar.title[0] === letter ? bar.score : 100 - bar.score;
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Pencil, LogOut } from 'lucide-react';
+import { Pencil, LogOut, Settings } from 'lucide-react';
 import { resolveAvatar } from '@/lib/avatar';
 
 interface User { name: string; gender: string; avatarSeed: number; avatarImage?: string | null; role?: string; password?: string; gmail?: string; }
@@ -119,10 +119,16 @@ export default function EditProfilePage() {
             <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
               Cancel
             </button>
-            <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-red-500 font-semibold hover:text-red-700 transition-colors">
-              <LogOut size={16} />
-              ออกจากระบบ
-            </button>
+            <div className="flex items-center gap-4">
+              <button onClick={() => router.push('/settings')} className="flex items-center gap-2 text-sm text-gray-500 font-semibold hover:text-gray-700 transition-colors">
+                <Settings size={16} />
+                ตั้งค่า
+              </button>
+              <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-red-500 font-semibold hover:text-red-700 transition-colors">
+                <LogOut size={16} />
+                ออกจากระบบ
+              </button>
+            </div>
           </div>
         </div>
 

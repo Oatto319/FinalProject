@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronLeft, Sparkles, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
+import { typeColor, leadershipScore } from '@/lib/mbti';
 
 interface RoomMember {
   name: string;
@@ -21,7 +22,7 @@ interface MatchedGroup {
   leaderId?: string;
 }
 
-interface MBTIResult { title: string; icon: string; description: string; jobs: string[]; }
+interface MBTIResult { code: string; title: string; icon: string; description: string; jobs: string[]; typeScores?: { title: string; score: number }[]; }
 
 export default function AnalyzePage() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function AnalyzePage() {
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
   const typesFetchedRef = useRef(false);
+  const memberTypesRef = useRef<Record<string, MBTIResult>>({});
 
   useEffect(() => {
     const userRaw = localStorage.getItem('currentUser');
@@ -63,18 +65,24 @@ export default function AnalyzePage() {
             const typesRes = await fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`);
             if (typesRes.ok) {
               const typesData = await typesRes.json();
-              setMemberTypes(typesData.types ?? {});
+              memberTypesRef.current = typesData.types ?? {};
+              setMemberTypes(memberTypesRef.current);
             }
           }
         }
       }
-      const withScores = members.map((m: RoomMember) => ({
-        name: m.name,
-        avatarSeed: m.avatarSeed,
-        avatarImage: m.avatarImage,
-        role: m.role,
-        score: 75 + ((m.avatarSeed ?? 1) % 25),
-      }));
+      // คะแนนความเหมาะสมเป็นผู้นำ คำนวณจริงจากคำตอบ MBTI (น้ำหนัก Extravert/Thinking/Judging)
+      // สมาชิกที่ยังไม่ทำแบบทดสอบจะได้คะแนนกลางๆ (50) ไปก่อน
+      const withScores = members.map((m: RoomMember) => {
+        const typeScores = memberTypesRef.current[m.name]?.typeScores;
+        return {
+          name: m.name,
+          avatarSeed: m.avatarSeed,
+          avatarImage: m.avatarImage,
+          role: m.role,
+          score: typeScores?.length ? leadershipScore(typeScores) : 50,
+        };
+      });
       setTeamMembers(withScores);
     };
 
@@ -154,13 +162,16 @@ export default function AnalyzePage() {
                         <Sparkles size={16} fill="currentColor" />
                       </div>
                     )}
-                    {/* MBTI icon — top-right */}
+                    {/* MBTI badge — top-right */}
                     {!isBest && memberTypes[member.name] && (
                       <div
                         onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.name] })}
-                        className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer"
+                        className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                        style={{ backgroundColor: `${typeColor(memberTypes[member.name].code)}26` }}
                       >
-                        <img src={memberTypes[member.name].icon} alt={memberTypes[member.name].title} className="w-full h-full object-contain" />
+                        <span className="text-[8px] font-black" style={{ color: typeColor(memberTypes[member.name].code) }}>
+                          {memberTypes[member.name].code}
+                        </span>
                       </div>
                     )}
 
@@ -233,7 +244,12 @@ export default function AnalyzePage() {
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <img src={mbtiPopup.type.icon} alt={mbtiPopup.type.title} className="w-14 h-14 object-contain" />
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: `${typeColor(mbtiPopup.type.code)}1A` }}
+                >
+                  <span className="text-xs font-black" style={{ color: typeColor(mbtiPopup.type.code) }}>{mbtiPopup.type.code}</span>
+                </div>
                 <div>
                   <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพ</p>
                   <p className="text-xl font-black text-[#4B3E7A]">{mbtiPopup.type.title}</p>

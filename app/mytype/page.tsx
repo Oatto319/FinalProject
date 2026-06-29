@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import Navbar from '../navbar/page';
+import { typeColor } from '@/lib/mbti';
 
 type MBTIResult = {
+  code: string;
   title: string;
   description: string;
   jobs: string[];
@@ -86,7 +88,12 @@ const MyTypePage = () => {
                   /* มีผลแล้ว — แสดงข้อมูลจริง */
                   <div className="bg-white p-6 flex flex-col gap-4">
                     <div className="flex items-center gap-4">
-                      <img src={result.icon} alt={result.title} className="w-28 h-28 object-contain flex-shrink-0" />
+                      <div
+                        className="w-20 h-20 rounded-2xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: `${typeColor(result.code)}1A` }}
+                      >
+                        <span className="text-lg font-black tracking-wide" style={{ color: typeColor(result.code) }}>{result.code}</span>
+                      </div>
                       <div>
                         <p className="text-xs text-gray-400 font-medium">ประเภทบุคลิกภาพการทำงาน</p>
                         <p className="text-xl font-black text-[#4B3E7A]">{result.title}</p>

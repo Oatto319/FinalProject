@@ -12,6 +12,7 @@ export default function EnterRoomIdPage() {
   const [loading, setLoading] = useState(false);
 
   const handleNext = async () => {
+    if (loading) return;
     if (!roomId.trim()) { setError('กรุณากรอก Room ID'); return; }
     setLoading(true);
     try {
@@ -39,7 +40,7 @@ export default function EnterRoomIdPage() {
           <div className="w-full max-w-[380px] bg-[#1D324B] rounded-[20px] p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
             <label className="text-white text-xl">&quot;Enter the room ID&quot;</label>
             <input type="text" placeholder="กรอก Room ID" value={roomId}
-              onChange={(e) => { setRoomId(e.target.value.replace(/\D/g, '').slice(0, 7)); setError(''); }}
+              onChange={(e) => { setRoomId(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleNext()}
               className="w-full bg-white rounded-xl py-4 px-6 text-[#2D3E50] font-bold text-2xl text-center focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all tracking-[0.2em] placeholder:text-gray-400 placeholder:font-normal placeholder:text-sm placeholder:tracking-normal" />
             {error && <p className="text-red-300 text-sm font-bold">{error}</p>}

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, ArrowRightCircle } from 'lucide-react';
+import { isValidPassword, PASSWORD_HINT } from '@/lib/validation';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,8 +20,8 @@ export default function RegisterPage() {
     if (!gmail.trim() || !gmail.toLowerCase().endsWith('@gmail.com')) {
       setError('กรุณากรอก Gmail ที่ถูกต้อง (ต้องลงท้ายด้วย @gmail.com)'); return;
     }
-    if (!password.trim() || password.length < 4) {
-      setError('รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร'); return;
+    if (!isValidPassword(password)) {
+      setError(PASSWORD_HINT); return;
     }
 
     setLoading(true);
@@ -74,7 +75,7 @@ export default function RegisterPage() {
         </div>
         <div className="bg-[#1D324B] rounded-[25px] p-6 flex flex-col gap-4">
           <label className="text-white text-xl">&quot;Create a password&quot;</label>
-          <input type="password" placeholder="รหัสผ่านอย่างน้อย 4 ตัวอักษร..." value={password} onChange={(e) => setPassword(e.target.value)}
+          <input type="password" placeholder="อย่างน้อย 8 ตัวอักษร มีทั้งตัวอักษรและตัวเลข..." value={password} onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-white rounded-xl py-4 px-6 text-[#1D324B] font-bold text-lg focus:outline-none focus:ring-4 focus:ring-blue-400/50 transition-all" />
         </div>
         {error && <p className="text-red-500 text-sm text-center font-medium -mt-2">{error}</p>}

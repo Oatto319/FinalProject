@@ -32,7 +32,7 @@ export default function JoinCheckPage() {
   }, []);
 
   const handleJoin = async () => {
-    if (!user || !room) return;
+    if (!user || !room || loading) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/rooms/${room.roomId}/join`, { method: 'POST' });

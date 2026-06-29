@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
-import { scoreMbti, buildAxisBars, typeIcon } from '@/lib/mbti';
+import { scoreMbti, buildAxisBars, typeIcon, typeColor } from '@/lib/mbti';
 import { programmingQuestions, programmingTypeTable } from '@/lib/mbti-programming';
 
 const ProgrammingQuestionnaire = () => {
@@ -176,7 +176,12 @@ const ProgrammingQuestionnaire = () => {
       {showPopup && jobResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
-            <img src={jobResult.icon} alt={jobResult.title} className="w-24 h-24 object-contain" />
+            <div
+              className="w-24 h-24 rounded-3xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${typeColor(jobResult.code)}1A` }}
+            >
+              <span className="text-xl font-black tracking-wide" style={{ color: typeColor(jobResult.code) }}>{jobResult.code}</span>
+            </div>
             <div className="text-center w-full">
               <h2 className="text-2xl text-[#1A2E44] mb-1" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif', textShadow: 'none' }}>เสร็จแล้ว!</h2>
               <p className="text-xs text-gray-400 mb-3" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ประเภทบุคลิกภาพการทำงานของคุณ · {jobResult.code}</p>

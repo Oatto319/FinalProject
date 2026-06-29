@@ -27,9 +27,9 @@ export function isRoomMember(
   user: { gmail: string; name: string },
   room: { members?: { gmail?: string; name: string }[] }
 ): boolean {
-  return (room.members ?? []).some(
-    (m) => (user.gmail && m.gmail === user.gmail) || m.name === user.name
-  );
+  // Match by gmail whenever the stored member has one — falling back to name only
+  // for legacy/manual members without a gmail avoids a same-name impersonation.
+  return (room.members ?? []).some((m) => (m.gmail ? m.gmail === user.gmail : m.name === user.name));
 }
 
 export function isGroupMember(
@@ -37,7 +37,5 @@ export function isGroupMember(
   group: { members?: { gmail?: string; name: string }[] } | undefined
 ): boolean {
   if (!group) return false;
-  return (group.members ?? []).some(
-    (m) => (user.gmail && m.gmail === user.gmail) || m.name === user.name
-  );
+  return (group.members ?? []).some((m) => (m.gmail ? m.gmail === user.gmail : m.name === user.name));
 }

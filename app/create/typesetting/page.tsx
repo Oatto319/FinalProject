@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Plus, Minus } from 'lucide-react';
 import { TYPES_BY_TEMPLATE, DEFAULT_TEMPLATE_TYPES as DEFAULT_TYPES } from '@/lib/type-composition';
+import { roleColor } from '@/lib/mbti';
 
 export default function TypeSelectionPage() {
   const router = useRouter();
@@ -83,8 +84,8 @@ export default function TypeSelectionPage() {
             {/* Icons row */}
             {types.map((t) => (
               <div key={t.key} className="flex flex-col items-center gap-1">
-                <div className="w-14 h-14 flex items-center justify-center">
-                  <img src={t.icon} alt={t.label} className="w-12 h-12 object-contain" />
+                <div className="w-14 h-14 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}1A` }}>
+                  <span className="text-xs font-black" style={{ color: roleColor(t.icon) }}>{t.label.slice(0, 2)}</span>
                 </div>
                 <span className="text-[10px] font-bold text-[#3D3D6B] text-center leading-tight">
                   {t.label}

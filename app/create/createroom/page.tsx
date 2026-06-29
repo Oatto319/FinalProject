@@ -25,6 +25,8 @@ export default function CreateRoomPage() {
 
   const totalOptions = [5, 10, 15, 20, 25, 30, 35, 40];
   const groupOptions = [2, 3, 4, 5, 6, 7, 8, 10];
+  const MAX_TOTAL_MEMBERS = 300;
+  const MAX_GROUP_SIZE = 50;
 
   const selectOption = (name: string, value: number) => {
     const e = { target: { name, value: String(value) } } as React.ChangeEvent<HTMLInputElement>;
@@ -44,7 +46,9 @@ export default function CreateRoomPage() {
     setFormData(updated);
     const total = parseInt(name === 'totalMembers' ? value : updated.totalMembers);
     const size  = parseInt(name === 'groupSize'    ? value : updated.groupSize);
-    if (total > 0 && size > 0) {
+    if (total > MAX_TOTAL_MEMBERS) setSizeWarning(`⚠️ จำนวนคนทั้งหมดต้องไม่เกิน ${MAX_TOTAL_MEMBERS} คน`);
+    else if (size > MAX_GROUP_SIZE) setSizeWarning(`⚠️ จำนวนคนต่อกลุ่มต้องไม่เกิน ${MAX_GROUP_SIZE} คน`);
+    else if (total > 0 && size > 0) {
       if (size > total) setSizeWarning('⚠️ จำนวนกลุ่มละกี่คน มากกว่าจำนวนนักเรียนทั้งหมด');
       else if (total % size !== 0) setSizeWarning(`⚠️ จำนวนไม่ลงตัว — จะได้ ${Math.floor(total / size)} กลุ่มเต็ม และเหลือ ${total % size} คน`);
       else setSizeWarning(`✓ ได้ ${total / size} กลุ่ม กลุ่มละ ${size} คน`);
@@ -52,13 +56,20 @@ export default function CreateRoomPage() {
   };
 
   const handleCreate = async () => {
+    if (loading) return;
     const { title, description, totalMembers, groupSize } = formData;
     if (!title || !description || !totalMembers || !groupSize) { setShowError(true); return; }
+    const total = parseInt(totalMembers);
+    const size = parseInt(groupSize);
+    if (!(total >= 1) || total > MAX_TOTAL_MEMBERS || !(size >= 1) || size > MAX_GROUP_SIZE) {
+      setShowError(true);
+      return;
+    }
     setShowError(false);
     setLoading(true);
 
     try {
-      const roomId = Math.floor(1000000 + Math.random() * 9000000).toString();
+      const roomId = Math.floor(100000 + Math.random() * 900000).toString();
       const pendingRaw = localStorage.getItem('pendingRoom');
       const template = pendingRaw ? (JSON.parse(pendingRaw).template ?? 'programming') : 'programming';
 
@@ -66,8 +77,8 @@ export default function CreateRoomPage() {
         roomId,
         title,
         description,
-        totalMembers: parseInt(totalMembers),
-        groupSize: parseInt(groupSize),
+        totalMembers: total,
+        groupSize: size,
         template,
         hostName: user?.name ?? '',
         hostAvatarSeed: user?.avatarSeed ?? 0,
@@ -120,7 +131,7 @@ export default function CreateRoomPage() {
                 <p className="text-white font-bold text-base mb-3">&ldquo;To name the room&rdquo;</p>
                 <input
                   type="text" name="title" value={formData.title} onChange={handleChange}
-                  placeholder="ชื่อกิจกรรม"
+                  placeholder="ชื่อกิจกรรม" maxLength={100}
                   className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                 />
               </div>
@@ -130,7 +141,7 @@ export default function CreateRoomPage() {
                 <p className="text-white font-bold text-base mb-3">&ldquo;Describe the activity&rdquo;</p>
                 <textarea
                   name="description" value={formData.description} onChange={handleChange}
-                  placeholder="รายละเอียดกิจกรรม / กำหนดส่งงาน" rows={2}
+                  placeholder="รายละเอียดกิจกรรม / กำหนดส่งงาน" rows={2} maxLength={500}
                   className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 resize-none transition-all"
                 />
               </div>
@@ -167,7 +178,7 @@ export default function CreateRoomPage() {
                 <div className="relative">
                   <input
                     type="number" name="totalMembers" value={formData.totalMembers} onChange={handleChange}
-                    placeholder="30" min={1}
+                    placeholder="30" min={1} max={MAX_TOTAL_MEMBERS}
                     className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                   />
                   <button
@@ -198,7 +209,7 @@ export default function CreateRoomPage() {
                 <div className="relative">
                   <input
                     type="number" name="groupSize" value={formData.groupSize} onChange={handleChange}
-                    placeholder="3" min={1}
+                    placeholder="3" min={1} max={MAX_GROUP_SIZE}
                     className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                   />
                   <button

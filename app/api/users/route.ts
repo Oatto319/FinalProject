@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/mongodb';
 import { User, Room } from '@/lib/models';
 import { createSessionToken, getSessionUser, SESSION_COOKIE } from '@/lib/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { isValidPassword, PASSWORD_HINT } from '@/lib/validation';
 
 function safeUser(u: Record<string, unknown>) {
   const obj = { ...u };
@@ -45,9 +47,16 @@ export async function POST(req: NextRequest) {
   await connectDB();
   const body = await req.json();
 
+  const ip = getClientIp(req);
+
   if (body.action === 'login') {
     const { gmail, password } = body;
     if (!gmail || !password) return NextResponse.json({ user: null }, { status: 400 });
+
+    if (!checkRateLimit(`login:${ip}`, 10, 10 * 60 * 1000)) {
+      return NextResponse.json({ error: 'พยายามเข้าสู่ระบบบ่อยเกินไป กรุณาลองใหม่ในอีกสักครู่' }, { status: 429 });
+    }
+
     const user = await User.findOne({ gmail: gmail.toLowerCase() });
     if (!user) return NextResponse.json({ user: null });
 
@@ -77,6 +86,11 @@ export async function POST(req: NextRequest) {
 
   const { name, gender, gmail, password, avatarSeed, avatarImage } = body;
   if (!name || !gmail || !password) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 });
+  if (!isValidPassword(password)) return NextResponse.json({ error: PASSWORD_HINT }, { status: 400 });
+
+  if (!checkRateLimit(`register:${ip}`, 5, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'สมัครสมาชิกบ่อยเกินไป กรุณาลองใหม่ในอีกสักครู่' }, { status: 429 });
+  }
 
   const existing = await User.findOne({ gmail: gmail.toLowerCase() });
   if (existing) return NextResponse.json({ error: 'Gmail นี้ถูกใช้งานแล้ว' }, { status: 409 });

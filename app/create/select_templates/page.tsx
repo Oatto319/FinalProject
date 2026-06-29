@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { roleColor } from '@/lib/mbti';
 
 const TEMPLATES = [
   {
@@ -150,7 +151,7 @@ export default function SelectTemplatesPage() {
                 <div className="flex gap-3 mt-1 flex-wrap">
                   {tmpl.types.map((type) => (
                     <div key={type.label} className="flex items-center gap-1.5 bg-white/50 rounded-full px-3 py-1">
-                      <img src={type.icon} alt={type.label} className="w-4 h-4 object-contain" />
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: roleColor(type.icon) }} />
                       <span className="text-[11px] font-bold text-[#2D3E50]">{type.label}</span>
                     </div>
                   ))}
