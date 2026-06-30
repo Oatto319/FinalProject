@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { typeColor } from '@/lib/mbti';
 
@@ -33,7 +33,6 @@ const TEMPLATES = [
 const MyTypePage = () => {
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; avatarSeed: number; gmail?: string; types?: UserTypes } | null>(null);
-  const [expandedScores, setExpandedScores] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -109,32 +108,6 @@ const MyTypePage = () => {
                           </span>
                         ))}
                       </div>
-                    </div>
-                    <div>
-                      <button
-                        onClick={() => setExpandedScores((prev) => ({ ...prev, [tmpl.id]: !prev[tmpl.id] }))}
-                        className="flex items-center gap-1 text-xs font-black text-gray-400 uppercase tracking-widest mb-2 hover:text-gray-600 transition-colors"
-                      >
-                        คะแนนแต่ละประเภท
-                        {expandedScores[tmpl.id] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      </button>
-                      {expandedScores[tmpl.id] && (
-                        <div className="flex flex-col gap-2">
-                          {result.typeScores.map((t) => (
-                            <div key={t.title} className="flex items-center gap-3">
-                              <img src={t.icon} alt={t.title} className="w-6 h-6 object-contain flex-shrink-0" />
-                              <span className="text-xs font-bold text-[#1A2E44] w-40 flex-shrink-0">{t.title}</span>
-                              <div className="flex-1 bg-gray-100 rounded-full h-2">
-                                <div
-                                  className="bg-[#4B3E7A] h-2 rounded-full"
-                                  style={{ width: `${t.score}%` }}
-                                />
-                              </div>
-                              <span className="text-xs font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}%</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ) : (

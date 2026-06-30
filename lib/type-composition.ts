@@ -1,62 +1,47 @@
 import { typeIcon, letterAffinity } from './mbti';
 
-export type TypeOption = { key: string; label: string; icon: string };
+export type TypeOption = { key: string; label: string; icon: string; subtitle?: string };
 
-// Each template's 4 composition categories are tagged with one of the 4 Keirsey
-// temperament icons (brain=NT, idea=NF, pencil=SP, make=SJ) that typeIcon() derives
-// from a member's MBTI code — this is how a 16-type result maps down to one of the
-// host's 4 composition buckets.
+// ทุก template ใช้ 4 กลุ่มหลัก MBTI เหมือนกัน (NT/NF/SJ/SP)
+// key/icon เหล่านี้ตรงกับที่ typeIcon() คืนค่า จึงทำงานกับ matching algorithm ได้โดยไม่ต้องเปลี่ยนอะไรเพิ่ม
+const MBTI_GROUP_TYPES: TypeOption[] = [
+  { key: 'Analysts',  label: 'Analysts',  subtitle: 'NT', icon: '/img/brain.png'  },
+  { key: 'Diplomats', label: 'Diplomats', subtitle: 'NF', icon: '/img/idea.png'   },
+  { key: 'Sentinels', label: 'Sentinels', subtitle: 'SJ', icon: '/img/make.png'   },
+  { key: 'Explorers', label: 'Explorers', subtitle: 'SP', icon: '/img/pencil.png' },
+];
+
 export const TYPES_BY_TEMPLATE: Record<string, TypeOption[]> = {
-  programming: [
-    { key: 'นักวิเคราะห์', label: 'นักวิเคราะห์', icon: '/img/brain.png' },
-    { key: 'นักคิดสร้างสรรค์', label: 'นักคิดสร้างสรรค์', icon: '/img/idea.png' },
-    { key: 'ผู้ปฏิบัติการ', label: 'ผู้ปฏิบัติการ', icon: '/img/pencil.png' },
-    { key: 'นักประสานงาน', label: 'นักประสานงาน', icon: '/img/make.png' },
-  ],
-  service: [
-    { key: 'นักสื่อสาร', label: 'นักสื่อสาร', icon: '/img/make.png' },
-    { key: 'นักแก้ปัญหา', label: 'นักแก้ปัญหา', icon: '/img/brain.png' },
-    { key: 'ผู้ฟัง', label: 'ผู้ฟัง', icon: '/img/idea.png' },
-    { key: 'ผู้ปฏิบัติการ', label: 'ผู้ปฏิบัติการ', icon: '/img/pencil.png' },
-  ],
-  presentation: [
-    { key: 'นักพูด', label: 'นักพูด', icon: '/img/idea.png' },
-    { key: 'นักวิจัย', label: 'นักวิจัย', icon: '/img/brain.png' },
-    { key: 'นักออกแบบ', label: 'นักออกแบบ', icon: '/img/pencil.png' },
-    { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
-  ],
-  design: [
-    { key: 'นักสร้างสรรค์', label: 'นักสร้างสรรค์', icon: '/img/idea.png' },
-    { key: 'นักวิเคราะห์', label: 'นักวิเคราะห์', icon: '/img/brain.png' },
-    { key: 'ผู้ปฏิบัติ', label: 'ผู้ปฏิบัติ', icon: '/img/pencil.png' },
-    { key: 'ผู้ประสานงาน', label: 'ผู้ประสานงาน', icon: '/img/make.png' },
-  ],
+  programming:  MBTI_GROUP_TYPES,
+  service:      MBTI_GROUP_TYPES,
+  presentation: MBTI_GROUP_TYPES,
+  design:       MBTI_GROUP_TYPES,
 };
 
-export const DEFAULT_TEMPLATE_TYPES = TYPES_BY_TEMPLATE.programming;
+export const DEFAULT_TEMPLATE_TYPES = MBTI_GROUP_TYPES;
 
 export function resolveTemplateTypes(template: string): TypeOption[] {
   return TYPES_BY_TEMPLATE[template.toLowerCase()] ?? DEFAULT_TEMPLATE_TYPES;
 }
 
-/** Maps a member's MBTI code to whichever of the template's 4 categories shares its temperament icon. */
+/** Maps a member's MBTI code to whichever of the 4 group categories shares its temperament icon. */
 export function categoryKeyForCode(template: string, code: string): string | null {
   const icon = typeIcon(code);
   return resolveTemplateTypes(template).find((o) => o.icon === icon)?.key ?? null;
 }
 
 /**
- * 0-100 fit score for each of the template's 4 categories, derived from a member's axis
- * bars. Used as a tie-breaker when no unassigned member exactly matches a composition slot.
+ * 0-100 fit score for each of the 4 MBTI group categories, derived from a member's axis bars.
+ * Used as a tie-breaker when no unassigned member exactly matches a composition slot.
  */
 export function categoryAffinities(template: string, typeScores: { title: string; score: number }[]): Record<string, number> {
   const N = letterAffinity(typeScores, 'N');
   const T = letterAffinity(typeScores, 'T');
   const J = letterAffinity(typeScores, 'J');
   const affinityByIcon: Record<string, number> = {
-    '/img/brain.png': (N + T) / 2,
-    '/img/idea.png': (N + (100 - T)) / 2,
-    '/img/make.png': (100 - N + J) / 2,
+    '/img/brain.png':  (N + T) / 2,
+    '/img/idea.png':   (N + (100 - T)) / 2,
+    '/img/make.png':   (100 - N + J) / 2,
     '/img/pencil.png': (100 - N + (100 - J)) / 2,
   };
   const result: Record<string, number> = {};

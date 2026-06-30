@@ -84,12 +84,13 @@ export default function TypeSelectionPage() {
             {/* Icons row */}
             {types.map((t) => (
               <div key={t.key} className="flex flex-col items-center gap-1">
-                <div className="w-14 h-14 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}1A` }}>
-                  <span className="text-xs font-black" style={{ color: roleColor(t.icon) }}>{t.label.slice(0, 2)}</span>
+                <div className="w-14 h-14 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}22` }}>
+                  <img src={t.icon} alt={t.label} className="w-8 h-8 object-contain" />
                 </div>
-                <span className="text-[10px] font-bold text-[#3D3D6B] text-center leading-tight">
-                  {t.label}
-                </span>
+                <span className="text-[10px] font-black text-[#3D3D6B] text-center leading-tight">{t.label}</span>
+                {t.subtitle && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${roleColor(t.icon)}22`, color: roleColor(t.icon) }}>{t.subtitle}</span>
+                )}
               </div>
             ))}
 

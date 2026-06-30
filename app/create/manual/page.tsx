@@ -343,10 +343,13 @@ const ManualPage = () => {
                   {/* Icons row */}
                   {tsTypes.map((t) => (
                     <div key={t.key} className="flex flex-col items-center gap-1">
-                      <div className="w-12 h-12 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}1A` }}>
-                        <span className="text-[10px] font-black" style={{ color: roleColor(t.icon) }}>{t.label.slice(0, 2)}</span>
+                      <div className="w-12 h-12 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}22` }}>
+                        <img src={t.icon} alt={t.label} className="w-7 h-7 object-contain" />
                       </div>
-                      <span className="text-[9px] font-bold text-[#3D3D6B] text-center leading-tight">{t.label}</span>
+                      <span className="text-[9px] font-black text-[#3D3D6B] text-center leading-tight">{t.label}</span>
+                      {t.subtitle && (
+                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: `${roleColor(t.icon)}22`, color: roleColor(t.icon) }}>{t.subtitle}</span>
+                      )}
                     </div>
                   ))}
 
