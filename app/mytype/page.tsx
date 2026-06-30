@@ -109,7 +109,7 @@ const MyTypePage = () => {
       <Navbar />
 
       {/* Top bar: back button + template tabs */}
-      <div className="w-full px-4 py-4 flex items-center gap-3">
+      <div className="w-full px-3 py-4 flex items-center gap-3 max-w-7xl mx-auto">
         <button
           onClick={() => router.back()}
           className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
@@ -213,13 +213,11 @@ const MyTypePage = () => {
                         </button>
 
                         {/* Avatar */}
-                        <div className="rounded-full p-1">
-                          <img
-                            src={avatarSrc}
-                            alt={code}
-                            className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain mb-0"
-                          />
-                        </div>
+                        <img
+                          src={avatarSrc}
+                          alt={code}
+                          className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain mb-0"
+                        />
 
                         {/* English name */}
                         <span className="text-2xl md:text-3xl font-black text-center leading-tight" style={{ color: group.color }}>
