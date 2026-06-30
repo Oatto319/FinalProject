@@ -10,6 +10,7 @@ const MatchingPage = () => {
 
   useEffect(() => {
     const runMatchAndRedirect = async () => {
+      try {
       const roomRaw = localStorage.getItem('currentRoom');
       if (!roomRaw) { router.push('/create/group'); return; }
       const localRoom = JSON.parse(roomRaw);
@@ -17,6 +18,7 @@ const MatchingPage = () => {
 
       // โหลดข้อมูล room จาก MongoDB
       const roomRes = await fetch(`/api/rooms/${roomId}`);
+      if (!roomRes.ok) { setSaveError(true); return; }
       const roomData = await roomRes.json();
       if (!roomData.room) { router.push('/create/group'); return; }
       const room = roomData.room;
@@ -31,31 +33,22 @@ const MatchingPage = () => {
 
       const template = (room.template ?? 'programming').toLowerCase();
 
-      // ดึง MBTI code + typeScores ของแต่ละ member จาก MongoDB แล้วแปลง code (16 แบบ)
-      // ให้เป็นหมวด composition ของ template นี้ (4 แบบ) ผ่าน temperament icon เดียวกับที่
-      // ใช้แสดงผลใน Type Settings popup — ดู lib/type-composition.ts
+      // ดึง MBTI code + typeScores ทุกคนในห้องด้วย 1 request แทน N requests
       const memberTypeMap: Record<string, string> = {};
       const memberScoreMap: Record<string, Record<string, number>> = {};
-      await Promise.all(
-        members.map(async (m) => {
-          try {
-            const url = m.gmail
-              ? `/api/users?gmail=${encodeURIComponent(m.gmail)}`
-              : `/api/users?name=${encodeURIComponent(m.name)}`;
-            const res = await fetch(url);
-            const data = await res.json();
-            const types: Record<string, { code?: string; typeScores?: { title: string; score: number }[] }> = data.user?.types ?? {};
-            let typeData: { code?: string; typeScores?: { title: string; score: number }[] } | undefined = types[template];
-            if (!typeData) typeData = Object.values(types).find((t) => t?.code);
-            if (typeData?.code) {
-              const categoryKey = categoryKeyForCode(template, typeData.code);
-              if (categoryKey) memberTypeMap[m.name] = categoryKey;
-            }
-            // เก็บ affinity ต่อหมวด composition สำหรับ secondary matching
-            memberScoreMap[m.name] = typeData?.typeScores ? categoryAffinities(template, typeData.typeScores) : {};
-          } catch { /* ไม่มี type */ }
-        })
-      );
+      const typesRes = await fetch(`/api/rooms/${roomId}/member-types?source=members`);
+      if (typesRes.ok) {
+        const typesData = await typesRes.json();
+        const allTypes: Record<string, { code?: string; typeScores?: { title: string; score: number }[] }> = typesData.types ?? {};
+        for (const m of members) {
+          const typeData = allTypes[m.name];
+          if (typeData?.code) {
+            const categoryKey = categoryKeyForCode(template, typeData.code);
+            if (categoryKey) memberTypeMap[m.name] = categoryKey;
+          }
+          memberScoreMap[m.name] = typeData?.typeScores ? categoryAffinities(template, typeData.typeScores) : {};
+        }
+      }
 
       const getMemberTypeLocal = (memberName: string): string =>
         memberTypeMap[memberName] ?? 'ไม่ระบุ';
@@ -157,6 +150,9 @@ const MatchingPage = () => {
 
       if (!saveRes.ok) { setSaveError(true); return; }
       router.push('/create/group');
+      } catch {
+        setSaveError(true);
+      }
     };
 
     const timer = setTimeout(() => { runMatchAndRedirect(); }, 3000);

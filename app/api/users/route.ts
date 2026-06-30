@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/mongodb';
 import { User, Room } from '@/lib/models';
-import { createSessionToken, getSessionUser, SESSION_COOKIE } from '@/lib/auth';
+import { createSessionToken, hashToken, getSessionUser, SESSION_COOKIE } from '@/lib/auth';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { isValidPassword, PASSWORD_HINT } from '@/lib/validation';
 
@@ -27,6 +27,9 @@ function setSessionCookie(res: NextResponse, token: string) {
 // GET /api/users?name=xxx   → lookup by name (fallback)
 export async function GET(req: NextRequest) {
   await connectDB();
+  const sessionUser = await getSessionUser(req);
+  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const gmail = searchParams.get('gmail')?.toLowerCase();
   const name  = searchParams.get('name');
@@ -77,7 +80,7 @@ export async function POST(req: NextRequest) {
     if (!passwordOk) return NextResponse.json({ user: null });
 
     const token = createSessionToken();
-    await User.updateOne({ _id: user._id }, { $set: { sessionToken: token } });
+    await User.updateOne({ _id: user._id }, { $set: { sessionToken: hashToken(token) } });
 
     const res = NextResponse.json({ user: safeUser(user.toObject()) });
     setSessionCookie(res, token);
@@ -99,7 +102,7 @@ export async function POST(req: NextRequest) {
   const token = createSessionToken();
   const user = await User.create({
     name, gender, gmail: gmail.toLowerCase(), password: hashedPassword,
-    avatarSeed: avatarSeed ?? 1, avatarImage: avatarImage ?? null, role: 'user', sessionToken: token,
+    avatarSeed: avatarSeed ?? 1, avatarImage: avatarImage ?? null, role: 'user', sessionToken: hashToken(token),
   });
 
   const res = NextResponse.json({ user: safeUser(user.toObject()) }, { status: 201 });
@@ -117,11 +120,14 @@ export async function PATCH(req: NextRequest) {
   const lowerGmail = sessionUser.gmail;
   const oldName: string = sessionUser.name;
 
-  // Blacklist: ห้าม override password, gmail, sessionToken — อนุญาต role เฉพาะค่า valid
-  const { password: _pw, gmail: _g, sessionToken: _st, role: rawRole, ...safeUpdates } = body;
-  if (rawRole !== undefined) {
-    if (rawRole === 'user' || rawRole === 'host') safeUpdates.role = rawRole;
+  // Whitelist: อนุญาตเฉพาะ field ที่ผู้ใช้แก้ไขได้จริง
+  const ALLOWED = ['name', 'gender', 'avatarSeed', 'avatarImage', 'types'] as const;
+  const safeUpdates: Record<string, unknown> = {};
+  for (const key of ALLOWED) {
+    if (body[key] !== undefined) safeUpdates[key] = body[key];
   }
+  if (body.role === 'user' || body.role === 'host') safeUpdates.role = body.role;
+  if (Object.keys(safeUpdates).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
   const user = await User.findOneAndUpdate(
     { gmail: lowerGmail },
     { $set: safeUpdates },

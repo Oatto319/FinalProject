@@ -21,9 +21,15 @@ export function checkRateLimit(key: string, limit: number, windowMs: number): bo
   return true;
 }
 
-/** Best-effort client IP from standard proxy headers, falling back to a shared bucket in dev. */
+/** Best-effort client IP. On Vercel uses x-vercel-forwarded-for (set by infra, not user-controllable).
+ *  Elsewhere takes the LAST IP in X-Forwarded-For (added by our edge, not user-supplied). */
 export function getClientIp(req: NextRequest): string {
+  const vercelIp = req.headers.get('x-vercel-forwarded-for');
+  if (vercelIp) return vercelIp.split(',')[0].trim();
   const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
+  if (forwarded) {
+    const ips = forwarded.split(',').map((s) => s.trim());
+    return ips[ips.length - 1];
+  }
   return req.headers.get('x-real-ip') ?? 'unknown';
 }

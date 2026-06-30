@@ -109,7 +109,26 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       }
       const { matchedGroups, matchMode } = body;
       if (!Array.isArray(matchedGroups)) return NextResponse.json({ error: 'matchedGroups required' }, { status: 400 });
-      const patch: Record<string, unknown> = { matchedGroups, matchDone: true };
+
+      // Build a whitelist of valid members from the authoritative room.members list
+      const validMembers = new Map<string, { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string }>(
+        (room.members ?? []).map((m: { gmail: string; name: string; avatarSeed: number; avatarImage?: string | null }) => [m.gmail, m])
+      );
+
+      // Sanitize each group: only keep fields we control, reject unknown members
+      type RawMember = { gmail?: unknown; role?: unknown };
+      const sanitizedGroups = matchedGroups.map((g: { id: unknown; name: unknown; members?: RawMember[] }) => ({
+        id: Number(g.id),
+        name: String(g.name ?? '').slice(0, TEAM_NAME_MAX_LENGTH),
+        members: (Array.isArray(g.members) ? g.members as RawMember[] : [])
+          .filter((m) => typeof m.gmail === 'string' && validMembers.has(m.gmail))
+          .map((m) => ({
+            ...validMembers.get(m.gmail as string)!,
+            role: typeof m.role === 'string' ? m.role.slice(0, 50) : 'ไม่ระบุ',
+          })),
+      }));
+
+      const patch: Record<string, unknown> = { matchedGroups: sanitizedGroups, matchDone: true };
       if (matchMode) patch.matchMode = matchMode;
       const updated = await Room.findOneAndUpdate({ roomId }, { $set: patch }, { returnDocument: 'after' });
       return NextResponse.json({ room: updated!.toObject() });
@@ -140,7 +159,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       const tally: Record<string, number> = {};
       Object.values(votesForGroup).forEach((n) => { tally[n] = (tally[n] ?? 0) + 1; });
       const entries = Object.entries(tally);
-      const winner = entries.length > 0 ? entries.reduce((a, b) => (b[1] >= a[1] ? b : a))[0] : targetName;
+      const winner = entries.length > 0 ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : targetName;
 
       // เปลี่ยนตัวหัวหน้าทีม → ต้องให้สมาชิกยืนยันใหม่ทั้งหมด
       const votePatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': winner };

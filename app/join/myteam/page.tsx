@@ -38,7 +38,6 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const [template, setTemplate] = useState('programming');
   const [leaderTip, setLeaderTip] = useState(false);
   const roomIdRef = useRef<string>('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const groupIdRef = useRef<number | null>(null);
   const memberTypesFetchedRef = useRef(false);
@@ -138,8 +137,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     roomIdRef.current = roomId;
     setRoomTitle(room.title ?? '');
 
-    fetchRoomData(roomId, currentUser.name, currentUser.gmail);
-    fetchMessages(roomId);
+    fetchRoomData(roomId, currentUser.name, currentUser.gmail).then(() => fetchMessages(roomId));
 
     const interval = setInterval(() => {
       const latestUser = JSON.parse(localStorage.getItem('currentUser') ?? '{}');
@@ -419,7 +417,6 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                   </div>
                 );
               })}
-              <div ref={messagesEndRef} />
             </div>
             <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
               <input
