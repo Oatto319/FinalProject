@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import Navbar from '../navbar/page';
-import { MBTI_CODES } from '@/lib/mbti';
 import { programmingTypeTable } from '@/lib/mbti-programming';
 import { serviceTypeTable } from '@/lib/mbti-service';
 import { presentationTypeTable } from '@/lib/mbti-presentation';
@@ -83,9 +82,9 @@ const MyTypePage = () => {
     setUser(local);
 
     fetch(`/api/users?gmail=${encodeURIComponent(local.gmail ?? '')}`)
-      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(r => r.ok ? r.json() : null)
       .then(data => {
-        if (data.user) {
+        if (data?.user) {
           const updated = { ...local, types: data.user.types };
           setUser(updated);
           localStorage.setItem('currentUser', JSON.stringify(updated));
@@ -94,7 +93,6 @@ const MyTypePage = () => {
       .catch(() => {});
   }, []);
 
-  useEffect(() => { setModalCode(null); }, [activeTab]);
 
   const types = user?.types as Record<string, { code?: string } | undefined> | undefined;
   const autoCode = types?.[activeTab]?.code ?? null;
@@ -105,14 +103,6 @@ const MyTypePage = () => {
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col">
-      <style>{`
-        @keyframes slideUpFade {
-          from { opacity: 0; transform: translateY(40px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .slide-up-1 { animation: slideUpFade 0.45s cubic-bezier(0.22,1,0.36,1) both; }
-        .slide-up-2 { animation: slideUpFade 0.45s cubic-bezier(0.22,1,0.36,1) 0.18s both; }
-      `}</style>
       <Navbar />
 
       {/* Top bar: back button + template tabs */}
@@ -127,7 +117,7 @@ const MyTypePage = () => {
           {TABS.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); setModalCode(null); }}
               className={`flex-1 py-2 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                 activeTab === tab.id
                   ? 'bg-[#4B3E7A] text-white shadow-sm'
@@ -191,7 +181,7 @@ const MyTypePage = () => {
                 <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 px-10 pb-12">
                   {group.codes.map(code => {
                     const isAutoHighlight = hasQuizForTab && code === autoCode;
-                    const avatarSrc = TYPE_IMAGES[code] ?? `/img/p${MBTI_CODES.indexOf(code) + 1}.PNG`;
+                    const avatarSrc = TYPE_IMAGES[code];
                     const info = TYPE_TABLES[activeTab][code];
 
                     return (
@@ -261,7 +251,7 @@ const MyTypePage = () => {
               style={{ backgroundColor: modalGroup.color + '18' }}
             >
               <img
-                src={TYPE_IMAGES[modalCode] ?? `/img/p${MBTI_CODES.indexOf(modalCode) + 1}.PNG`}
+                src={TYPE_IMAGES[modalCode]}
                 alt={modalCode}
                 className="w-48 h-48 object-contain"
               />
