@@ -7,10 +7,14 @@ import Navbar from '../../navbar/page';
 import { scoreMbti, buildAxisBars, typeIcon, typeColor } from '@/lib/mbti';
 import { serviceQuestions, serviceTypeTable } from '@/lib/mbti-service';
 
+const QUESTIONS_PER_PAGE = 30;
+const totalPages = Math.ceil(serviceQuestions.length / QUESTIONS_PER_PAGE);
+
 const ServiceQuestionnaire = () => {
   const router = useRouter();
 
   const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [currentPage, setCurrentPage] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
   const [jobResult, setJobResult] = useState<{
     code: string;
@@ -20,6 +24,12 @@ const ServiceQuestionnaire = () => {
     icon: string;
     typeScores: { title: string; icon: string; score: number }[];
   } | null>(null);
+
+  const currentQuestions = serviceQuestions.slice(
+    currentPage * QUESTIONS_PER_PAGE,
+    (currentPage + 1) * QUESTIONS_PER_PAGE,
+  );
+  const isPageComplete = currentQuestions.every((q) => answers[q.id] !== undefined);
 
   const handleSelect = (questionId: number, value: number) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }));
@@ -35,6 +45,16 @@ const ServiceQuestionnaire = () => {
 
     setJobResult({ code, title: info.title, description: info.description, jobs: info.jobs, icon: typeIcon(code), typeScores });
     setShowPopup(true);
+  };
+
+  const handlePageNext = () => {
+    if (!isPageComplete) { alert('กรุณาตอบให้ครบทุกข้อในหน้านี้ก่อนนะครับ'); return; }
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(p => p + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      handleSubmit();
+    }
   };
 
   const handlePopupClose = async () => {
@@ -74,8 +94,20 @@ const ServiceQuestionnaire = () => {
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
-      <div className="w-full max-w-5xl flex items-center justify-between px-4 md:px-8 mt-6 mb-6">
-        <button onClick={() => router.back()} className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+
+      {/* Top bar: back + template badge */}
+      <div className="w-full max-w-5xl flex items-center justify-between px-4 md:px-8 mt-6 mb-4">
+        <button
+          onClick={() => {
+            if (currentPage > 0) {
+              setCurrentPage(p => p - 1);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+              router.back();
+            }
+          }}
+          className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+        >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
         <div className="bg-[#A7F3D0] px-8 py-3 rounded-2xl shadow-sm">
@@ -83,14 +115,37 @@ const ServiceQuestionnaire = () => {
         </div>
       </div>
 
-      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-xl p-8 md:p-16 flex flex-col gap-12 border-b-8 border-gray-300">
-        {serviceQuestions.map((q, idx) => (
+      {/* Card */}
+      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-xl p-8 md:p-16 flex flex-col gap-12 border-b-8 border-gray-300 mb-8">
+        {/* Progress indicator */}
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex items-center gap-2">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === currentPage ? 'w-10 bg-[#4B3E7A]' :
+                  i < currentPage ? 'w-6 bg-[#4B3E7A] opacity-40' :
+                  'w-6 bg-gray-200'
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-sm text-gray-400">
+            ข้อ {currentPage * QUESTIONS_PER_PAGE + 1}–{Math.min((currentPage + 1) * QUESTIONS_PER_PAGE, serviceQuestions.length)} จาก {serviceQuestions.length}
+          </p>
+        </div>
+
+        {/* Questions for this page */}
+        {currentQuestions.map((q, idx) => (
           <div key={q.id} className="flex flex-col items-center gap-8">
             <h3 className="text-[#1A2E44] text-xl md:text-2xl font-black text-center leading-relaxed">&ldquo;{q.text}&rdquo;</h3>
             <div className="w-full flex items-center justify-between max-w-3xl">
               <div className="flex items-center gap-3">
                 <span className="text-[#22C55E] font-black text-lg md:text-xl">เห็นด้วย</span>
-                <div className="w-10 h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white"><Plus size={24} strokeWidth={4} /></div>
+                <div className="w-10 h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white">
+                  <Plus size={24} strokeWidth={4} />
+                </div>
               </div>
               <div className="flex items-center gap-2 md:gap-4 flex-1 justify-center px-4">
                 {[1, 2, 3, 4, 5, 6, 7].map((val) => {
@@ -104,15 +159,20 @@ const ServiceQuestionnaire = () => {
                 })}
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full border-2 border-[#A7F3D0] flex items-center justify-center text-[#A7F3D0] bg-white"><Minus size={24} strokeWidth={4} /></div>
+                <div className="w-10 h-10 rounded-full border-2 border-[#A7F3D0] flex items-center justify-center text-[#A7F3D0] bg-white">
+                  <Minus size={24} strokeWidth={4} />
+                </div>
                 <span className="text-[#A7F3D0] font-black text-lg md:text-xl whitespace-nowrap">ไม่เห็นด้วย</span>
               </div>
             </div>
-            {idx !== serviceQuestions.length - 1 && <div className="w-full h-[2px] bg-gray-100 mt-4" />}
+            {idx !== currentQuestions.length - 1 && <div className="w-full h-[2px] bg-gray-100 mt-4" />}
           </div>
         ))}
+
         <div className="flex justify-center mt-8">
-          <button onClick={handleSubmit} className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl font-black text-xl hover:bg-[#3b3161] transition-colors shadow-lg">ถัดไป</button>
+          <button onClick={handlePageNext} className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl font-black text-xl hover:bg-[#3b3161] transition-colors shadow-lg">
+            {currentPage < totalPages - 1 ? 'ถัดไป' : 'ส่งคำตอบ'}
+          </button>
         </div>
       </div>
 
