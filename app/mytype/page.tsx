@@ -2,13 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Star } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { MBTI_CODES } from '@/lib/mbti';
 import { programmingTypeTable } from '@/lib/mbti-programming';
 import { serviceTypeTable } from '@/lib/mbti-service';
 import { presentationTypeTable } from '@/lib/mbti-presentation';
 import { designTypeTable } from '@/lib/mbti-design';
+
+const TYPE_IMAGES: Record<string, string> = {
+  INTJ: '/img/a1.PNG',
+  INTP: '/img/a2.PNG',
+  ENTJ: '/img/a3.PNG',
+  ENTP: '/img/a4.PNG',
+  INFJ: '/img/b1.PNG',
+  INFP: '/img/b2.PNG',
+  ENFJ: '/img/b3.PNG',
+  ENFP: '/img/b4.PNG',
+  ISTJ: '/img/c1.PNG',
+  ISFJ: '/img/c2.PNG',
+  ESTJ: '/img/c3.PNG',
+  ESFJ: '/img/c4.PNG',
+  ISTP: '/img/d1.PNG',
+  ISFP: '/img/d2.PNG',
+  ESTP: '/img/d3.PNG',
+  ESFP: '/img/d4.PNG',
+};
 
 const ENGLISH_NAMES: Record<string, string> = {
   INTJ: 'Architect',    INTP: 'Logician',     ENTJ: 'Commander',    ENTP: 'Debater',
@@ -51,8 +70,6 @@ const MyTypePage = () => {
   const [user, setUser] = useState<UserShape | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('programming');
   const [modalCode, setModalCode] = useState<string | null>(null);
-  const [pinnedCode, setPinnedCode] = useState<string | null>(null);
-  const [pinSaving, setPinSaving] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -64,7 +81,6 @@ const MyTypePage = () => {
       return;
     }
     setUser(local);
-    setPinnedCode((local.types?.pinned as string | null) ?? null);
 
     fetch(`/api/users?gmail=${encodeURIComponent(local.gmail ?? '')}`)
       .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
@@ -73,38 +89,10 @@ const MyTypePage = () => {
           const updated = { ...local, types: data.user.types };
           setUser(updated);
           localStorage.setItem('currentUser', JSON.stringify(updated));
-          setPinnedCode((data.user.types?.pinned as string | null) ?? null);
         }
       })
       .catch(() => {});
   }, []);
-
-  const handlePinToggle = async (code: string) => {
-    if (pinSaving || !user) return;
-    const previousPin = pinnedCode;
-    const previousUser = user;
-    const newPin = previousPin === code ? null : code;
-    setPinnedCode(newPin);
-    setPinSaving(true);
-    const currentTypes = (user.types as Record<string, unknown>) ?? {};
-    const newTypes = { ...currentTypes, pinned: newPin };
-    const updatedUser = { ...user, types: newTypes };
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-    try {
-      await fetch('/api/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ types: newTypes }),
-      });
-    } catch {
-      setPinnedCode(previousPin);
-      setUser(previousUser);
-      localStorage.setItem('currentUser', JSON.stringify(previousUser));
-    } finally {
-      setPinSaving(false);
-    }
-  };
 
   useEffect(() => { setModalCode(null); }, [activeTab]);
 
@@ -117,10 +105,18 @@ const MyTypePage = () => {
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col">
+      <style>{`
+        @keyframes slideUpFade {
+          from { opacity: 0; transform: translateY(40px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .slide-up-1 { animation: slideUpFade 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+        .slide-up-2 { animation: slideUpFade 0.45s cubic-bezier(0.22,1,0.36,1) 0.18s both; }
+      `}</style>
       <Navbar />
 
       {/* Top bar: back button + template tabs */}
-      <div className="w-full px-4 py-4 flex items-center gap-3">
+      <div className="slide-up-1 w-full px-3 py-4 flex items-center gap-3 max-w-7xl mx-auto">
         <button
           onClick={() => router.back()}
           className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
@@ -158,7 +154,7 @@ const MyTypePage = () => {
       )}
 
       {/* Group Sections */}
-      <div className="flex flex-col gap-3 px-3 pb-6 max-w-7xl mx-auto w-full">
+      <div className="slide-up-2 flex flex-col gap-3 px-3 pb-6 max-w-7xl mx-auto w-full">
         {GROUPS.map(group => (
               <section
                 key={group.label}
@@ -180,7 +176,7 @@ const MyTypePage = () => {
 
                 {/* Section Header */}
                 <div className="relative z-10 px-12 pt-12 pb-3 flex items-baseline gap-2">
-                  <h2 className="text-xl font-black" style={{ color: group.color }}>
+                  <h2 className="text-2xl font-black" style={{ color: group.color }}>
                     {group.label}
                   </h2>
                   <span
@@ -195,42 +191,27 @@ const MyTypePage = () => {
                 <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 px-10 pb-12">
                   {group.codes.map(code => {
                     const isAutoHighlight = hasQuizForTab && code === autoCode;
-                    const isPinned = code === pinnedCode;
-                    const isHighlighted = isAutoHighlight || isPinned;
-                    const avatarSrc = `/img/p${MBTI_CODES.indexOf(code) + 1}.PNG`;
+                    const avatarSrc = TYPE_IMAGES[code] ?? `/img/p${MBTI_CODES.indexOf(code) + 1}.PNG`;
                     const info = TYPE_TABLES[activeTab][code];
 
                     return (
                       <div
                         key={code}
                         onClick={() => setModalCode(code)}
-                        className="relative cursor-pointer flex flex-col items-center gap-1 pb-5 pt-2 transition-all rounded-2xl"
-                        style={isHighlighted ? {
+                        className="group relative cursor-pointer flex flex-col items-center gap-1 pb-5 pt-2 transition-all rounded-2xl"
+                        style={isAutoHighlight ? {
                           backgroundColor: '#ffffff',
-                          boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
                           border: '3px solid #ffffff',
                         } : {
                           border: '3px solid transparent',
                         }}
                       >
-                        {/* Star pin button */}
-                        <button
-                          onClick={e => { e.stopPropagation(); handlePinToggle(code); }}
-                          disabled={pinSaving}
-                          className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full transition-colors"
-                          style={{ color: isPinned ? group.color : group.color + '55' }}
-                        >
-                          <Star size={15} fill={isPinned ? 'currentColor' : 'none'} />
-                        </button>
-
                         {/* Avatar */}
-                        <div className="rounded-full p-1">
-                          <img
-                            src={avatarSrc}
-                            alt={code}
-                            className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain mb-0"
-                          />
-                        </div>
+                        <img
+                          src={avatarSrc}
+                          alt={code}
+                          className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain mb-3 transition-transform duration-300 group-hover:scale-110"
+                        />
 
                         {/* English name */}
                         <span className="text-2xl md:text-3xl font-black text-center leading-tight" style={{ color: group.color }}>
@@ -247,31 +228,14 @@ const MyTypePage = () => {
                           {info?.title ?? ''}
                         </span>
 
-                        {/* Description */}
-                        <p className="text-sm md:text-base text-gray-500 text-center leading-relaxed line-clamp-3 w-full">
-                          {info?.description ?? ''}
-                        </p>
-
-                        {/* Badges */}
-                        {(isAutoHighlight || isPinned) && (
-                          <div className="flex gap-1 flex-wrap justify-center">
-                            {isAutoHighlight && (
-                              <span
-                                className="text-[9px] font-black px-2 py-0.5 rounded-full text-white"
-                                style={{ backgroundColor: group.color }}
-                              >
-                                ผลของฉัน
-                              </span>
-                            )}
-                            {isPinned && (
-                              <span
-                                className="text-[9px] font-black px-2 py-0.5 rounded-full border"
-                                style={{ color: group.color, borderColor: group.color }}
-                              >
-                                ★ ปักหมุด
-                              </span>
-                            )}
-                          </div>
+                        {/* Badge */}
+                        {isAutoHighlight && (
+                          <span
+                            className="text-[9px] font-black px-2 py-0.5 rounded-full text-white"
+                            style={{ backgroundColor: group.color }}
+                          >
+                            ผลของฉัน
+                          </span>
                         )}
                       </div>
                     );
@@ -288,46 +252,46 @@ const MyTypePage = () => {
           onClick={() => setModalCode(null)}
         >
           <div
-            className="bg-white rounded-[24px] w-full max-w-md max-h-[85vh] overflow-y-auto"
+            className="bg-white rounded-[32px] w-full max-w-lg max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Colored header */}
             <div
-              className="rounded-t-[24px] p-6 flex flex-col items-center gap-2"
+              className="rounded-t-[32px] p-10 flex flex-col items-center gap-3"
               style={{ backgroundColor: modalGroup.color + '18' }}
             >
               <img
-                src={`/img/p${MBTI_CODES.indexOf(modalCode) + 1}.PNG`}
+                src={TYPE_IMAGES[modalCode] ?? `/img/p${MBTI_CODES.indexOf(modalCode) + 1}.PNG`}
                 alt={modalCode}
-                className="w-28 h-28 object-contain"
+                className="w-48 h-48 object-contain"
               />
-              <span className="text-2xl font-black" style={{ color: modalGroup.color }}>
+              <span className="text-4xl font-black" style={{ color: modalGroup.color }}>
                 {modalCode}
               </span>
-              <span className="text-sm font-bold text-gray-400">
+              <span className="text-base font-bold text-gray-400">
                 {ENGLISH_NAMES[modalCode]}
               </span>
-              <span className="text-lg font-black text-[#4B3E7A] text-center">
+              <span className="text-2xl font-black text-[#4B3E7A] text-center">
                 {modalInfo?.title ?? ''}
               </span>
             </div>
 
             {/* Body */}
-            <div className="p-6 flex flex-col gap-4">
-              <p className="text-gray-500 text-sm leading-relaxed">
+            <div className="p-10 flex flex-col gap-5">
+              <p className="text-gray-500 text-base leading-relaxed">
                 {modalInfo?.description ?? ''}
               </p>
 
               {modalInfo?.jobs && modalInfo.jobs.length > 0 && (
                 <div>
-                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                  <p className="text-sm font-black text-gray-400 uppercase tracking-widest mb-3">
                     ตำแหน่งงานที่เหมาะสม
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {modalInfo.jobs.map(job => (
                       <span
                         key={job}
-                        className="text-xs font-bold px-3 py-1.5 rounded-full"
+                        className="text-sm font-bold px-4 py-2 rounded-full"
                         style={{ backgroundColor: modalGroup.color + '18', color: modalGroup.color }}
                       >
                         {job}
@@ -339,7 +303,7 @@ const MyTypePage = () => {
 
               <button
                 onClick={() => setModalCode(null)}
-                className="mt-2 w-full py-3 rounded-2xl font-black text-white"
+                className="mt-2 w-full py-4 rounded-2xl font-black text-white text-base"
                 style={{ backgroundColor: modalGroup.color }}
               >
                 ปิด
