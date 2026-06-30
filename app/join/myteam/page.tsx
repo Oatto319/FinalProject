@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Edit2, Home, Info, Send, User, X } from 'lucide-react';
+import { Check, Edit2, Home, Send, User, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
@@ -232,7 +232,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
           </div>
           <div className="flex gap-2">
             <button onClick={() => router.push('/')} className="bg-[#2D3E50] p-3 rounded-lg text-white hover:bg-slate-700 transition-colors"><Home size={20} /></button>
-            <button onClick={() => router.push('/join/myroom')} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Info size={20} /></button>
+            <MbtiTagLegend template={template} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors flex items-center justify-center" />
           </div>
         </div>
       </div>
@@ -250,10 +250,6 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
               <>
                 <div className="flex items-center justify-between px-1 -mb-2">
                   <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">สมาชิกในทีม</p>
-                  <MbtiTagLegend
-                    template={template}
-                    className="w-7 h-7 rounded-full bg-white hover:bg-gray-100 flex items-center justify-center text-[#4B3E7A] transition-all shadow-sm"
-                  />
                 </div>
                 <div className="flex flex-col gap-3">
                   {(myGroup?.members ?? teamMembers).map((member, idx) => {
