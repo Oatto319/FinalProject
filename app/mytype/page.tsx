@@ -10,6 +10,25 @@ import { serviceTypeTable } from '@/lib/mbti-service';
 import { presentationTypeTable } from '@/lib/mbti-presentation';
 import { designTypeTable } from '@/lib/mbti-design';
 
+const TYPE_IMAGES: Record<string, string> = {
+  INTJ: '/img/a1.PNG',
+  INTP: '/img/a2.PNG',
+  ENTJ: '/img/a3.PNG',
+  ENTP: '/img/a4.PNG',
+  INFJ: '/img/b1.PNG',
+  INFP: '/img/b2.PNG',
+  ENFJ: '/img/b3.PNG',
+  ENFP: '/img/b4.PNG',
+  ISTJ: '/img/c1.PNG',
+  ISFJ: '/img/c2.PNG',
+  ESTJ: '/img/c3.PNG',
+  ESFJ: '/img/c4.PNG',
+  ISTP: '/img/d1.PNG',
+  ISFP: '/img/d2.PNG',
+  ESTP: '/img/d3.PNG',
+  ESFP: '/img/d4.PNG',
+};
+
 const ENGLISH_NAMES: Record<string, string> = {
   INTJ: 'Architect',    INTP: 'Logician',     ENTJ: 'Commander',    ENTP: 'Debater',
   INFJ: 'Advocate',     INFP: 'Mediator',     ENFJ: 'Protagonist',  ENFP: 'Campaigner',
@@ -165,7 +184,7 @@ const MyTypePage = () => {
                 <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 px-10 pb-12">
                   {group.codes.map(code => {
                     const isAutoHighlight = hasQuizForTab && code === autoCode;
-                    const avatarSrc = `/img/p${MBTI_CODES.indexOf(code) + 1}.PNG`;
+                    const avatarSrc = TYPE_IMAGES[code] ?? `/img/p${MBTI_CODES.indexOf(code) + 1}.PNG`;
                     const info = TYPE_TABLES[activeTab][code];
 
                     return (
@@ -184,7 +203,7 @@ const MyTypePage = () => {
                         <img
                           src={avatarSrc}
                           alt={code}
-                          className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain mb-3 transition-transform duration-300 group-hover:scale-110"
+                          className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain mb-3 transition-transform duration-300 group-hover:scale-110"
                         />
 
                         {/* English name */}
@@ -235,7 +254,7 @@ const MyTypePage = () => {
               style={{ backgroundColor: modalGroup.color + '18' }}
             >
               <img
-                src={`/img/p${MBTI_CODES.indexOf(modalCode) + 1}.PNG`}
+                src={TYPE_IMAGES[modalCode] ?? `/img/p${MBTI_CODES.indexOf(modalCode) + 1}.PNG`}
                 alt={modalCode}
                 className="w-48 h-48 object-contain"
               />
