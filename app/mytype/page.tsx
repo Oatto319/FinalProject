@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Star } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { MBTI_CODES } from '@/lib/mbti';
 import { programmingTypeTable } from '@/lib/mbti-programming';
@@ -51,15 +51,12 @@ const MyTypePage = () => {
   const [user, setUser] = useState<UserShape | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('programming');
   const [modalCode, setModalCode] = useState<string | null>(null);
-  const [pinnedCode, setPinnedCode] = useState<string | null>(null);
-  const [pinSaving, setPinSaving] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (!raw) return;
     const local = JSON.parse(raw);
     setUser(local);
-    setPinnedCode((local.types?.pinned as string | null) ?? null);
 
     fetch(`/api/users?gmail=${encodeURIComponent(local.gmail)}`)
       .then(r => r.json())
@@ -68,34 +65,10 @@ const MyTypePage = () => {
           const updated = { ...local, types: data.user.types };
           setUser(updated);
           localStorage.setItem('currentUser', JSON.stringify(updated));
-          setPinnedCode((data.user.types?.pinned as string | null) ?? null);
         }
       })
       .catch(() => {});
   }, []);
-
-  const handlePinToggle = async (code: string) => {
-    if (pinSaving || !user) return;
-    const newPin = pinnedCode === code ? null : code;
-    setPinnedCode(newPin);
-    setPinSaving(true);
-    const currentTypes = (user.types as Record<string, unknown>) ?? {};
-    const newTypes = { ...currentTypes, pinned: newPin };
-    const updatedUser = { ...user, types: newTypes };
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    setUser(updatedUser);
-    try {
-      await fetch('/api/users', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ types: newTypes }),
-      });
-    } catch {
-      setPinnedCode(pinnedCode);
-    } finally {
-      setPinSaving(false);
-    }
-  };
 
   const types = user?.types as Record<string, { code?: string } | undefined> | undefined;
   const autoCode = types?.[activeTab]?.code ?? null;
@@ -184,8 +157,6 @@ const MyTypePage = () => {
                 <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 px-10 pb-12">
                   {group.codes.map(code => {
                     const isAutoHighlight = hasQuizForTab && code === autoCode;
-                    const isPinned = code === pinnedCode;
-                    const isHighlighted = isAutoHighlight || isPinned;
                     const avatarSrc = `/img/p${MBTI_CODES.indexOf(code) + 1}.PNG`;
                     const info = TYPE_TABLES[activeTab][code];
 
@@ -193,8 +164,8 @@ const MyTypePage = () => {
                       <div
                         key={code}
                         onClick={() => setModalCode(code)}
-                        className="relative cursor-pointer flex flex-col items-center gap-1 pb-5 pt-2 transition-all rounded-2xl"
-                        style={isHighlighted ? {
+                        className="group relative cursor-pointer flex flex-col items-center gap-1 pb-5 pt-2 transition-all rounded-2xl"
+                        style={isAutoHighlight ? {
                           backgroundColor: '#ffffff',
                           boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
                           border: '3px solid #ffffff',
@@ -202,21 +173,11 @@ const MyTypePage = () => {
                           border: '3px solid transparent',
                         }}
                       >
-                        {/* Star pin button */}
-                        <button
-                          onClick={e => { e.stopPropagation(); handlePinToggle(code); }}
-                          disabled={pinSaving}
-                          className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center rounded-full transition-colors"
-                          style={{ color: isPinned ? group.color : group.color + '55' }}
-                        >
-                          <Star size={15} fill={isPinned ? 'currentColor' : 'none'} />
-                        </button>
-
                         {/* Avatar */}
                         <img
                           src={avatarSrc}
                           alt={code}
-                          className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain mb-0"
+                          className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 object-contain mb-0 transition-transform duration-300 group-hover:scale-110"
                         />
 
                         {/* English name */}
@@ -234,26 +195,14 @@ const MyTypePage = () => {
                           {info?.title ?? ''}
                         </span>
 
-                        {/* Badges */}
-                        {(isAutoHighlight || isPinned) && (
-                          <div className="flex gap-1 flex-wrap justify-center">
-                            {isAutoHighlight && (
-                              <span
-                                className="text-[9px] font-black px-2 py-0.5 rounded-full text-white"
-                                style={{ backgroundColor: group.color }}
-                              >
-                                ผลของฉัน
-                              </span>
-                            )}
-                            {isPinned && (
-                              <span
-                                className="text-[9px] font-black px-2 py-0.5 rounded-full border"
-                                style={{ color: group.color, borderColor: group.color }}
-                              >
-                                ★ ปักหมุด
-                              </span>
-                            )}
-                          </div>
+                        {/* Badge */}
+                        {isAutoHighlight && (
+                          <span
+                            className="text-[9px] font-black px-2 py-0.5 rounded-full text-white"
+                            style={{ backgroundColor: group.color }}
+                          >
+                            ผลของฉัน
+                          </span>
                         )}
                       </div>
                     );
