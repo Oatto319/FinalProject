@@ -236,11 +236,6 @@ const MyTypePage = () => {
                           {info?.title ?? ''}
                         </span>
 
-                        {/* Description */}
-                        <p className="text-sm md:text-base text-gray-500 text-center leading-relaxed line-clamp-3 w-full">
-                          {info?.description ?? ''}
-                        </p>
-
                         {/* Badges */}
                         {(isAutoHighlight || isPinned) && (
                           <div className="flex gap-1 flex-wrap justify-center">
