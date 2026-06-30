@@ -57,12 +57,17 @@ const MyTypePage = () => {
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (!raw) return;
-    const local = JSON.parse(raw);
+    let local: UserShape;
+    try {
+      local = JSON.parse(raw);
+    } catch {
+      return;
+    }
     setUser(local);
     setPinnedCode((local.types?.pinned as string | null) ?? null);
 
-    fetch(`/api/users?gmail=${encodeURIComponent(local.gmail)}`)
-      .then(r => r.json())
+    fetch(`/api/users?gmail=${encodeURIComponent(local.gmail ?? '')}`)
+      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(data => {
         if (data.user) {
           const updated = { ...local, types: data.user.types };
@@ -76,7 +81,9 @@ const MyTypePage = () => {
 
   const handlePinToggle = async (code: string) => {
     if (pinSaving || !user) return;
-    const newPin = pinnedCode === code ? null : code;
+    const previousPin = pinnedCode;
+    const previousUser = user;
+    const newPin = previousPin === code ? null : code;
     setPinnedCode(newPin);
     setPinSaving(true);
     const currentTypes = (user.types as Record<string, unknown>) ?? {};
@@ -91,11 +98,15 @@ const MyTypePage = () => {
         body: JSON.stringify({ types: newTypes }),
       });
     } catch {
-      setPinnedCode(pinnedCode);
+      setPinnedCode(previousPin);
+      setUser(previousUser);
+      localStorage.setItem('currentUser', JSON.stringify(previousUser));
     } finally {
       setPinSaving(false);
     }
   };
+
+  useEffect(() => { setModalCode(null); }, [activeTab]);
 
   const types = user?.types as Record<string, { code?: string } | undefined> | undefined;
   const autoCode = types?.[activeTab]?.code ?? null;
