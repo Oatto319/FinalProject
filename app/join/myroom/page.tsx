@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Copy } from 'lucide-react';
+import { Copy, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
@@ -105,16 +105,25 @@ export default function MyRoomPage() {
         {/* Header */}
         <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
-          <button
-            onClick={copyToClipboard}
-            className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white text-[#4B3E7A] hover:bg-white/90"
-          >
-            <span className="text-xl font-black tracking-wider">#{room ? getRoomId(room) : '...'}</span>
-            <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full transition-all ${copied ? 'bg-green-400 text-white' : 'bg-[#4B3E7A]/10 text-[#4B3E7A]'}`}>
-              <Copy size={13} />
-              {copied ? 'Copied!' : 'Copy'}
-            </span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={copyToClipboard}
+              className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white text-[#4B3E7A] hover:bg-white/90"
+            >
+              <span className="text-xl font-black tracking-wider">#{room ? getRoomId(room) : '...'}</span>
+              <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full transition-all ${copied ? 'bg-green-400 text-white' : 'bg-[#4B3E7A]/10 text-[#4B3E7A]'}`}>
+                <Copy size={13} />
+                {copied ? 'Copied!' : 'Copy'}
+              </span>
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              title="กลับหน้าหลัก"
+              className="w-11 h-11 bg-white rounded-full flex items-center justify-center text-[#4B3E7A] shadow-md hover:bg-white/90 transition-all active:scale-95"
+            >
+              <Home size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
