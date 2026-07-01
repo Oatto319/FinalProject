@@ -6,6 +6,7 @@ import { Check, Edit2, Home, Send, User, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
+import { TYPE_IMAGES } from '@/lib/type-images';
 import MbtiTagLegend from '../../components/MbtiTagLegend';
 import { markMatchSeen } from '../../components/notifications';
 
@@ -474,12 +475,18 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center flex-shrink-0"
+                  className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0"
                   style={{ backgroundColor: `${popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon)}1A` }}
                 >
-                  <span className="text-lg font-black" style={{ color: popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon) }}>
-                    {popup.type.code ?? popup.type.title.slice(0, 2)}
-                  </span>
+                  {popup.type.code && TYPE_IMAGES[popup.type.code] ? (
+                    <img src={TYPE_IMAGES[popup.type.code]} alt={popup.type.code} className="w-full h-full object-contain" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-lg font-black" style={{ color: popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon) }}>
+                        {popup.type.code ?? popup.type.title.slice(0, 2)}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 font-medium">{isManualRoom ? 'บทบาทในทีม' : 'ประเภทบุคลิกภาพ'}</p>

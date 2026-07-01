@@ -6,6 +6,7 @@ import { X, Home, Copy } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
+import { TYPE_IMAGES } from '@/lib/type-images';
 import MbtiTagLegend from '../../components/MbtiTagLegend';
 import { markMatchSeen } from '../../components/notifications';
 
@@ -222,12 +223,18 @@ const GroupResultPage = () => {
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
               <div
-                className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center"
+                className="w-20 h-20 rounded-2xl overflow-hidden"
                 style={{ backgroundColor: `${mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon)}1A` }}
               >
-                <span className="text-lg font-black" style={{ color: mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon) }}>
-                  {mbtiPopup.type.code ?? mbtiPopup.type.title.slice(0, 2)}
-                </span>
+                {mbtiPopup.type.code && TYPE_IMAGES[mbtiPopup.type.code] ? (
+                  <img src={TYPE_IMAGES[mbtiPopup.type.code]} alt={mbtiPopup.type.code} className="w-full h-full object-contain" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <span className="text-lg font-black" style={{ color: mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon) }}>
+                      {mbtiPopup.type.code ?? mbtiPopup.type.title.slice(0, 2)}
+                    </span>
+                  </div>
+                )}
               </div>
               <p className="font-black text-[#4B3E7A] text-xl">{mbtiPopup.type.title}</p>
               {mbtiPopup.type.description && <p className="text-gray-500 text-sm text-center leading-relaxed">{mbtiPopup.type.description}</p>}
