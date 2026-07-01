@@ -6,6 +6,7 @@ import { Plus, Minus, ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { scoreMbti, buildAxisBars, typeIcon, typeColor } from '@/lib/mbti';
 import { presentationQuestions, presentationTypeTable } from '@/lib/mbti-presentation';
+import { TYPE_IMAGES } from '@/lib/type-images';
 
 const QUESTIONS_PER_PAGE = 30;
 const totalPages = Math.ceil(presentationQuestions.length / QUESTIONS_PER_PAGE);
@@ -195,10 +196,10 @@ const PresentationQuestionnaire = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
             <div
-              className="w-24 h-24 rounded-3xl flex items-center justify-center flex-shrink-0"
+              className="w-24 h-24 rounded-3xl overflow-hidden flex-shrink-0"
               style={{ backgroundColor: `${typeColor(jobResult.code)}1A` }}
             >
-              <span className="text-xl font-black tracking-wide" style={{ color: typeColor(jobResult.code) }}>{jobResult.code}</span>
+              <img src={TYPE_IMAGES[jobResult.code]} alt={jobResult.code} className="w-full h-full object-contain" />
             </div>
             <div className="text-center w-full">
               <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>

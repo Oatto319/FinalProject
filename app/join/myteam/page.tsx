@@ -8,7 +8,6 @@ import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
 import MbtiTagLegend from '../../components/MbtiTagLegend';
 import { markMatchSeen } from '../../components/notifications';
-import { TYPE_IMAGES } from '@/lib/type-images';
 
 interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; avatarImage?: string | null; }
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
@@ -313,13 +312,9 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
                               style={{ backgroundColor: `${mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon)}26` }}
                             >
-                              {mbtiType.code && TYPE_IMAGES[mbtiType.code] ? (
-                                <img src={TYPE_IMAGES[mbtiType.code]} alt={mbtiType.code} className="w-full h-full object-contain" />
-                              ) : (
-                                <span className="text-[11px] font-black" style={{ color: mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon) }}>
-                                  {mbtiType.code ?? mbtiType.title.slice(0, 2)}
-                                </span>
-                              )}
+                              <span className="text-[11px] font-black" style={{ color: mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon) }}>
+                                {mbtiType.code ?? mbtiType.title.slice(0, 2)}
+                              </span>
                             </button>
                           ) : isManualRoom && member.role && member.role !== 'ไม่ระบุ' ? (
                             <button
@@ -482,13 +477,9 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                   className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center flex-shrink-0"
                   style={{ backgroundColor: `${popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon)}1A` }}
                 >
-                  {popup.type.code && TYPE_IMAGES[popup.type.code] ? (
-                    <img src={TYPE_IMAGES[popup.type.code]} alt={popup.type.code} className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-lg font-black" style={{ color: popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon) }}>
-                      {popup.type.code ?? popup.type.title.slice(0, 2)}
-                    </span>
-                  )}
+                  <span className="text-lg font-black" style={{ color: popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon) }}>
+                    {popup.type.code ?? popup.type.title.slice(0, 2)}
+                  </span>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 font-medium">{isManualRoom ? 'บทบาทในทีม' : 'ประเภทบุคลิกภาพ'}</p>
