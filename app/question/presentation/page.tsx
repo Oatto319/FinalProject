@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
@@ -16,6 +16,9 @@ const PresentationQuestionnaire = () => {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
   const [jobResult, setJobResult] = useState<{
     code: string;
     title: string;
@@ -48,9 +51,20 @@ const PresentationQuestionnaire = () => {
   };
 
   const handlePageNext = () => {
-    if (!isPageComplete) { alert('กรุณาตอบให้ครบทุกข้อในหน้านี้ก่อนนะครับ'); return; }
+    if (!isPageComplete) {
+      const firstUnanswered = currentQuestions.find((q) => answers[q.id] === undefined);
+      if (firstUnanswered) {
+        document.getElementById(`question-${firstUnanswered.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightedId(firstUnanswered.id);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setHighlightedId(null), 2000);
+      }
+      alert('กรุณาตอบให้ครบทุกข้อในหน้านี้ก่อนนะครับ');
+      return;
+    }
     if (currentPage < totalPages - 1) {
       setCurrentPage(p => p + 1);
+      setHighlightedId(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       handleSubmit();
@@ -101,6 +115,7 @@ const PresentationQuestionnaire = () => {
           onClick={() => {
             if (currentPage > 0) {
               setCurrentPage(p => p - 1);
+              setHighlightedId(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               router.back();
@@ -138,7 +153,7 @@ const PresentationQuestionnaire = () => {
 
         {/* Questions for this page */}
         {currentQuestions.map((q, idx) => (
-          <div key={q.id} className="flex flex-col items-center gap-8">
+          <div key={q.id} id={`question-${q.id}`} className={`flex flex-col items-center gap-8 rounded-2xl px-4 pt-4 transition-all duration-300 ${highlightedId === q.id ? 'ring-2 ring-red-400 bg-red-50' : ''}`}>
             <h3 className="text-[#1A2E44] text-xl md:text-2xl font-black text-center leading-relaxed">&ldquo;{q.text}&rdquo;</h3>
             <div className="w-full flex items-center justify-between max-w-3xl">
               <div className="flex items-center gap-3">

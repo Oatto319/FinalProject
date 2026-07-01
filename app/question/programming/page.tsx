@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
@@ -16,6 +16,9 @@ const ProgrammingQuestionnaire = () => {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
+  const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
   const [jobResult, setJobResult] = useState<{
     code: string;
     title: string;
@@ -48,9 +51,20 @@ const ProgrammingQuestionnaire = () => {
   };
 
   const handlePageNext = () => {
-    if (!isPageComplete) { alert('กรุณาตอบให้ครบทุกข้อในหน้านี้ก่อนนะครับ'); return; }
+    if (!isPageComplete) {
+      const firstUnanswered = currentQuestions.find((q) => answers[q.id] === undefined);
+      if (firstUnanswered) {
+        document.getElementById(`question-${firstUnanswered.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightedId(firstUnanswered.id);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setHighlightedId(null), 2000);
+      }
+      alert('กรุณาตอบให้ครบทุกข้อในหน้านี้ก่อนนะครับ');
+      return;
+    }
     if (currentPage < totalPages - 1) {
       setCurrentPage(p => p + 1);
+      setHighlightedId(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       handleSubmit();
@@ -104,6 +118,7 @@ const ProgrammingQuestionnaire = () => {
           onClick={() => {
             if (currentPage > 0) {
               setCurrentPage(p => p - 1);
+              setHighlightedId(null);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
               router.back();
@@ -134,20 +149,18 @@ const ProgrammingQuestionnaire = () => {
                 />
               ))}
             </div>
-            <p className="text-sm text-gray-400" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>
+            <p className="text-sm text-gray-400">
               ข้อ {currentPage * QUESTIONS_PER_PAGE + 1}–{Math.min((currentPage + 1) * QUESTIONS_PER_PAGE, programmingQuestions.length)} จาก {programmingQuestions.length}
             </p>
           </div>
 
           {/* Questions for this page */}
           {currentQuestions.map((q, idx) => (
-            <div key={q.id} className="flex flex-col items-center gap-8">
-              <h3 className="text-[#1A2E44] text-xl md:text-2xl text-center leading-relaxed" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif', textShadow: 'none' }}>
-                &ldquo;{q.text}&rdquo;
-              </h3>
+            <div key={q.id} id={`question-${q.id}`} className={`flex flex-col items-center gap-8 rounded-2xl px-4 pt-4 transition-all duration-300 ${highlightedId === q.id ? 'ring-2 ring-red-400 bg-red-50' : ''}`}>
+              <h3 className="text-[#1A2E44] text-xl md:text-2xl font-black text-center leading-relaxed">&ldquo;{q.text}&rdquo;</h3>
               <div className="w-full flex items-center justify-between max-w-3xl">
                 <div className="flex items-center gap-3">
-                  <span className="text-[#22C55E] text-lg md:text-xl" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เห็นด้วย</span>
+                  <span className="text-[#22C55E] font-black text-lg md:text-xl">เห็นด้วย</span>
                   <div className="w-10 h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white">
                     <Plus size={24} strokeWidth={4} />
                   </div>
@@ -173,7 +186,7 @@ const ProgrammingQuestionnaire = () => {
                   <div className="w-10 h-10 rounded-full border-2 border-[#F8A4A4] flex items-center justify-center text-[#F8A4A4] bg-white">
                     <Minus size={24} strokeWidth={4} />
                   </div>
-                  <span className="text-[#F8A4A4] text-lg md:text-xl whitespace-nowrap" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ไม่เห็นด้วย</span>
+                  <span className="text-[#F8A4A4] font-black text-lg md:text-xl whitespace-nowrap">ไม่เห็นด้วย</span>
                 </div>
               </div>
               {idx !== currentQuestions.length - 1 && (
@@ -183,11 +196,7 @@ const ProgrammingQuestionnaire = () => {
           ))}
 
           <div className="flex justify-center mt-8">
-            <button
-              onClick={handlePageNext}
-              className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl text-xl hover:bg-[#3b3161] transition-colors shadow-lg"
-              style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}
-            >
+            <button onClick={handlePageNext} className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl font-black text-xl hover:bg-[#3b3161] transition-colors shadow-lg">
               {currentPage < totalPages - 1 ? 'ถัดไป' : 'ส่งคำตอบ'}
             </button>
           </div>
@@ -204,29 +213,29 @@ const ProgrammingQuestionnaire = () => {
               <span className="text-xl font-black tracking-wide" style={{ color: typeColor(jobResult.code) }}>{jobResult.code}</span>
             </div>
             <div className="text-center w-full">
-              <h2 className="text-2xl text-[#1A2E44] mb-1" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif', textShadow: 'none' }}>เสร็จแล้ว!</h2>
-              <p className="text-xs text-gray-400 mb-3" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ประเภทบุคลิกภาพการทำงานของคุณ · {jobResult.code}</p>
-              <p className="text-2xl text-[#4B3E7A] mb-3" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>{jobResult.title}</p>
-              <p className="text-gray-500 text-sm leading-relaxed mb-4" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>{jobResult.description}</p>
+              <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>
+              <p className="text-xs text-gray-400 font-medium mb-3">ประเภทบุคลิกภาพการทำงานของคุณ · {jobResult.code}</p>
+              <p className="text-2xl font-black text-[#4B3E7A] mb-3">{jobResult.title}</p>
+              <p className="text-gray-500 text-sm leading-relaxed mb-4">{jobResult.description}</p>
               <div className="text-left">
-                <p className="text-xs text-gray-400 mb-2" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ตำแหน่งงานที่เหมาะสม</p>
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
                 <div className="flex flex-wrap gap-2">
                   {jobResult.jobs.map((job) => (
                     <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">{job}</span>
                   ))}
                 </div>
               </div>
-              <div className="text-left w-full mt-2">
-                <p className="text-xs text-gray-400 mb-3" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>คะแนนแต่ละประเภท</p>
+              <div className="text-left w-full mt-4">
+                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">สัดส่วนแต่ละมิติบุคลิกภาพ</p>
                 <div className="flex flex-col gap-3">
                   {jobResult.typeScores.map((t) => (
                     <div key={t.title} className="flex items-center gap-3">
                       <img src={t.icon} alt={t.title} className="w-8 h-8 object-contain flex-shrink-0" />
-                      <span className="text-sm text-[#1A2E44] w-28 flex-shrink-0" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>{t.title}</span>
+                      <span className="text-sm font-bold text-[#1A2E44] w-40 flex-shrink-0">{t.title}</span>
                       <div className="flex-1 bg-gray-100 rounded-full h-2.5">
                         <div className="bg-[#4B3E7A] h-2.5 rounded-full transition-all duration-500" style={{ width: `${t.score}%` }} />
                       </div>
-                      <span className="text-sm font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}</span>
+                      <span className="text-sm font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}%</span>
                     </div>
                   ))}
                 </div>

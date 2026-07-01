@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Info, X } from 'lucide-react';
 import { typeColor } from '@/lib/mbti';
+import { TYPE_IMAGES } from '@/lib/type-images';
 import { programmingTypeTable } from '@/lib/mbti-programming';
 import { serviceTypeTable } from '@/lib/mbti-service';
 import { presentationTypeTable } from '@/lib/mbti-presentation';
@@ -83,10 +84,10 @@ export default function MbtiTagLegend({ template, className }: { template: strin
                         return (
                           <div key={code} className="flex items-start gap-3">
                             <div
-                              className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                              className="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0"
                               style={{ backgroundColor: `${typeColor(code)}1A` }}
                             >
-                              <span className="text-[11px] font-black" style={{ color: typeColor(code) }}>{code}</span>
+                              <img src={TYPE_IMAGES[code]} alt={code} className="w-full h-full object-contain" />
                             </div>
                             <div>
                               <p className="font-bold text-[#4B3E7A] text-sm">{info.title}</p>

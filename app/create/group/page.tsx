@@ -14,6 +14,8 @@ interface MatchedGroup { id: number; name: string; members: RoomMember[]; leader
 interface MBTIResult { code?: string; title: string; icon: string; description: string; jobs: string[]; }
 
 
+import { TYPE_IMAGES } from '@/lib/type-images';
+
 const GROUP_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
 const ROLE_ICONS: Record<string, string> = {
   'นักวิเคราะห์': '/img/brain.png',    'นักคิดสร้างสรรค์': '/img/idea.png',
@@ -193,9 +195,13 @@ const GroupResultPage = () => {
                             <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
                               className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
                               style={{ backgroundColor: `${typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon)}26` }}>
-                              <span className="text-[10px] font-black" style={{ color: typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon) }}>
-                                {typeOverride.code ?? typeOverride.title.slice(0, 2)}
-                              </span>
+                              {typeOverride.code && TYPE_IMAGES[typeOverride.code] ? (
+                                <img src={TYPE_IMAGES[typeOverride.code]} alt={typeOverride.code} className="w-full h-full object-contain" />
+                              ) : (
+                                <span className="text-[10px] font-black" style={{ color: typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon) }}>
+                                  {typeOverride.code ?? typeOverride.title.slice(0, 2)}
+                                </span>
+                              )}
                             </button>
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-gray-100" />
@@ -222,12 +228,16 @@ const GroupResultPage = () => {
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
               <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center"
                 style={{ backgroundColor: `${mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon)}1A` }}
               >
-                <span className="text-lg font-black" style={{ color: mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon) }}>
-                  {mbtiPopup.type.code ?? mbtiPopup.type.title.slice(0, 2)}
-                </span>
+                {mbtiPopup.type.code && TYPE_IMAGES[mbtiPopup.type.code] ? (
+                  <img src={TYPE_IMAGES[mbtiPopup.type.code]} alt={mbtiPopup.type.code} className="w-full h-full object-contain" />
+                ) : (
+                  <span className="text-lg font-black" style={{ color: mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon) }}>
+                    {mbtiPopup.type.code ?? mbtiPopup.type.title.slice(0, 2)}
+                  </span>
+                )}
               </div>
               <p className="font-black text-[#4B3E7A] text-xl">{mbtiPopup.type.title}</p>
               {mbtiPopup.type.description && <p className="text-gray-500 text-sm text-center leading-relaxed">{mbtiPopup.type.description}</p>}
