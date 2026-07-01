@@ -195,12 +195,7 @@ const DesignQuestionnaire = () => {
       {showPopup && jobResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
-            <div
-              className="w-24 h-24 rounded-3xl overflow-hidden flex-shrink-0"
-              style={{ backgroundColor: `${typeColor(jobResult.code)}1A` }}
-            >
-              <img src={TYPE_IMAGES[jobResult.code]} alt={jobResult.code} className="w-full h-full object-contain" />
-            </div>
+            <img src={TYPE_IMAGES[jobResult.code]} alt={jobResult.code} className="w-40 h-40 object-contain flex-shrink-0" />
             <div className="text-center w-full">
               <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>
               <p className="text-xs text-gray-400 font-medium mb-3">ประเภทบุคลิกภาพการทำงานของคุณ · {jobResult.code}</p>
