@@ -28,21 +28,21 @@ export default function EvaluationPage() {
       <div className="flex-1 flex flex-col items-center justify-start px-4 py-6">
         <div className="w-full max-w-2xl rounded-3xl overflow-hidden">
           {/* Profile header */}
-          <div className="flex items-center gap-3 px-5 py-4" style={{ backgroundColor: '#CBD6E3' }}>
+          <div className="flex items-center gap-3 px-5 py-6" style={{ backgroundColor: '#CBD6E3' }}>
             <img
               src={resolveAvatar({ avatarSeed: person.avatarSeed })}
               alt={person.name}
-              className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+              className="w-16 h-16 rounded-full object-cover flex-shrink-0"
             />
             <div className="flex-1 min-w-0">
               <p className="font-bold text-base text-gray-800 truncate">{person.name}</p>
               <p className="text-sm text-gray-500">{person.role}</p>
             </div>
             {person.isLeader && (
-              <img src="/img/crown.PNG" alt="หัวหน้ากลุ่ม" className="w-10 h-10 object-contain flex-shrink-0" />
+              <img src="/img/crown.PNG" alt="หัวหน้ากลุ่ม" className="w-14 h-14 object-contain flex-shrink-0" />
             )}
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-xs flex-shrink-0"
+              className="w-14 h-14 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0"
               style={{ backgroundColor: '#6B63B5' }}
             >
               {person.mbtiType}
