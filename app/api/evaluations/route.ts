@@ -4,7 +4,10 @@ import { Room, PeerEvaluation } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { getPendingEvaluations } from '@/lib/evaluation';
 
-const CRITERIA_KEYS = ['decision', 'creative', 'emotion', 'teamwork', 'responsibility'] as const;
+const CRITERIA_KEYS = [
+  'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
+  'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
+] as const;
 
 // GET /api/evaluations → รายการห้องที่จบแล้วและยังมีเพื่อนร่วมกลุ่มที่ยังไม่ได้ประเมิน
 export async function GET(req: NextRequest) {

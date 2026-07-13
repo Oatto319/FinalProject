@@ -3,7 +3,10 @@ import { connectDB } from '@/lib/mongodb';
 import { Room, User, PeerEvaluation } from '@/lib/models';
 import { getSessionUser, isRoomHost, isRoomMember } from '@/lib/auth';
 
-const CRITERIA_KEYS = ['decision', 'creative', 'emotion', 'teamwork', 'responsibility'] as const;
+const CRITERIA_KEYS = [
+  'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
+  'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
+] as const;
 type CriteriaKey = typeof CRITERIA_KEYS[number];
 
 // GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนประเมินย้อนหลังเฉพาะกลุ่มนั้น (post-match)
@@ -84,7 +87,7 @@ export async function GET(
 
     const avg = (key: CriteriaKey) => list.reduce((sum, s) => sum + s[key], 0) / list.length;
     const overallAvg = CRITERIA_KEYS.reduce((sum, k) => sum + avg(k), 0) / CRITERIA_KEYS.length;
-    const leadershipAvg = (avg('decision') + avg('teamwork') + avg('responsibility')) / 3;
+    const leadershipAvg = (avg('initiative') + avg('problemSolving') + avg('responsibility')) / 3;
 
     scores[member.name] = {
       overall: Math.round(overallAvg * 20),

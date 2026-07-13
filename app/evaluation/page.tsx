@@ -6,11 +6,16 @@ import Navbar from '../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
 const CRITERIA = [
-  { id: 'decision',       label: 'ความรวดเร็วในการตัดสินใจ' },
-  { id: 'creative',       label: 'ความคิดสร้างสรรค์' },
-  { id: 'emotion',        label: 'การควบคุมอารมณ์' },
-  { id: 'teamwork',       label: 'การทำงานเป็นทีม' },
-  { id: 'responsibility', label: 'ความรับผิดชอบ' },
+  { id: 'contribution',   label: 'การมีส่วนร่วมและลงมือทำงานจริง' },
+  { id: 'responsibility', label: 'ความรับผิดชอบและตรงต่อเวลา' },
+  { id: 'communication',  label: 'การสื่อสารและรับฟังความคิดเห็น' },
+  { id: 'problemSolving', label: 'การแก้ไขปัญหาเมื่อเกิดอุปสรรค' },
+  { id: 'cooperation',    label: 'ความร่วมมือและช่วยเหลือเพื่อนในทีม' },
+  { id: 'creativity',     label: 'ความคิดสร้างสรรค์ในการทำงาน' },
+  { id: 'initiative',     label: 'ความคิดริเริ่มและความเป็นผู้นำ' },
+  { id: 'timeManagement', label: 'การบริหารจัดการเวลาและวางแผนงาน' },
+  { id: 'adaptability',   label: 'ความยืดหยุ่นและปรับตัวเมื่อสถานการณ์เปลี่ยน' },
+  { id: 'qualityOfWork',  label: 'คุณภาพของผลงานที่ทำออกมา' },
 ] as const;
 
 const RATING_LABELS = ['ปรับปรุง', 'พอใช้', 'ปานกลาง', 'ดี', 'ดีมาก'];

@@ -77,11 +77,16 @@ const PeerEvaluationSchema = new Schema({
   fromGmail: { type: String, required: true, lowercase: true },
   toGmail:   { type: String, required: true, lowercase: true },
   scores: {
-    decision:       { type: Number, required: true, min: 1, max: 5 },
-    creative:       { type: Number, required: true, min: 1, max: 5 },
-    emotion:        { type: Number, required: true, min: 1, max: 5 },
-    teamwork:       { type: Number, required: true, min: 1, max: 5 },
-    responsibility: { type: Number, required: true, min: 1, max: 5 },
+    contribution:    { type: Number, required: true, min: 1, max: 5 },
+    responsibility:  { type: Number, required: true, min: 1, max: 5 },
+    communication:   { type: Number, required: true, min: 1, max: 5 },
+    problemSolving:  { type: Number, required: true, min: 1, max: 5 },
+    cooperation:     { type: Number, required: true, min: 1, max: 5 },
+    creativity:      { type: Number, required: true, min: 1, max: 5 },
+    initiative:      { type: Number, required: true, min: 1, max: 5 },
+    timeManagement:  { type: Number, required: true, min: 1, max: 5 },
+    adaptability:    { type: Number, required: true, min: 1, max: 5 },
+    qualityOfWork:   { type: Number, required: true, min: 1, max: 5 },
   },
 }, { timestamps: true });
 

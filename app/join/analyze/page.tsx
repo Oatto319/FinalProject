@@ -80,7 +80,7 @@ export default function AnalyzePage() {
         }
       }
       // คะแนนความเหมาะสมเป็นผู้นำ ผสมจากคำตอบ MBTI (น้ำหนัก Extravert/Thinking/Judging)
-      // กับผลการประเมินเพื่อนร่วมทีมในอดีต (ความรวดเร็วตัดสินใจ/ทำงานเป็นทีม/ความรับผิดชอบ)
+      // กับผลการประเมินเพื่อนร่วมทีมในอดีต (ความคิดริเริ่ม/การแก้ไขปัญหา/ความรับผิดชอบ)
       // สมาชิกที่ยังไม่ทำแบบทดสอบและไม่เคยถูกประเมินจะได้คะแนนกลางๆ (50) ไปก่อน
       const withScores = members.map((m: RoomMember) => {
         const typeScores = memberTypesRef.current[m.name]?.typeScores;
