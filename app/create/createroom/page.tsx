@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ArrowRight, ChevronDown } from 'lucide-react';
+import { todayDateString, toDateString, dateStringToUtcDate } from '@/lib/date';
 
 interface CurrentUser {
   name: string;
@@ -29,11 +30,12 @@ export default function CreateRoomPage() {
   const MAX_TOTAL_MEMBERS = 300;
   const MAX_GROUP_SIZE = 50;
 
-  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const todayStr = () => todayDateString();
+  // นับวันแบบ absolute instant (ไม่พึ่ง timezone ของเครื่อง client) แล้วค่อยแปลงกลับเป็นวันที่ตามเขตเวลาไทย
   const addDaysStr = (days: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString().slice(0, 10);
+    const base = dateStringToUtcDate(todayDateString());
+    base.setUTCDate(base.getUTCDate() + days);
+    return toDateString(base);
   };
 
   const selectDeadline = (days: number) => {

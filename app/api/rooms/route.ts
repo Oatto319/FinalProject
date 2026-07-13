@@ -4,6 +4,7 @@ import { Room } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getPendingEvaluations } from '@/lib/evaluation';
+import { todayDateString, dateStringToUtcDate } from '@/lib/date';
 
 const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
@@ -45,14 +46,14 @@ export async function POST(req: NextRequest) {
   }
   let deadlineDate: Date | null = null;
   if (deadline) {
-    deadlineDate = new Date(deadline);
-    if (Number.isNaN(deadlineDate.getTime())) {
+    if (typeof deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
       return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
     }
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    if (deadlineDate < today) {
+    // เทียบเป็น string วันที่ตามเขตเวลาไทยตรงๆ แทนการเทียบ Date object เพื่อไม่ให้ผลต่างกันตาม timezone ของ server
+    if (deadline < todayDateString()) {
       return NextResponse.json({ error: 'วันสิ้นสุดต้องไม่ใช่วันที่ผ่านมาแล้ว' }, { status: 400 });
     }
+    deadlineDate = dateStringToUtcDate(deadline);
   }
 
   // เจ้าของห้องที่เป็น "user" (นักเรียน) สร้างห้องเพื่อร่วมทีมด้วยตัวเอง จึงนับเป็นสมาชิกและพร้อมจับกลุ่มทันที

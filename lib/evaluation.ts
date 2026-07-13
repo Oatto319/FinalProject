@@ -24,6 +24,7 @@ interface RoomLike {
   deadline?: Date | string | null;
   matchedAt?: Date | string | null;
   endedManually?: boolean;
+  updatedAt?: Date | string | null;
   matchedGroups?: MatchedGroupLike[];
 }
 
@@ -31,8 +32,7 @@ interface RoomLike {
 export async function getPendingEvaluations(gmail: string): Promise<PendingEvaluationRoom[]> {
   const rooms = await Room.find({ matchDone: true, 'matchedGroups.members.gmail': gmail }).lean<RoomLike[]>();
 
-  const pending: PendingEvaluationRoom[] = [];
-
+  const endedGroups: { room: RoomLike; group: MatchedGroupLike; teammates: MatchedGroupMemberLike[] }[] = [];
   for (const room of rooms) {
     if (!isRoomEnded(room)) continue;
 
@@ -40,14 +40,26 @@ export async function getPendingEvaluations(gmail: string): Promise<PendingEvalu
     if (!group) continue;
 
     const teammates = group.members.filter((m) => m.gmail && m.gmail !== gmail);
-    if (teammates.length === 0) continue;
+    if (teammates.length > 0) endedGroups.push({ room, group, teammates });
+  }
 
-    const done = await PeerEvaluation.find(
-      { roomId: room.roomId, fromGmail: gmail, toGmail: { $in: teammates.map((m) => m.gmail) } },
-      { toGmail: 1, _id: 0 }
-    ).lean<{ toGmail: string }[]>();
-    const doneSet = new Set(done.map((d) => d.toGmail));
+  if (endedGroups.length === 0) return [];
 
+  // ดึงแบบประเมินที่ทำไปแล้วทั้งหมดในครั้งเดียว (แทนที่จะ query แยกทีละห้อง) แล้วค่อยจับคู่ทีหลังในหน่วยความจำ
+  const done = await PeerEvaluation.find(
+    { fromGmail: gmail, roomId: { $in: endedGroups.map((e) => e.room.roomId) } },
+    { roomId: 1, toGmail: 1, _id: 0 }
+  ).lean<{ roomId: string; toGmail: string }[]>();
+
+  const doneByRoom = new Map<string, Set<string>>();
+  for (const d of done) {
+    if (!doneByRoom.has(d.roomId)) doneByRoom.set(d.roomId, new Set());
+    doneByRoom.get(d.roomId)!.add(d.toGmail);
+  }
+
+  const pending: PendingEvaluationRoom[] = [];
+  for (const { room, group, teammates } of endedGroups) {
+    const doneSet = doneByRoom.get(room.roomId) ?? new Set<string>();
     const remaining = teammates.filter((m) => !doneSet.has(m.gmail!));
     if (remaining.length > 0) {
       pending.push({

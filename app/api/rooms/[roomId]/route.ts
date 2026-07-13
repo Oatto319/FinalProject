@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Room, User } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
+import { dateStringToUtcDate } from '@/lib/date';
 
 interface RoomMemberLike { name: string; gmail?: string; }
 interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; leaderConfirmedBy?: string[]; }
@@ -93,8 +94,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         return NextResponse.json({ error: `รายละเอียดต้องไม่เกิน ${DESCRIPTION_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
       }
       if (body.deadline !== undefined && body.deadline !== null) {
-        const d = new Date(body.deadline);
-        if (Number.isNaN(d.getTime())) return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
+        if (typeof body.deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.deadline)) {
+          return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
+        }
+        body.deadline = dateStringToUtcDate(body.deadline);
       }
       const patch: Record<string, unknown> = {};
       for (const key of ['title', 'description', 'matchMode', 'typeComposition', 'deadline'] as const) {

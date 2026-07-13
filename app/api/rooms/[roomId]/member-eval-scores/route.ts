@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { Room, PeerEvaluation } from '@/lib/models';
+import { Room, User, PeerEvaluation } from '@/lib/models';
 import { getSessionUser, isRoomHost, isRoomMember } from '@/lib/auth';
 
 const CRITERIA_KEYS = ['decision', 'creative', 'emotion', 'teamwork', 'responsibility'] as const;
@@ -45,7 +45,23 @@ export async function GET(
     allMembers = allGroups.flatMap((g) => g.members);
   }
 
-  const gmails = allMembers.filter((m) => m.gmail).map((m) => m.gmail!.toLowerCase());
+  // สมาชิกเก่าที่ไม่มี gmail เก็บไว้ใน room (ข้อมูลก่อนหน้านี้) — หา gmail จริงจาก User ด้วยชื่อแทน
+  // ให้สอดคล้องกับ fallback แบบเดียวกับ /member-types
+  const namesWithoutGmail = allMembers.filter((m) => !m.gmail).map((m) => m.name);
+  const usersByName = namesWithoutGmail.length
+    ? await User.find({ name: { $in: namesWithoutGmail } }, { name: 1, gmail: 1, _id: 0 }).lean<
+        { name: string; gmail: string }[]
+      >()
+    : [];
+  const gmailByName = new Map(usersByName.map((u) => [u.name, u.gmail.toLowerCase()]));
+
+  const resolvedGmailByMemberName = new Map<string, string>();
+  for (const member of allMembers) {
+    const resolved = member.gmail?.toLowerCase() ?? gmailByName.get(member.name);
+    if (resolved) resolvedGmailByMemberName.set(member.name, resolved);
+  }
+
+  const gmails = [...new Set(resolvedGmailByMemberName.values())];
   const evals = gmails.length
     ? await PeerEvaluation.find({ toGmail: { $in: gmails } }, { toGmail: 1, scores: 1, _id: 0 }).lean<
         { toGmail: string; scores: Record<CriteriaKey, number> }[]
@@ -61,8 +77,9 @@ export async function GET(
 
   const scores: Record<string, { overall: number; leadership: number; count: number }> = {};
   for (const member of allMembers) {
-    if (!member.gmail) continue;
-    const list = byGmail.get(member.gmail.toLowerCase());
+    const resolvedGmail = resolvedGmailByMemberName.get(member.name);
+    if (!resolvedGmail) continue;
+    const list = byGmail.get(resolvedGmail);
     if (!list || list.length === 0) continue;
 
     const avg = (key: CriteriaKey) => list.reduce((sum, s) => sum + s[key], 0) / list.length;
