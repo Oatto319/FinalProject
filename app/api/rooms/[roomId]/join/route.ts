@@ -2,12 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Room } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
+import { getPendingEvaluations } from '@/lib/evaluation';
 
 // POST /api/rooms/:roomId/join → add the session user to the room (atomic, capacity-checked)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
   await connectDB();
   const sessionUser = await getSessionUser(req);
   if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const pending = await getPendingEvaluations(sessionUser.gmail);
+  if (pending.length > 0) {
+    return NextResponse.json(
+      { error: 'มีแบบประเมินเพื่อนร่วมทีมค้างอยู่ กรุณาทำให้เสร็จก่อนเข้าร่วมห้องใหม่', pending },
+      { status: 403 }
+    );
+  }
 
   const { roomId } = await params;
   const member = { name: sessionUser.name, avatarSeed: sessionUser.avatarSeed, avatarImage: sessionUser.avatarImage, gmail: sessionUser.gmail };

@@ -8,10 +8,15 @@ import { resolveAvatar } from '@/lib/avatar';
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; description: string;
-  totalMembers: number; groupSize: number; template: string;
+  totalMembers: number; groupSize: number; deadline?: string | null; template: string;
   hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
   readyUsers?: string[];
 }
+
+const formatDeadline = (deadline?: string | null) => {
+  if (!deadline) return null;
+  return new Date(deadline).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+};
 
 const WaitingRoom = () => {
   const [user, setUser]           = useState<{ name: string; avatarSeed: number; avatarImage?: string | null } | null>(null);
@@ -116,6 +121,9 @@ const WaitingRoom = () => {
                     <p className="text-sm text-gray-500 font-medium italic mt-1">
                       {room ? `จำนวน ${room.totalMembers} คน กลุ่มละ ${room.groupSize} คน` : ''}
                     </p>
+                    {formatDeadline(room?.deadline) && (
+                      <p className="text-sm text-red-500 font-bold mt-1">กำหนดส่ง: {formatDeadline(room?.deadline)}</p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-500 font-medium">เข้าร่วมแล้ว:</p>

@@ -15,7 +15,7 @@ interface CurrentUser {
 export default function CreateRoomPage() {
   const router = useRouter();
   const [user, setUser] = useState<CurrentUser | null>(null);
-  const [formData, setFormData] = useState({ title: '', description: '', totalMembers: '', groupSize: '' });
+  const [formData, setFormData] = useState({ title: '', description: '', totalMembers: '', groupSize: '', deadline: '' });
   const [step, setStep] = useState(1);
   const [showError, setShowError] = useState(false);
   const [sizeWarning, setSizeWarning] = useState('');
@@ -25,8 +25,20 @@ export default function CreateRoomPage() {
 
   const totalOptions = [5, 10, 15, 20, 25, 30, 35, 40];
   const groupOptions = [2, 3, 4, 5, 6, 7, 8, 10];
+  const dayOptions = [3, 7, 14, 30];
   const MAX_TOTAL_MEMBERS = 300;
   const MAX_GROUP_SIZE = 50;
+
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const addDaysStr = (days: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const selectDeadline = (days: number) => {
+    setFormData((prev) => ({ ...prev, deadline: addDaysStr(days) }));
+  };
 
   const selectOption = (name: string, value: number) => {
     const e = { target: { name, value: String(value) } } as React.ChangeEvent<HTMLInputElement>;
@@ -57,7 +69,7 @@ export default function CreateRoomPage() {
 
   const handleCreate = async () => {
     if (loading) return;
-    const { title, description, totalMembers, groupSize } = formData;
+    const { title, description, totalMembers, groupSize, deadline } = formData;
     if (!title || !description || !totalMembers || !groupSize) { setShowError(true); return; }
     const total = parseInt(totalMembers);
     const size = parseInt(groupSize);
@@ -65,6 +77,7 @@ export default function CreateRoomPage() {
       setShowError(true);
       return;
     }
+    if (deadline && deadline < todayStr()) { setShowError(true); return; }
     setShowError(false);
     setLoading(true);
 
@@ -79,6 +92,7 @@ export default function CreateRoomPage() {
         description,
         totalMembers: total,
         groupSize: size,
+        deadline: deadline || null,
         template,
         hostName: user?.name ?? '',
         hostAvatarSeed: user?.avatarSeed ?? 0,
@@ -95,6 +109,7 @@ export default function CreateRoomPage() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         alert(data.error ?? 'สร้างห้องไม่สำเร็จ กรุณาลองใหม่');
+        if (res.status === 403 && data.pending) router.push('/evaluation');
         return;
       }
 
@@ -238,10 +253,35 @@ export default function CreateRoomPage() {
                   </p>
                 )}
               </div>
+
+              {/* Deadline */}
+              <div className="bg-[#1D324B] rounded-[20px] p-5">
+                <p className="text-white font-bold text-base mb-3">&ldquo;When is the deadline?&rdquo;</p>
+                <input
+                  type="date" name="deadline" value={formData.deadline} onChange={handleChange}
+                  min={todayStr()}
+                  className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                />
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {dayOptions.map((d) => (
+                    <button key={d} type="button" onClick={() => selectDeadline(d)}
+                      className={`px-4 py-2 rounded-full font-bold text-sm transition-colors ${formData.deadline === addDaysStr(d) ? 'bg-blue-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                      {d} วัน
+                    </button>
+                  ))}
+                  {formData.deadline && (
+                    <button type="button" onClick={() => setFormData((prev) => ({ ...prev, deadline: '' }))}
+                      className="px-4 py-2 rounded-full font-bold text-sm text-white/60 hover:text-white transition-colors">
+                      ล้าง
+                    </button>
+                  )}
+                </div>
+                <p className="text-white/50 text-xs mt-2">ไม่กำหนดก็ได้ (ไม่บังคับ)</p>
+              </div>
             </div>
 
             {showError && (
-              <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกจำนวนให้ครบ</p>
+              <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกจำนวนให้ครบ หรือกำหนดวันสิ้นสุดให้ถูกต้อง</p>
             )}
 
             <div className="flex items-center justify-between mt-6">

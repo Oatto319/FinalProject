@@ -31,12 +31,13 @@ const GroupResultPage = () => {
   const router = useRouter();
   const [showModal, setShowModal]             = useState(false);
   const [selectedReq, setSelectedReq]         = useState<{id:number;name:string} | null>(null);
-  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[] } | null>(null);
+  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[]; endedManually?: boolean } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
   const [isManualRoom, setIsManualRoom]        = useState(false);
   const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [endingActivity, setEndingActivity] = useState(false);
 
 
   useEffect(() => {
@@ -83,6 +84,26 @@ const GroupResultPage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleEndActivity = async () => {
+    const roomId = room?.roomId ?? room?.id;
+    if (!roomId || endingActivity) return;
+    if (!confirm('จบกิจกรรมนี้เลยหรือไม่? สมาชิกทุกคนในห้องจะต้องทำแบบประเมินเพื่อนร่วมทีมก่อนสร้าง/เข้าร่วมห้องใหม่')) return;
+    setEndingActivity(true);
+    try {
+      const res = await fetch(`/api/rooms/${roomId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'endActivity' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRoom((prev) => (prev ? { ...prev, endedManually: data.room?.endedManually } : prev));
+      }
+    } finally {
+      setEndingActivity(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#E8E8E8] font-sans flex flex-col items-center">
       <Navbar />
@@ -125,6 +146,19 @@ const GroupResultPage = () => {
                 <Home size={16} />
                 กลับหน้าหลัก
               </button>
+              {groups.length > 0 && (
+                room?.endedManually ? (
+                  <p className="mt-2 w-full text-center text-xs font-bold text-orange-500">กิจกรรมนี้จบแล้ว</p>
+                ) : (
+                  <button
+                    onClick={handleEndActivity}
+                    disabled={endingActivity}
+                    className="mt-2 w-full py-2.5 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-600 font-bold text-sm transition-all active:scale-95 disabled:opacity-60"
+                  >
+                    {endingActivity ? 'กำลังบันทึก...' : 'จบกิจกรรมนี้'}
+                  </button>
+                )
+              )}
             </div>
           </div>
         </div>

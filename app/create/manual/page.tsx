@@ -200,14 +200,19 @@ const ManualPage = () => {
             {members.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอนักเรียนเข้าร่วม...</div>
             ) : (
-              members.map((member, idx) => (
+              members.map((member, idx) => {
+                const isSelf = member.name === user?.name;
+                return (
                 <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
                       <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-700 leading-tight">{member.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-gray-700 leading-tight">{member.name}</p>
+                        {isSelf && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
+                      </div>
                       <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
                       {user?.name === room?.hostName && memberTypes[member.name] && (
                         <div className="flex items-center gap-1 mt-1">
@@ -226,7 +231,7 @@ const ManualPage = () => {
                     <div className={`px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
                       {readyUsers.includes(member.name) ? 'ready' : 'wait'}
                     </div>
-                    {user?.name === room?.hostName && (
+                    {user?.name === room?.hostName && !isSelf && (
                       <button
                         onClick={() => setKickTarget(member)}
                         title="เอาออกจากห้อง"
@@ -237,7 +242,8 @@ const ManualPage = () => {
                     )}
                   </div>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
 

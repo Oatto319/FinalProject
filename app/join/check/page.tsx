@@ -9,9 +9,14 @@ import { resolveAvatar } from '@/lib/avatar';
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
 interface RoomData {
   roomId: string; title: string; description: string; totalMembers: number;
-  groupSize: number; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null;
+  groupSize: number; deadline?: string | null; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null;
   hostRole?: string; members: RoomMember[];
 }
+
+const formatDeadline = (deadline?: string | null) => {
+  if (!deadline) return null;
+  return new Date(deadline).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+};
 
 export default function JoinCheckPage() {
   const router = useRouter();
@@ -37,7 +42,11 @@ export default function JoinCheckPage() {
     try {
       const res = await fetch(`/api/rooms/${room.roomId}/join`, { method: 'POST' });
       const data = await res.json();
-      if (!res.ok) { alert(data.error ?? 'เข้าร่วมห้องไม่สำเร็จ'); return; }
+      if (!res.ok) {
+        alert(data.error ?? 'เข้าร่วมห้องไม่สำเร็จ');
+        if (res.status === 403 && data.pending) router.push('/evaluation');
+        return;
+      }
       const updatedRoom = data.room ?? room;
       // เก็บ currentRoom ไว้ navigate (ใช้ id เพื่อความเข้ากันได้)
       localStorage.setItem('currentRoom', JSON.stringify({ ...updatedRoom, id: updatedRoom.roomId }));
@@ -76,6 +85,9 @@ export default function JoinCheckPage() {
                 <div className="text-right font-bold text-lg text-[#2D3E50]">ID: {room.roomId}</div>
                 <div className="font-bold text-lg text-gray-600">จำนวน {room.totalMembers} คน กลุ่มละ {room.groupSize} คน</div>
                 <div className="text-right font-bold text-xl text-[#2D3E50]">{room.members.length}/{room.totalMembers}</div>
+                {formatDeadline(room.deadline) && (
+                  <div className="col-span-2 text-sm font-bold text-red-500">กำหนดส่ง: {formatDeadline(room.deadline)}</div>
+                )}
               </div>
             ) : (
               <p className="text-gray-400">ไม่พบข้อมูลห้อง</p>

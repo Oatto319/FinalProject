@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LucideMessageCircle } from 'lucide-react';
+import { LucideMessageCircle, ClipboardList } from 'lucide-react';
 import { resolveAvatar } from '@/lib/avatar';
 import {
   notificationsEnabled, isMatchSeen, isMsgNew, markMatchSeen, markMsgSeen,
@@ -37,6 +37,7 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<ApiNotification[]>([]);
+  const [pendingEvalRooms, setPendingEvalRooms] = useState(0);
   const [showPanel, setShowPanel] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -53,12 +54,22 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
     if (!user) return;
 
     const fetchNotifications = async () => {
-      if (!notificationsEnabled()) { setNotifications([]); return; }
+      if (!notificationsEnabled()) { setNotifications([]); } else {
+        try {
+          const res = await fetch('/api/notifications');
+          if (res.ok) {
+            const data = await res.json();
+            setNotifications(data.notifications ?? []);
+          }
+        } catch { /* network error — keep previous state */ }
+      }
+
       try {
-        const res = await fetch('/api/notifications');
-        if (!res.ok) return;
-        const data = await res.json();
-        setNotifications(data.notifications ?? []);
+        const evalRes = await fetch('/api/evaluations');
+        if (evalRes.ok) {
+          const evalData = await evalRes.json();
+          setPendingEvalRooms((evalData.pending ?? []).length);
+        }
       } catch { /* network error — keep previous state */ }
     };
 
@@ -86,8 +97,8 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
     return false;
   };
 
-  const hasUnread = notifications.some(isUnseen);
-  const unreadCount = notifications.filter(isUnseen).length;
+  const hasUnread = notifications.some(isUnseen) || pendingEvalRooms > 0;
+  const unreadCount = notifications.filter(isUnseen).length + pendingEvalRooms;
 
   const handleNotifClick = (n: ApiNotification) => {
     if (n.type === 'match') markMatchSeen(n.roomId);
@@ -155,10 +166,25 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
               </div>
 
               {/* Notification list */}
-              {notifications.length === 0 ? (
+              {notifications.length === 0 && pendingEvalRooms === 0 ? (
                 <div className="p-6 text-center text-gray-400 text-sm">ไม่มีการแจ้งเตือน</div>
               ) : (
                 <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                  {pendingEvalRooms > 0 && (
+                    <button
+                      onClick={() => { setShowPanel(false); router.push('/evaluation'); }}
+                      className="w-full text-left px-4 py-3 flex items-start gap-3 hover:bg-orange-50 transition-colors bg-orange-50"
+                    >
+                      <div className="flex-shrink-0 w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
+                        <ClipboardList size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold leading-tight text-gray-800">มีแบบประเมินเพื่อนร่วมทีมค้างอยู่</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{pendingEvalRooms} ห้อง — ทำให้เสร็จก่อนสร้าง/เข้าร่วมห้องใหม่</p>
+                      </div>
+                      <span className="flex-shrink-0 w-2 h-2 bg-red-500 rounded-full mt-1.5" />
+                    </button>
+                  )}
                   {notifications.map((n, i) => {
                     const unseen = isUnseen(n);
                     return (

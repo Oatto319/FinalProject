@@ -53,6 +53,7 @@ export default function AnalyzePage() {
       const dbRoom = data.room;
 
       let members: RoomMember[] = [];
+      let evalLeaderScores: Record<string, { leadership: number; count: number }> = {};
       if (dbRoom.matchedGroups?.length) {
         const mine: MatchedGroup = dbRoom.matchedGroups.find(
           (g: MatchedGroup) => g.members.some((m) => (currentUser.gmail && m.gmail === currentUser.gmail) || m.name === currentUser.name)
@@ -62,25 +63,41 @@ export default function AnalyzePage() {
           setMyGroupId(mine.id);
           if (!typesFetchedRef.current) {
             typesFetchedRef.current = true;
-            const typesRes = await fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`);
+            const [typesRes, evalRes] = await Promise.all([
+              fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`),
+              fetch(`/api/rooms/${roomId}/member-eval-scores?groupId=${mine.id}`),
+            ]);
             if (typesRes.ok) {
               const typesData = await typesRes.json();
               memberTypesRef.current = typesData.types ?? {};
               setMemberTypes(memberTypesRef.current);
             }
+            if (evalRes.ok) {
+              const evalData = await evalRes.json();
+              evalLeaderScores = evalData.scores ?? {};
+            }
           }
         }
       }
-      // คะแนนความเหมาะสมเป็นผู้นำ คำนวณจริงจากคำตอบ MBTI (น้ำหนัก Extravert/Thinking/Judging)
-      // สมาชิกที่ยังไม่ทำแบบทดสอบจะได้คะแนนกลางๆ (50) ไปก่อน
+      // คะแนนความเหมาะสมเป็นผู้นำ ผสมจากคำตอบ MBTI (น้ำหนัก Extravert/Thinking/Judging)
+      // กับผลการประเมินเพื่อนร่วมทีมในอดีต (ความรวดเร็วตัดสินใจ/ทำงานเป็นทีม/ความรับผิดชอบ)
+      // สมาชิกที่ยังไม่ทำแบบทดสอบและไม่เคยถูกประเมินจะได้คะแนนกลางๆ (50) ไปก่อน
       const withScores = members.map((m: RoomMember) => {
         const typeScores = memberTypesRef.current[m.name]?.typeScores;
+        const mbtiScore = typeScores?.length ? leadershipScore(typeScores) : null;
+        const evalEntry = evalLeaderScores[m.name];
+        const evalScore = evalEntry?.count ? evalEntry.leadership : null;
+        let score: number;
+        if (mbtiScore !== null && evalScore !== null) score = Math.round(mbtiScore * 0.7 + evalScore * 0.3);
+        else if (mbtiScore !== null) score = mbtiScore;
+        else if (evalScore !== null) score = evalScore;
+        else score = 50;
         return {
           name: m.name,
           avatarSeed: m.avatarSeed,
           avatarImage: m.avatarImage,
           role: m.role,
-          score: typeScores?.length ? leadershipScore(typeScores) : 50,
+          score,
         };
       });
       setTeamMembers(withScores);

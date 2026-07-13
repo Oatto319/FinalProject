@@ -92,8 +92,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       if (body.description !== undefined && String(body.description).length > DESCRIPTION_MAX_LENGTH) {
         return NextResponse.json({ error: `รายละเอียดต้องไม่เกิน ${DESCRIPTION_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
       }
+      if (body.deadline !== undefined && body.deadline !== null) {
+        const d = new Date(body.deadline);
+        if (Number.isNaN(d.getTime())) return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
+      }
       const patch: Record<string, unknown> = {};
-      for (const key of ['title', 'description', 'matchMode', 'typeComposition'] as const) {
+      for (const key of ['title', 'description', 'matchMode', 'typeComposition', 'deadline'] as const) {
         if (body[key] !== undefined) patch[key] = body[key];
       }
       if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
@@ -128,9 +132,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
           })),
       }));
 
-      const patch: Record<string, unknown> = { matchedGroups: sanitizedGroups, matchDone: true };
+      const patch: Record<string, unknown> = { matchedGroups: sanitizedGroups, matchDone: true, matchedAt: new Date() };
       if (matchMode) patch.matchMode = matchMode;
       const updated = await Room.findOneAndUpdate({ roomId }, { $set: patch }, { returnDocument: 'after' });
+      return NextResponse.json({ room: updated!.toObject() });
+    }
+
+    case 'endActivity': {
+      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (!room.matchDone) return NextResponse.json({ error: 'ยังไม่ได้จับกลุ่ม ไม่สามารถจบกิจกรรมได้' }, { status: 400 });
+      const updated = await Room.findOneAndUpdate({ roomId }, { $set: { endedManually: true } }, { returnDocument: 'after' });
       return NextResponse.json({ room: updated!.toObject() });
     }
 
@@ -233,6 +244,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       const { memberGmail } = body;
       if (typeof memberGmail !== 'string' || !memberGmail.trim()) {
         return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
+      if (memberGmail === room.hostGmail) {
+        return NextResponse.json({ error: 'ไม่สามารถเอาผู้สร้างห้องออกจากห้องได้' }, { status: 400 });
       }
       const target: RoomMemberLike | undefined = (room.members ?? []).find((m: { gmail?: string }) => m.gmail === memberGmail);
       if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });

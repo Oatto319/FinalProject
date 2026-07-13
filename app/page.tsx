@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ClipboardList } from 'lucide-react';
 import Navbar from './navbar/page';
 
 type RevealState = {
@@ -29,6 +30,7 @@ const App = () => {
   const router = useRouter();
   const [ready, setReady] = useState(false);
   const [reveal, setReveal] = useState<RevealState | null>(null);
+  const [pendingEvalRooms, setPendingEvalRooms] = useState(0);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -38,6 +40,14 @@ const App = () => {
       setReady(true);
     }
   }, [router]);
+
+  useEffect(() => {
+    if (!ready) return;
+    fetch('/api/evaluations')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => { if (data) setPendingEvalRooms((data.pending ?? []).length); })
+      .catch(() => {});
+  }, [ready]);
 
   const handleReveal = (e: React.MouseEvent, color: string, textColor: string, label: string, route: string) => {
     setReveal({ x: e.clientX, y: e.clientY, color, textColor, label, route });
@@ -168,6 +178,32 @@ const App = () => {
         </main>
 
       </div>
+
+      {pendingEvalRooms > 0 && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl flex flex-col items-center gap-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
+              <ClipboardList size={32} />
+            </div>
+            <h2 className="text-xl font-black text-gray-800">มีแบบประเมินเพื่อนร่วมทีมค้างอยู่</h2>
+            <p className="text-gray-500 text-sm">
+              กรุณาประเมินเพื่อนร่วมทีมของกิจกรรมที่จบแล้วให้ครบ ({pendingEvalRooms} ห้อง) ก่อนสร้างหรือเข้าร่วมห้องใหม่
+            </p>
+            <button
+              onClick={() => router.push('/evaluation')}
+              className="w-full bg-[#2D3E50] text-white py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95"
+            >
+              ไปทำแบบประเมิน
+            </button>
+            <button
+              onClick={() => router.push('/join/myprojects')}
+              className="text-gray-400 text-xs font-semibold hover:underline"
+            >
+              ดูทีมที่จับกลุ่มแล้ว
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 };

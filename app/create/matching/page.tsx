@@ -53,6 +53,20 @@ const MatchingPage = () => {
       const getMemberTypeLocal = (memberName: string): string =>
         memberTypeMap[memberName] ?? 'ไม่ระบุ';
 
+      // คะแนนเฉลี่ยจากแบบประเมินเพื่อนร่วมทีมในอดีต (1-100, กลางๆ 50 ถ้ายังไม่เคยถูกประเมิน)
+      // ใช้กระจายคนที่มีประวัติผลงานดี/ต้องปรับปรุงให้อยู่คนละกลุ่มกัน แทนที่จะกองอยู่กลุ่มเดียว
+      const memberEvalScoreMap: Record<string, number> = {};
+      const evalScoresRes = await fetch(`/api/rooms/${roomId}/member-eval-scores?source=members`);
+      if (evalScoresRes.ok) {
+        const evalData = await evalScoresRes.json();
+        const allScores: Record<string, { overall: number }> = evalData.scores ?? {};
+        for (const m of members) memberEvalScoreMap[m.name] = allScores[m.name]?.overall ?? 50;
+      } else {
+        for (const m of members) memberEvalScoreMap[m.name] = 50;
+      }
+      const sortByEvalScoreDesc = (arr: (typeof members[0] & { role: string })[]) =>
+        [...arr].sort((a, b) => (memberEvalScoreMap[b.name] ?? 50) - (memberEvalScoreMap[a.name] ?? 50));
+
       const groupSize: number = room.groupSize ?? 4;
       const numGroups = Math.max(1, Math.ceil(members.length / groupSize));
       const groups: { id: number; name: string; members: (typeof members[0] & { role: string })[] }[] =
@@ -65,7 +79,7 @@ const MatchingPage = () => {
           if (!byType[t]) byType[t] = [];
           byType[t].push({ ...m, role: t });
         });
-        const typeArrays = Object.values(byType);
+        const typeArrays = Object.values(byType).map(sortByEvalScoreDesc);
         const interleaved: (typeof members[0] & { role: string })[] = [];
         const maxLen = Math.max(...typeArrays.map((a) => a.length), 0);
         for (let i = 0; i < maxLen; i++) typeArrays.forEach((arr) => { if (arr[i]) interleaved.push(arr[i]); });
@@ -89,14 +103,19 @@ const MatchingPage = () => {
         const hasComposition = Object.values(typeComposition).some((v) => v > 0);
 
         if (hasComposition) {
-          // pool ที่ยังไม่ถูก assign
-          const unassigned: (typeof members[0] & { role: string })[] =
-            members.map((m) => ({ ...m, role: getMemberTypeLocal(m.name) }));
+          // pool ที่ยังไม่ถูก assign — เรียงตามคะแนนประเมินย้อนหลังจากมากไปน้อยก่อน
+          // เพื่อให้ลูปด้านล่าง (วน slot ก่อน วนกลุ่มทีหลัง) กระจายคนคะแนนสูง/ต่ำคนละกลุ่มกัน
+          const unassigned: (typeof members[0] & { role: string })[] = sortByEvalScoreDesc(
+            members.map((m) => ({ ...m, role: getMemberTypeLocal(m.name) }))
+          );
 
-          for (let g = 0; g < numGroups; g++) {
-            for (const [typeKey, count] of Object.entries(typeComposition)) {
-              if (!count) continue;
-              for (let c = 0; c < count && unassigned.length > 0; c++) {
+          // วน slot ของแต่ละ type ก่อน (นอก) แล้ววนกลุ่ม (ใน) — แทนที่จะกรอกกลุ่มแรกให้ครบก่อน
+          // ทำให้แต่ละกลุ่มได้คนคะแนนสูง/ต่ำผสมกัน ไม่กระจุกอยู่กลุ่มเดียว
+          for (const [typeKey, count] of Object.entries(typeComposition)) {
+            if (!count) continue;
+            for (let c = 0; c < count; c++) {
+              for (let g = 0; g < numGroups; g++) {
+                if (unassigned.length === 0) break;
                 // Phase 1: หา member ที่มี primary type ตรงกับ typeKey
                 let idx = unassigned.findIndex((m) => getMemberTypeLocal(m.name) === typeKey);
                 // Phase 2: ถ้าไม่มี primary → หาคนที่มี secondary score สูงสุดสำหรับ typeKey
@@ -124,7 +143,7 @@ const MatchingPage = () => {
             if (!byType[t]) byType[t] = [];
             byType[t].push({ ...m, role: t });
           }
-          const typeArrays = Object.values(byType);
+          const typeArrays = Object.values(byType).map(sortByEvalScoreDesc);
           const interleaved: (typeof members[0] & { role: string })[] = [];
           const maxLen = Math.max(...typeArrays.map((a) => a.length), 0);
           for (let i = 0; i < maxLen; i++) typeArrays.forEach((arr) => { if (arr[i]) interleaved.push(arr[i]); });

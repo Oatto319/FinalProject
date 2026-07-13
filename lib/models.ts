@@ -43,14 +43,18 @@ const RoomSchema = new Schema({
   description:    { type: String, default: '' },
   totalMembers:   { type: Number, required: true },
   groupSize:      { type: Number, required: true },
+  deadline:       { type: Date, default: null },
   template:       { type: String, default: 'PROGRAMMING' },
   hostName:       { type: String, required: true },
   hostGmail:      { type: String, default: '' },
   hostAvatarSeed: { type: Number, default: 0 },
   hostAvatarImage: { type: String, default: null },
+  hostRole:       { type: String, default: 'host' },
   members:        { type: [RoomMemberSchema], default: [] },
   readyUsers:     { type: [String], default: [] },
   matchDone:      { type: Boolean, default: false },
+  matchedAt:      { type: Date, default: null },
+  endedManually:  { type: Boolean, default: false },
   matchMode:      { type: String, default: 'auto' },
   typeComposition: { type: Schema.Types.Mixed, default: {} },
   matchedGroups:  { type: [MatchedGroupSchema], default: [] },
@@ -64,6 +68,28 @@ RoomSchema.index({ 'members.name': 1 });
 RoomSchema.index({ createdAt: 1 }, { expireAfterSeconds: RETENTION_SECONDS });
 
 export const Room = mongoose.models.Room || mongoose.model('Room', RoomSchema);
+
+// ─── PeerEvaluation ──────────────────────────────────────
+// แบบประเมินเพื่อนร่วมทีมรายบุคคล เก็บหลังห้องสิ้นสุด ใช้ประกอบกับผล MBTI ในการจับกลุ่มครั้งต่อไป
+const PeerEvaluationSchema = new Schema({
+  roomId:    { type: String, required: true },
+  groupId:   { type: Number, required: true },
+  fromGmail: { type: String, required: true, lowercase: true },
+  toGmail:   { type: String, required: true, lowercase: true },
+  scores: {
+    decision:       { type: Number, required: true, min: 1, max: 5 },
+    creative:       { type: Number, required: true, min: 1, max: 5 },
+    emotion:        { type: Number, required: true, min: 1, max: 5 },
+    teamwork:       { type: Number, required: true, min: 1, max: 5 },
+    responsibility: { type: Number, required: true, min: 1, max: 5 },
+  },
+}, { timestamps: true });
+
+PeerEvaluationSchema.index({ roomId: 1, fromGmail: 1, toGmail: 1 }, { unique: true });
+PeerEvaluationSchema.index({ toGmail: 1 });
+PeerEvaluationSchema.index({ createdAt: 1 }, { expireAfterSeconds: RETENTION_SECONDS });
+
+export const PeerEvaluation = mongoose.models.PeerEvaluation || mongoose.model('PeerEvaluation', PeerEvaluationSchema);
 
 // ─── Message ─────────────────────────────────────────────
 const MessageSchema = new Schema({
