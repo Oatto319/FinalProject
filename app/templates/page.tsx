@@ -223,7 +223,12 @@ function TemplatesContent() {
                 );
               })}
             </div>
-            <div className="flex justify-center mt-4">
+            <div className="relative flex items-center justify-center mt-4">
+              <button
+                onClick={() => router.push('/')}
+                className="absolute left-6 w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 active:scale-95 transition-all">
+                <ChevronLeft size={18} strokeWidth={2.5} />
+              </button>
               <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
                 <ArrowLeftRight size={12} strokeWidth={2.5} />
                 Swipe to choose
@@ -243,7 +248,7 @@ function TemplatesContent() {
 
           <button
             onClick={() => router.push('/')}
-            className="order-2 md:order-1 flex-shrink-0 md:mt-2 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+            className="order-2 md:order-1 flex-shrink-0 md:mt-2 w-12 h-12 bg-gray-200 rounded-full hidden md:flex items-center justify-center text-gray-500 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
         </div>
