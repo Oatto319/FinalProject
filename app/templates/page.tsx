@@ -67,22 +67,16 @@ function TemplatesContent() {
       <Navbar />
       {/* Main Content */}
       <main className="w-full max-w-5xl mt-4 px-4 pb-12">
-        <div className="flex items-start gap-3">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
 
-          <button
-            onClick={() => router.push('/')}
-            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-            <ChevronLeft size={24} strokeWidth={2.5} />
-          </button>
-
-        <div className="flex-1 bg-white rounded-[24px] px-4 pt-3 pb-6 sm:px-8 md:px-10 sm:pb-8 md:pb-10 shadow-sm flex flex-col items-center">
+        <div className="order-1 md:order-2 w-full md:flex-1 bg-white rounded-[24px] px-4 pt-3 pb-6 sm:px-8 md:px-10 sm:pb-8 md:pb-10 shadow-sm flex flex-col items-center">
 
           <p className="text-sm text-[#2D3142] mb-0 text-center" style={{ fontFamily: 'var(--font-geologica)' }}>
             &ldquo;Choose Templates&rdquo;
           </p>
 
           {/* Templates Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 md:gap-8 w-full mt-6">
             {templates.map((item, index) => {
               const done = !!userTypes[item.id];
               const comingSoon = !!(item as { comingSoon?: boolean }).comingSoon;
@@ -139,6 +133,12 @@ function TemplatesContent() {
           </div>
 
         </div>
+
+          <button
+            onClick={() => router.push('/')}
+            className="order-2 md:order-1 flex-shrink-0 md:mt-2 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+            <ChevronLeft size={24} strokeWidth={2.5} />
+          </button>
         </div>
       </main>
     </div>
