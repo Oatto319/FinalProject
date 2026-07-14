@@ -122,7 +122,7 @@ function ProfilePageInner() {
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4 md:gap-6 justify-items-center">
           {customImage && (
             <div onClick={() => setUseCustom(true)}
-              className={`relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${useCustom ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              className={`relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${useCustom ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
               <div className={`w-full h-full rounded-full overflow-hidden transition-all ${useCustom ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
                 <img src={customImage} alt="รูปของคุณ" className="w-full h-full object-cover" />
               </div>
@@ -130,7 +130,7 @@ function ProfilePageInner() {
           )}
           {avatars.map((avatar) => (
             <div key={avatar.id} onClick={() => { setUseCustom(false); setSelectedAvatar(avatar.id); }}
-              className={`relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${!useCustom && selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              className={`relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${!useCustom && selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
               <div className={`w-full h-full rounded-full overflow-hidden transition-all ${!useCustom && selectedAvatar === avatar.id ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
                 <img src={avatar.url} alt={`Avatar ${avatar.id}`} className="w-full h-full object-cover" />
               </div>
