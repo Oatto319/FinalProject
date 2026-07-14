@@ -51,6 +51,16 @@ const DesignQuestionnaire = () => {
     setShowPopup(true);
   };
 
+  const handleBack = () => {
+    if (currentPage > 0) {
+      setCurrentPage(p => p - 1);
+      setHighlightedId(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      router.back();
+    }
+  };
+
   const handlePageNext = () => {
     if (!isPageComplete) {
       const firstUnanswered = currentQuestions.find((q) => answers[q.id] === undefined);
@@ -109,31 +119,35 @@ const DesignQuestionnaire = () => {
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
       <Navbar />
-
-      {/* Top bar: back + template badge */}
-      <div className="w-full max-w-5xl flex items-center justify-between px-4 md:px-8 mt-6 mb-4">
+      <div className="w-full max-w-5xl flex items-start gap-4 mt-4 px-4 md:px-0">
+        {/* Back button — desktop/tablet: sits beside the card */}
         <button
-          onClick={() => {
-            if (currentPage > 0) {
-              setCurrentPage(p => p - 1);
-              setHighlightedId(null);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            } else {
-              router.back();
-            }
-          }}
-          className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+          onClick={handleBack}
+          className="hidden sm:flex flex-shrink-0 mt-8 w-12 h-12 bg-white rounded-full items-center justify-center text-gray-700 transition-all active:scale-95"
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
-        <div className="bg-[#C7D2FE] px-8 py-3 rounded-2xl shadow-sm">
-          <h2 className="text-[#818CF8] font-black italic tracking-tight uppercase">DESIGN / CREATIVE</h2>
-        </div>
-      </div>
 
-      {/* Card */}
-      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-xl p-4 sm:p-8 md:p-16 flex flex-col gap-8 sm:gap-12 border-b-8 border-gray-300 mb-8">
-        {/* Progress indicator */}
+        <div className="relative flex-1 bg-white rounded-[24px] shadow-xl p-4 sm:p-8 md:p-16 flex flex-col gap-8 sm:gap-12 border-b-8 border-gray-300">
+          {/* Mobile header row — back button + template badge share the same line */}
+          <div className="flex sm:hidden items-center justify-between">
+            <button
+              onClick={handleBack}
+              className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
+            >
+              <ChevronLeft size={20} strokeWidth={2.5} />
+            </button>
+            <div className="bg-[#C7D2FE] px-3 py-1.5 rounded-2xl shadow-sm">
+              <h2 className="text-[#818CF8] font-black italic tracking-tight uppercase text-sm">DESIGN / CREATIVE</h2>
+            </div>
+          </div>
+
+          {/* Template badge — desktop/tablet position */}
+          <div className="hidden sm:block absolute top-6 right-6 bg-[#C7D2FE] px-6 py-2 rounded-2xl shadow-sm">
+            <h2 className="text-[#818CF8] font-black italic tracking-tight uppercase">DESIGN / CREATIVE</h2>
+          </div>
+
+          {/* Progress indicator */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2">
             {Array.from({ length: totalPages }).map((_, i) => (
@@ -155,35 +169,82 @@ const DesignQuestionnaire = () => {
         {/* Questions for this page */}
         {currentQuestions.map((q, idx) => (
           <div key={q.id} id={`question-${q.id}`} className={`flex flex-col items-center gap-5 sm:gap-8 rounded-2xl px-2 sm:px-4 pt-4 transition-all duration-300 ${highlightedId === q.id ? 'ring-2 ring-red-400 bg-red-50' : ''}`}>
-            <h3 className="text-[#1A2E44] text-lg sm:text-xl md:text-2xl font-black text-center leading-relaxed">&ldquo;{q.text}&rdquo;</h3>
-            <div className="w-full flex items-center justify-between max-w-3xl gap-1 sm:gap-3">
-              <div className="flex flex-col items-center gap-0.5 sm:flex-row sm:gap-3 flex-shrink-0">
-                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white flex-shrink-0">
-                  <Plus size={16} strokeWidth={4} className="sm:hidden" />
-                  <Plus size={24} strokeWidth={4} className="hidden sm:block" />
+            <h3
+              className="text-[#1A2E44] text-xl sm:text-xl md:text-2xl font-light text-center leading-relaxed"
+              style={{ fontFamily: 'var(--font-geologica), var(--font-noto-sans-thai), sans-serif', textShadow: 'none', letterSpacing: 'normal' }}
+            >
+              &ldquo;{q.text}&rdquo;
+            </h3>
+
+            {/* Mobile: labels above, larger full-width dot row for easier reading/tapping */}
+            <div className="w-full sm:hidden flex flex-col gap-3">
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-7 h-7 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white flex-shrink-0">
+                    <Plus size={16} strokeWidth={4} />
+                  </div>
+                  <span className="text-[#22C55E] font-bold text-xs">เห็นด้วย</span>
                 </div>
-                <span className="text-[#22C55E] font-black text-[9px] sm:text-lg md:text-xl text-center leading-none">เห็นด้วย</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#818CF8] font-bold text-xs">ไม่เห็นด้วย</span>
+                  <div className="w-7 h-7 rounded-full border-2 border-[#C7D2FE] flex items-center justify-center text-[#818CF8] bg-white flex-shrink-0">
+                    <Minus size={16} strokeWidth={4} />
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-1 justify-center px-1 sm:px-4">
+              <div className="flex items-center justify-between gap-2">
                 {[1, 2, 3, 4, 5, 6, 7].map((val) => {
                   const isSelected = answers[q.id] === val;
-                  const sizeClass = val === 4 ? 'w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6' : (val === 3 || val === 5) ? 'w-4 h-4 sm:w-5 sm:h-5 md:w-8 md:h-8' : (val === 2 || val === 6) ? 'w-5 h-5 sm:w-7 sm:h-7 md:w-10 md:h-10' : 'w-6 h-6 sm:w-9 sm:h-9 md:w-12 md:h-12';
+                  const sizeClass = val === 4 ? 'w-5 h-5' :
+                                   (val === 3 || val === 5) ? 'w-7 h-7' :
+                                   (val === 2 || val === 6) ? 'w-8 h-8' : 'w-9 h-9';
                   const borderColor = val < 4 ? 'border-[#22C55E]' : val > 4 ? 'border-[#C7D2FE]' : 'border-gray-400';
                   return (
-                    <button key={val} onClick={() => handleSelect(q.id, val)}
-                      className={`${sizeClass} rounded-full border-2 transition-all duration-200 flex-shrink-0 ${borderColor} ${isSelected ? (val < 4 ? 'bg-[#22C55E]' : val > 4 ? 'bg-[#C7D2FE]' : 'bg-gray-400') : 'bg-transparent'} hover:scale-110`} />
+                    <button
+                      key={val}
+                      onClick={() => handleSelect(q.id, val)}
+                      className={`${sizeClass} rounded-full border-2 transition-all duration-200 flex-shrink-0 ${borderColor} ${isSelected ? (val < 4 ? 'bg-[#22C55E]' : val > 4 ? 'bg-[#C7D2FE]' : 'bg-gray-400') : 'bg-transparent'} active:scale-110`}
+                    />
                   );
                 })}
               </div>
-              <div className="flex flex-col items-center gap-0.5 sm:flex-row sm:gap-3 flex-shrink-0">
-                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full border-2 border-[#C7D2FE] flex items-center justify-center text-[#818CF8] bg-white flex-shrink-0">
-                  <Minus size={16} strokeWidth={4} className="sm:hidden" />
-                  <Minus size={24} strokeWidth={4} className="hidden sm:block" />
+            </div>
+
+            {/* Tablet/desktop: original single-row layout */}
+            <div className="hidden sm:flex w-full items-center justify-between max-w-3xl gap-3">
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <span className="text-[#22C55E] font-black text-lg md:text-xl">เห็นด้วย</span>
+                <div className="w-10 h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white flex-shrink-0">
+                  <Plus size={24} strokeWidth={4} />
                 </div>
-                <span className="text-[#818CF8] font-black text-[9px] sm:text-lg md:text-xl text-center leading-none sm:whitespace-nowrap">ไม่เห็นด้วย</span>
+              </div>
+              <div className="flex items-center gap-2 md:gap-4 flex-1 justify-center px-4">
+                {[1, 2, 3, 4, 5, 6, 7].map((val) => {
+                  const isSelected = answers[q.id] === val;
+                  const sizeClass = val === 4 ? 'w-4 h-4 md:w-6 md:h-6' :
+                                   (val === 3 || val === 5) ? 'w-5 h-5 md:w-8 md:h-8' :
+                                   (val === 2 || val === 6) ? 'w-7 h-7 md:w-10 md:h-10' : 'w-9 h-9 md:w-12 md:h-12';
+                  const borderColor = val < 4 ? 'border-[#22C55E]' : val > 4 ? 'border-[#C7D2FE]' : 'border-gray-400';
+                  return (
+                    <button
+                      key={val}
+                      onClick={() => handleSelect(q.id, val)}
+                      className={`${sizeClass} rounded-full border-2 transition-all duration-200 flex-shrink-0 ${borderColor} ${isSelected ? (val < 4 ? 'bg-[#22C55E]' : val > 4 ? 'bg-[#C7D2FE]' : 'bg-gray-400') : 'bg-transparent'} hover:scale-110`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="w-10 h-10 rounded-full border-2 border-[#C7D2FE] flex items-center justify-center text-[#818CF8] bg-white flex-shrink-0">
+                  <Minus size={24} strokeWidth={4} />
+                </div>
+                <span className="text-[#818CF8] font-black text-lg md:text-xl whitespace-nowrap">ไม่เห็นด้วย</span>
               </div>
             </div>
-            {idx !== currentQuestions.length - 1 && <div className="w-full h-[2px] bg-gray-100 mt-4" />}
+
+            {idx !== currentQuestions.length - 1 && (
+              <div className="w-full h-[2px] bg-gray-100 mt-4" />
+            )}
           </div>
         ))}
 
@@ -191,6 +252,7 @@ const DesignQuestionnaire = () => {
           <button onClick={handlePageNext} className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl font-black text-xl hover:bg-[#3b3161] transition-colors shadow-lg">
             {currentPage < totalPages - 1 ? 'ถัดไป' : 'ส่งคำตอบ'}
           </button>
+        </div>
         </div>
       </div>
 
