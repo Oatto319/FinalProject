@@ -3,7 +3,8 @@ import { NextRequest } from 'next/server';
 import { connectDB } from './mongodb';
 import { User } from './models';
 
-export const SESSION_COOKIE = 'session';
+export { SESSION_COOKIE } from './session-cookie';
+import { SESSION_COOKIE } from './session-cookie';
 
 export function createSessionToken(): string {
   return randomBytes(32).toString('hex');

@@ -14,12 +14,13 @@ function safeUser(u: Record<string, unknown>) {
 }
 
 function setSessionCookie(res: NextResponse, token: string) {
+  // ไม่ตั้ง maxAge/expires โดยตั้งใจ — ให้เป็น session cookie ที่หมดอายุเมื่อปิดเบราว์เซอร์
+  // ผู้ใช้ต้อง login ใหม่ทุกครั้งที่กลับมาเปิดเว็บใหม่ (ตามที่ผู้ใช้ต้องการ)
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 30,
   });
 }
 
