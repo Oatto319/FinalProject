@@ -32,12 +32,12 @@ export default function EnterRoomIdPage() {
     <div className="h-screen bg-[#E8E8E8] font-sans flex flex-col overflow-hidden" style={{ fontFamily: 'var(--font-geologica), sans-serif' }}>
       <Navbar />
       <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto mt-4 px-4 overflow-hidden">
-        <div className="bg-white rounded-[24px] rounded-bl-none rounded-br-none p-8 md:p-12 shadow-sm flex flex-col items-center flex-1 relative">
-          <div className="w-full flex justify-center -mt-36 mb-4 relative z-10">
+        <div className="bg-white rounded-[24px] rounded-bl-none rounded-br-none p-4 sm:p-8 md:p-12 shadow-sm flex flex-col items-center flex-1 relative">
+          <div className="w-full flex justify-center -mt-20 sm:-mt-36 mb-4 relative z-10">
             <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[460px] h-auto object-contain drop-shadow-xl"
               onError={(e) => { e.currentTarget.src = 'https://img.freepik.com/free-vector/team-holding-jigsaw-puzzle-pieces_74855-6962.jpg'; }} />
           </div>
-          <div className="w-full max-w-[380px] bg-[#1D324B] rounded-[20px] p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
+          <div className="w-full max-w-[380px] bg-[#1D324B] rounded-[20px] p-5 sm:p-8 flex flex-col items-center gap-4 shadow-lg mb-8">
             <label className="text-white text-xl">&quot;Enter the room ID&quot;</label>
             <input type="text" placeholder="กรอก Room ID" value={roomId}
               onChange={(e) => { setRoomId(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}

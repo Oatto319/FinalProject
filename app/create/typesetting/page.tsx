@@ -56,40 +56,40 @@ export default function TypeSelectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 sm:p-6 font-sans relative overflow-hidden">
 
       {/* Decorative type labels — corners */}
-      {types[0] && <span className="absolute top-6 left-6 text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[0].icon) }}>{types[0].label}</span>}
-      {types[1] && <span className="absolute top-6 right-6 text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[1].icon) }}>{types[1].label}</span>}
-      {types[2] && <span className="absolute bottom-6 left-6 text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[2].icon) }}>{types[2].label}</span>}
-      {types[3] && <span className="absolute bottom-6 right-6 text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[3].icon) }}>{types[3].label}</span>}
+      {types[0] && <span className="absolute top-2 left-2 sm:top-6 sm:left-6 text-lg sm:text-2xl md:text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[0].icon) }}>{types[0].label}</span>}
+      {types[1] && <span className="absolute top-2 right-2 sm:top-6 sm:right-6 text-lg sm:text-2xl md:text-3xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[1].icon) }}>{types[1].label}</span>}
+      {types[2] && <span className="absolute bottom-2 left-2 sm:bottom-6 sm:left-6 text-base sm:text-xl md:text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[2].icon) }}>{types[2].label}</span>}
+      {types[3] && <span className="absolute bottom-2 right-2 sm:bottom-6 sm:right-6 text-base sm:text-xl md:text-2xl font-black opacity-20 pointer-events-none select-none" style={{ color: roleColor(types[3].icon) }}>{types[3].label}</span>}
 
       {/* Title */}
-      <h1 className="text-5xl font-black uppercase tracking-tight text-[#2D3E50] mb-8"
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-[#2D3E50] mb-6 sm:mb-8"
           style={{ fontFamily: 'sans-serif', letterSpacing: '-1px' }}>
         Type Settings
       </h1>
 
       {/* Card */}
-      <div className="bg-[#C4C9E2] rounded-[20px] p-8 w-full max-w-lg shadow-lg">
+      <div className="bg-[#C4C9E2] rounded-[20px] p-4 sm:p-6 md:p-8 w-full max-w-lg shadow-lg">
 
         {/* Members count */}
-        <p className="text-center text-2xl font-black text-[#5B5EA6] mb-6">
+        <p className="text-center text-xl sm:text-2xl font-black text-[#5B5EA6] mb-4 sm:mb-6">
           {groupSize} <span className="font-bold">:Members</span>
         </p>
 
         {/* Types grid */}
-        <div className="bg-[#E8EAF3] rounded-2xl p-6">
-          <div className="grid grid-cols-4 gap-4">
+        <div className="bg-[#E8EAF3] rounded-2xl p-3 sm:p-4 md:p-6">
+          <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             {/* Icons row */}
             {types.map((t) => (
               <div key={t.key} className="flex flex-col items-center gap-1">
-                <div className="w-14 h-14 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}22` }}>
-                  <img src={t.icon} alt={t.label} className="w-8 h-8 object-contain" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}22` }}>
+                  <img src={t.icon} alt={t.label} className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 object-contain" />
                 </div>
-                <span className="text-[10px] font-black text-[#3D3D6B] text-center leading-tight">{t.label}</span>
+                <span className="text-[9px] sm:text-[10px] font-black text-[#3D3D6B] text-center leading-tight">{t.label}</span>
                 {t.subtitle && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${roleColor(t.icon)}22`, color: roleColor(t.icon) }}>{t.subtitle}</span>
+                  <span className="text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: `${roleColor(t.icon)}22`, color: roleColor(t.icon) }}>{t.subtitle}</span>
                 )}
               </div>
             ))}
@@ -100,9 +100,10 @@ export default function TypeSelectionPage() {
                 <button
                   onClick={() => increment(t.key)}
                   disabled={total >= groupSize}
-                  className="w-10 h-10 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
+                  className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
                 >
-                  <Plus size={20} strokeWidth={3} />
+                  <Plus size={16} strokeWidth={3} className="sm:hidden" />
+                  <Plus size={20} strokeWidth={3} className="hidden sm:block" />
                 </button>
               </div>
             ))}
@@ -112,7 +113,7 @@ export default function TypeSelectionPage() {
               <div key={t.key + '-count'} className="flex justify-center">
                 <button
                   onClick={() => decrement(t.key)}
-                  className="w-12 h-12 rounded-xl bg-[#8B8FAD] text-white text-xl font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
+                  className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl bg-[#8B8FAD] text-white text-base sm:text-lg md:text-xl font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
                 >
                   {counts[t.key]}
                 </button>

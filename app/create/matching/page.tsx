@@ -186,7 +186,7 @@ const MatchingPage = () => {
       <div className="absolute top-[10%] right-[-5%] w-[35%] h-[35%] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       {/* Text */}
-      <h1 className="text-white text-5xl font-black tracking-tighter mb-12">Matching</h1>
+      <h1 className="text-white text-4xl sm:text-5xl font-black tracking-tighter mb-8 sm:mb-12">Matching</h1>
 
       {saveError ? (
         <>

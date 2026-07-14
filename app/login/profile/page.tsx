@@ -118,11 +118,11 @@ function ProfilePageInner() {
       <p className="text-[#2D3E50] text-sm font-medium text-center mb-4">
         {fromEdit ? '"เลือก Avatar ใหม่"' : '"Choose your avatar"'}
       </p>
-      <div className="bg-white w-full max-w-[900px] rounded-[24px] p-8 md:p-12 shadow-sm border border-gray-100">
-        <div className="grid grid-cols-5 gap-4 md:gap-6 justify-items-center">
+      <div className="bg-white w-full max-w-[900px] rounded-[24px] p-4 sm:p-8 md:p-12 shadow-sm border border-gray-100">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4 md:gap-6 justify-items-center">
           {customImage && (
             <div onClick={() => setUseCustom(true)}
-              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${useCustom ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              className={`relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${useCustom ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
               <div className={`w-full h-full rounded-full overflow-hidden transition-all ${useCustom ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
                 <img src={customImage} alt="รูปของคุณ" className="w-full h-full object-cover" />
               </div>
@@ -130,7 +130,7 @@ function ProfilePageInner() {
           )}
           {avatars.map((avatar) => (
             <div key={avatar.id} onClick={() => { setUseCustom(false); setSelectedAvatar(avatar.id); }}
-              className={`relative w-28 h-28 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${!useCustom && selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
+              className={`relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-36 lg:h-36 rounded-full cursor-pointer transition-all duration-300 hover:scale-110 ${!useCustom && selectedAvatar === avatar.id ? 'scale-105' : 'grayscale-[20%] hover:grayscale-0'}`}>
               <div className={`w-full h-full rounded-full overflow-hidden transition-all ${!useCustom && selectedAvatar === avatar.id ? 'ring-4 ring-blue-500 shadow-lg' : ''}`}>
                 <img src={avatar.url} alt={`Avatar ${avatar.id}`} className="w-full h-full object-cover" />
               </div>
@@ -138,19 +138,19 @@ function ProfilePageInner() {
           ))}
         </div>
         {importError && <p className="text-red-500 text-sm text-center font-medium mt-4">{importError}</p>}
-        <div className="flex justify-between items-center mt-12">
+        <div className="flex flex-wrap gap-3 justify-between items-center mt-8 sm:mt-12">
           <button onClick={() => router.back()} className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95">
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
             <button onClick={handleImportClick} type="button"
-              className="flex items-center gap-2 px-6 py-4 rounded-[20px] font-bold text-lg bg-white text-[#2D3E50] border-2 border-[#2D3E50] transition-all hover:bg-gray-50 active:scale-95">
+              className="flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 rounded-[20px] font-bold text-sm sm:text-lg bg-white text-[#2D3E50] border-2 border-[#2D3E50] transition-all hover:bg-gray-50 active:scale-95">
               <Upload size={20} strokeWidth={2.5} />
               Import
             </button>
             <button onClick={handleConfirm} disabled={loading}
-              className={`px-12 py-4 rounded-[20px] font-bold text-xl transition-all ${loading ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]' : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}`}>
+              className={`px-6 sm:px-12 py-3 sm:py-4 rounded-[20px] font-bold text-base sm:text-xl transition-all ${loading ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]' : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}`}>
               {loading ? 'กำลังบันทึก...' : 'Confirm'}
             </button>
           </div>

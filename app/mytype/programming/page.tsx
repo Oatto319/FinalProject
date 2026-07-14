@@ -59,8 +59,8 @@ const ProgrammingTypePage = () => {
             >
               <ChevronLeft size={24} strokeWidth={2.5} />
             </button>
-            <div className={`${TEMPLATE.color} px-10 py-3 rounded-tl-3xl rounded-br-3xl shadow-sm`}>
-              <h1 className={`${TEMPLATE.textColor} text-2xl font-black italic tracking-tighter uppercase`}>{TEMPLATE.label}</h1>
+            <div className={`${TEMPLATE.color} px-4 sm:px-6 md:px-10 py-2 sm:py-3 rounded-tl-3xl rounded-br-3xl shadow-sm`}>
+              <h1 className={`${TEMPLATE.textColor} text-sm sm:text-lg md:text-2xl font-black italic tracking-tighter uppercase`}>{TEMPLATE.label}</h1>
             </div>
           </div>
 

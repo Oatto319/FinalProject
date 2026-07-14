@@ -218,26 +218,26 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   return (
     <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center">
       <Navbar bgColor="#122031" nameColor="white" />
-      <div className="w-full max-w-7xl px-6 mt-4 flex flex-wrap items-center justify-between gap-4">
+      <div className="w-full max-w-7xl px-4 sm:px-6 mt-4 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
-          <button className="bg-[#FF9142] text-white px-16 py-3 rounded-t-2xl font-bold text-xl shadow-lg">{myGroup?.name ?? 'My team'}</button>
-          <button onClick={() => { setEditingName(myGroup?.name ?? ''); setIsEditingName(true); }} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors"><Edit2 size={20} /></button>
+          <button className="bg-[#FF9142] text-white px-6 sm:px-10 md:px-16 py-2.5 sm:py-3 rounded-t-2xl font-bold text-base sm:text-lg md:text-xl shadow-lg truncate max-w-[45vw] sm:max-w-none">{myGroup?.name ?? 'My team'}</button>
+          <button onClick={() => { setEditingName(myGroup?.name ?? ''); setIsEditingName(true); }} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors flex-shrink-0"><Edit2 size={20} /></button>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="bg-[#7096D1] text-white px-10 py-3 rounded-tl-2xl rounded-tr-2xl font-bold text-xl flex items-center gap-3 shadow-inner">
-            <span>{roomTitle}</span>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="bg-[#7096D1] text-white px-4 sm:px-6 md:px-10 py-2.5 sm:py-3 rounded-tl-2xl rounded-tr-2xl font-bold text-sm sm:text-lg md:text-xl flex items-center gap-2 sm:gap-3 shadow-inner min-w-0">
+            <span className="truncate max-w-[30vw] sm:max-w-none">{roomTitle}</span>
             <span className="opacity-40">|</span>
-            <span>{myGroup ? myGroup.members.length : teamMembers.length} :Members</span>
+            <span className="whitespace-nowrap">{myGroup ? myGroup.members.length : teamMembers.length} :Members</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <button onClick={() => router.push('/')} className="bg-[#2D3E50] p-3 rounded-lg text-white hover:bg-slate-700 transition-colors"><Home size={20} /></button>
             <MbtiTagLegend template={template} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors flex items-center justify-center" />
           </div>
         </div>
       </div>
 
-      <main className="w-full max-w-7xl px-6 pb-12">
-        <div className="bg-[#E5E7EB] rounded-b-[40px] rounded-tr-[40px] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 h-[590px] shadow-2xl">
+      <main className="w-full max-w-7xl px-4 sm:px-6 flex-1 flex flex-col">
+        <div className="bg-[#E5E7EB] rounded-tr-[40px] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 shadow-2xl">
           <div className="lg:col-span-5 flex flex-col gap-6 overflow-y-auto">
             {!isMatched ? (
               <div className="bg-white rounded-2xl p-8 text-center text-gray-400 flex flex-col items-center gap-3">
@@ -259,10 +259,10 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
                     const mbtiType = memberTypes[member.name];
                     return (
-                      <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
-                        <div className="flex items-center gap-4">
-                          <div className="relative">
-                            <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
+                      <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm">
+                        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden bg-gray-100">
                               <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                             </div>
                             {isCurrentUser && (
@@ -271,9 +271,9 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               </div>
                             )}
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-bold text-gray-800 text-lg">{displayName}</p>
+                              <p className="font-bold text-gray-800 text-sm sm:text-base md:text-lg truncate max-w-[30vw] sm:max-w-none">{displayName}</p>
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -300,7 +300,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                                 </div>
                               )}
                               <div
-                                className="w-16 h-16 flex items-center justify-center cursor-pointer"
+                                className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center cursor-pointer"
                                 onClick={() => { setLeaderTip(true); setTimeout(() => setLeaderTip(false), 3000); }}
                               >
                                 <img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" />
@@ -310,25 +310,25 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           {mbtiType ? (
                             <button
                               onClick={() => setPopup({ member, type: mbtiType })}
-                              className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
                               style={{ backgroundColor: `${mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon)}26` }}
                             >
-                              <span className="text-[11px] font-black" style={{ color: mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon) }}>
+                              <span className="text-[9px] sm:text-[10px] md:text-[11px] font-black" style={{ color: mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon) }}>
                                 {mbtiType.code ?? mbtiType.title.slice(0, 2)}
                               </span>
                             </button>
                           ) : isManualRoom && member.role && member.role !== 'ไม่ระบุ' ? (
                             <button
                               onClick={() => setPopup({ member, type: { title: member.role!, icon: roleIcons[member.role!] ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                              className="w-16 h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
                               style={{ backgroundColor: `${roleColor(roleIcons[member.role!] ?? '/img/brain.png')}26` }}
                             >
-                              <span className="text-[10px] font-black text-center px-1" style={{ color: roleColor(roleIcons[member.role!] ?? '/img/brain.png') }}>
+                              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-center px-1" style={{ color: roleColor(roleIcons[member.role!] ?? '/img/brain.png') }}>
                                 {member.role!.slice(0, 2)}
                               </span>
                             </button>
                           ) : (
-                            <div className="w-16 h-16 rounded-full bg-gray-100" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-gray-100" />
                           )}
                         </div>
                       </div>

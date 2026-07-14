@@ -163,7 +163,7 @@ const GroupResultPage = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-7 bg-white rounded-[24px] p-6 shadow-sm overflow-hidden flex flex-col gap-8">
+        <div className="lg:col-span-7 bg-white rounded-[24px] p-4 sm:p-6 shadow-sm overflow-hidden flex flex-col gap-6 sm:gap-8">
           {groups.length > 0 && (
             <div className="flex items-center justify-between -mb-4">
               <p className="text-xs font-black text-gray-400 uppercase tracking-widest">ผลการจับกลุ่ม</p>
@@ -189,7 +189,7 @@ const GroupResultPage = () => {
             groups.map((group, idx) => (
               <div key={group.id} className="flex flex-col">
                 {idx > 0 && <div className="border-t-2 border-dashed border-gray-200 my-2" />}
-                <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-8 py-2 rounded-full font-black text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
+                <div className={`inline-block self-start ${GROUP_COLORS[idx % GROUP_COLORS.length]} text-white px-5 sm:px-8 py-2 rounded-full font-black text-lg sm:text-xl italic tracking-wider mb-2 ml-2 shadow-sm`}>
                   {group.name}
                 </div>
                 {group.leaderId && (
@@ -204,17 +204,17 @@ const GroupResultPage = () => {
                     const assignedRole = member.role && member.role !== 'ไม่ระบุ' ? member.role : undefined;
                     const isLeader  = group.leaderId === member.name;
                     return (
-                      <div key={mIdx} className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border-2 border-transparent hover:border-yellow-400 transition-all">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 border border-gray-100">
+                      <div key={mIdx} className="bg-white rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm border-2 border-transparent hover:border-yellow-400 transition-all">
+                        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                          <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 border border-gray-100">
                             <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-700 text-sm leading-tight">{member.name}</p>
+                          <div className="min-w-0">
+                            <p className="font-bold text-gray-700 text-sm leading-tight truncate">{member.name}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {isLeader && <div className="w-16 h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
+                          {isLeader && <div className="w-10 h-10 sm:w-16 sm:h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
                           {isManualRoom ? (
                             assignedRole && ROLE_ICONS[assignedRole] ? (
                               <button

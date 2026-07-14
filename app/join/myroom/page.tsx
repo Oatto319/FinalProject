@@ -138,20 +138,20 @@ export default function MyRoomPage() {
                 const isMe = member.name === user?.name;
                 const avatarUrl = resolveAvatar(member);
                 return (
-                  <div key={idx} className={`bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border-2 ${isMe ? 'border-[#7096D1]' : 'border-transparent'}`}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
+                  <div key={idx} className={`bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm border-2 ${isMe ? 'border-[#7096D1]' : 'border-transparent'}`}>
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
                         <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-bold text-gray-700 leading-tight">{member.name}</p>
+                          <p className="font-bold text-gray-700 leading-tight truncate">{member.name}</p>
                           {isMe && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                         </div>
                         <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
                       </div>
                     </div>
-                    <div className={`px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
+                    <div className={`px-3 sm:px-6 py-1.5 rounded-xl font-bold text-xs sm:text-sm min-w-[64px] sm:min-w-[100px] text-center shadow-sm flex-shrink-0 ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
                       {readyUsers.includes(member.name) ? 'ready' : 'wait'}
                     </div>
                   </div>
@@ -162,9 +162,9 @@ export default function MyRoomPage() {
 
           {/* Right: Host info + Ready button */}
           <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-[20px] p-8 shadow-sm">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
+            <div className="bg-white rounded-[20px] p-5 sm:p-6 md:p-8 shadow-sm">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
                   <img src={room ? resolveAvatar({ avatarSeed: room.hostAvatarSeed, avatarImage: room.hostAvatarImage }) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
@@ -198,7 +198,7 @@ export default function MyRoomPage() {
             </div>
 
             <button onClick={handleReady}
-              className={`mt-auto w-full py-8 rounded-[20px] font-black text-5xl uppercase tracking-[0.2em] text-white transition-all
+              className={`mt-auto w-full py-5 sm:py-6 md:py-8 rounded-[20px] font-black text-2xl sm:text-3xl md:text-5xl uppercase tracking-widest sm:tracking-[0.2em] text-white transition-all
                 ${isReady
                   ? 'bg-green-500 shadow-[0_10px_0_0_#15803d] hover:shadow-[0_5px_0_0_#15803d] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
                   : 'bg-[#7096D1] shadow-[0_10px_0_0_#4A6FA5] hover:shadow-[0_5px_0_0_#4A6FA5] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'

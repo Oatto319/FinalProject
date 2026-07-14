@@ -120,19 +120,19 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
   const displaySubtitle = subtitle ?? user.role ?? user.gender;
 
   return (
-    <header className="w-full flex items-center justify-between px-4 py-3 shadow-sm" style={{ backgroundColor: bgColor ?? 'white' }}>
-      <div className="w-full flex items-center justify-between">
+    <header className="w-full flex items-center justify-between px-3 sm:px-4 py-3 shadow-sm" style={{ backgroundColor: bgColor ?? 'white' }}>
+      <div className="w-full flex items-center justify-between gap-2">
         {/* Profile button */}
         <button
           onClick={() => router.push('/navbar/edit')}
-          className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+          className="flex items-center gap-2 sm:gap-3 min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
         >
-          <div className="w-16 h-16 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-full overflow-hidden bg-orange-100 border-2 border-orange-200">
             <img src={avatarUrl} alt="Profile" className="w-full h-full object-contain" />
           </div>
-          <div className="text-left">
-            <p className="text-lg leading-tight" style={{ color: nameColor ?? '#1f2937' }}>{user.name}</p>
-            <span className={`text-sm px-2 py-0.5 rounded-full ${
+          <div className="text-left min-w-0">
+            <p className="text-base sm:text-lg leading-tight truncate max-w-[36vw] sm:max-w-none" style={{ color: nameColor ?? '#1f2937' }}>{user.name}</p>
+            <span className={`text-xs sm:text-sm px-2 py-0.5 rounded-full ${
               displaySubtitle === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'
             }`}>
               {displaySubtitle}
@@ -141,20 +141,21 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
         </button>
 
         {/* Notification button + dropdown */}
-        <div className="relative" ref={wrapperRef}>
+        <div className="relative flex-shrink-0" ref={wrapperRef}>
           <button
             onClick={() => setShowPanel((v) => !v)}
             title="การแจ้งเตือน"
-            className="relative bg-green-500 p-3 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95"
+            className="relative bg-green-500 p-2.5 sm:p-3 rounded-full text-white shadow-lg hover:scale-105 transition-transform active:scale-95"
           >
-            <LucideMessageCircle fill="currentColor" size={26} />
+            <LucideMessageCircle fill="currentColor" size={22} className="sm:hidden" />
+            <LucideMessageCircle fill="currentColor" size={26} className="hidden sm:block" />
             {hasUnread && (
               <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
             )}
           </button>
 
           {showPanel && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
               {/* Header */}
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <p className="font-bold text-gray-800 text-sm">การแจ้งเตือน</p>

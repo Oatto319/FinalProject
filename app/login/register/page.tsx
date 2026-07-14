@@ -48,7 +48,7 @@ export default function RegisterPage() {
         <h1 className="text-white text-5xl md:text-6xl font-black tracking-tighter uppercase mb-2" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>WHO ARE YOU?</h1>
         <p className="text-gray-400 text-sm">เลือกประเภทผู้ใช้งานเพื่อเข้าสู่ระบบ</p>
       </div>
-      <div className="bg-white w-full max-w-[600px] rounded-[24px] p-8 md:p-12 shadow-2xl flex flex-col gap-6" style={{ fontFamily: 'var(--font-geologica), sans-serif' }}>
+      <div className="bg-white w-full max-w-[600px] rounded-[24px] p-5 sm:p-8 md:p-12 shadow-2xl flex flex-col gap-6" style={{ fontFamily: 'var(--font-geologica), sans-serif' }}>
         <div className="bg-[#1D324B] rounded-[25px] p-6 flex flex-col gap-4">
           <label className="text-white text-xl">&quot;What&apos;s your name?&quot;</label>
           <input type="text" placeholder="กรอกชื่อของคุณ..." value={name} onChange={(e) => setName(e.target.value)}

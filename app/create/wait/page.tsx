@@ -81,17 +81,17 @@ const WaitingRoom = () => {
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอนักเรียนเข้าร่วม...</div>
             ) : (
               members.map((member, idx) => (
-                <div key={idx} className="bg-white rounded-2xl p-3 flex items-center justify-between shadow-sm border border-transparent hover:border-white transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border-2 border-white">
+                <div key={idx} className="bg-white rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm border border-transparent hover:border-white transition-all">
+                  <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-full overflow-hidden bg-yellow-100 border-2 border-white">
                       <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
                     </div>
-                    <div>
-                      <h4 className="font-bold text-gray-700 leading-tight">{member.name}</h4>
+                    <div className="min-w-0">
+                      <h4 className="font-bold text-gray-700 leading-tight truncate">{member.name}</h4>
                       <p className="text-xs text-gray-400">นักเรียน</p>
                     </div>
                   </div>
-                  <div className={`px-6 py-1.5 rounded-xl font-bold text-sm text-white shadow-sm ${readyUsers.includes(member.name) ? 'bg-[#6B8DCC]' : 'bg-[#C96C6C]'}`}>
+                  <div className={`px-3 sm:px-6 py-1.5 rounded-xl font-bold text-xs sm:text-sm text-white shadow-sm flex-shrink-0 ${readyUsers.includes(member.name) ? 'bg-[#6B8DCC]' : 'bg-[#C96C6C]'}`}>
                     {readyUsers.includes(member.name) ? 'Ready' : 'wait'}
                   </div>
                 </div>
@@ -100,9 +100,9 @@ const WaitingRoom = () => {
           </div>
 
           <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-[20px] p-8 shadow-sm flex flex-col gap-6">
+            <div className="bg-white rounded-[20px] p-5 sm:p-6 md:p-8 shadow-sm flex flex-col gap-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
                   <img src={user ? resolveAvatar(user) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
@@ -133,12 +133,12 @@ const WaitingRoom = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-[20px] overflow-hidden shadow-sm flex h-32 md:h-40">
-              <div className="flex-[3] flex items-center justify-center p-4">
-                <h1 className="text-5xl md:text-6xl font-black italic tracking-tighter text-[#6C63FF]/80 uppercase">READY</h1>
+            <div className="bg-white rounded-[20px] overflow-hidden shadow-sm flex h-24 sm:h-32 md:h-40">
+              <div className="flex-[3] flex items-center justify-center p-2 sm:p-4">
+                <h1 className="text-2xl sm:text-4xl md:text-6xl font-black italic tracking-tighter text-[#6C63FF]/80 uppercase">READY</h1>
               </div>
-              <div className="flex-[2] bg-[#7559B8] flex flex-col items-center justify-center text-white p-4">
-                <span className="text-4xl md:text-5xl font-black">{readyCount}/{members.length || '?'}</span>
+              <div className="flex-[2] bg-[#7559B8] flex flex-col items-center justify-center text-white p-2 sm:p-4">
+                <span className="text-xl sm:text-3xl md:text-5xl font-black">{readyCount}/{members.length || '?'}</span>
               </div>
             </div>
           </div>

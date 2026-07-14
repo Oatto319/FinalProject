@@ -203,14 +203,14 @@ const ManualPage = () => {
               members.map((member, idx) => {
                 const isSelf = member.name === user?.name;
                 return (
-                <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
+                <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200">
+                  <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 flex-shrink-0 rounded-full overflow-hidden bg-yellow-100 border border-gray-100">
                       <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="font-bold text-gray-700 leading-tight">{member.name}</p>
+                        <p className="font-bold text-gray-700 leading-tight truncate">{member.name}</p>
                         {isSelf && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                       </div>
                       <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
@@ -228,7 +228,7 @@ const ManualPage = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className={`px-6 py-1.5 rounded-xl font-bold text-sm min-w-[100px] text-center shadow-sm transition-colors ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
+                    <div className={`px-3 sm:px-6 py-1.5 rounded-xl font-bold text-xs sm:text-sm min-w-[64px] sm:min-w-[100px] text-center shadow-sm transition-colors ${readyUsers.includes(member.name) ? 'bg-[#608BC1] text-white' : 'bg-[#C86D6D] text-white'}`}>
                       {readyUsers.includes(member.name) ? 'ready' : 'wait'}
                     </div>
                     {user?.name === room?.hostName && !isSelf && (
@@ -248,9 +248,9 @@ const ManualPage = () => {
           </div>
 
           <div className="flex flex-col gap-6">
-            <div className="bg-white rounded-[20px] p-8 shadow-sm">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200">
+            <div className="bg-white rounded-[20px] p-5 sm:p-6 md:p-8 shadow-sm">
+              <div className="flex items-center gap-4 mb-6 sm:mb-8">
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
                   <img src={user ? resolveAvatar(user) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
                 </div>
                 <div>
@@ -285,24 +285,24 @@ const ManualPage = () => {
 
             <div className="flex-1 flex flex-col justify-end">
               {!isFull ? (
-                <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
-                  <div className="flex-[3] flex flex-col items-center justify-center gap-1 px-4">
-                    <span className="text-[#4B3E7A] text-4xl font-black italic tracking-tighter uppercase opacity-30 select-none">WAITING</span>
-                    <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">รอคนเข้าห้องให้ครบ</span>
+                <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[120px] sm:min-h-[160px] border border-white/50">
+                  <div className="flex-[3] flex flex-col items-center justify-center gap-1 px-2 sm:px-4">
+                    <span className="text-[#4B3E7A] text-xl sm:text-2xl md:text-4xl font-black italic tracking-tighter uppercase opacity-30 select-none">WAITING</span>
+                    <span className="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-center">รอคนเข้าห้องให้ครบ</span>
                   </div>
                   <div className="flex-[2] bg-gray-400 flex flex-col items-center justify-center text-white">
-                    <span className="text-6xl font-black leading-none">{members.length}/{totalMembers}</span>
-                    <span className="text-xs font-bold uppercase mt-2 tracking-widest opacity-80">คน</span>
+                    <span className="text-2xl sm:text-3xl md:text-6xl font-black leading-none">{members.length}/{totalMembers}</span>
+                    <span className="text-[10px] sm:text-xs font-bold uppercase mt-2 tracking-widest opacity-80">คน</span>
                   </div>
                 </div>
               ) : !isAllReady ? (
-                <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[160px] border border-white/50">
+                <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[120px] sm:min-h-[160px] border border-white/50">
                   <div className="flex-[3] flex items-center justify-center">
-                    <span className="text-[#4B3E7A] text-6xl font-black italic tracking-tighter uppercase opacity-30 select-none">READY</span>
+                    <span className="text-[#4B3E7A] text-2xl sm:text-3xl md:text-6xl font-black italic tracking-tighter uppercase opacity-30 select-none">READY</span>
                   </div>
                   <div className="flex-[2] bg-[#7C3AED] flex flex-col items-center justify-center text-white">
-                    <span className="text-6xl font-black leading-none">{readyCount}/{totalMembers}</span>
-                    <span className="text-xs font-bold uppercase mt-2 tracking-widest opacity-80">Waiting...</span>
+                    <span className="text-2xl sm:text-3xl md:text-6xl font-black leading-none">{readyCount}/{totalMembers}</span>
+                    <span className="text-[10px] sm:text-xs font-bold uppercase mt-2 tracking-widest opacity-80">Waiting...</span>
                   </div>
                 </div>
               ) : (
@@ -313,8 +313,8 @@ const ManualPage = () => {
                   }}
                   className="w-full relative group transition-transform active:scale-95">
                   <div className="absolute inset-0 bg-[#D97706] rounded-[20px] translate-y-2 group-active:translate-y-1"></div>
-                  <div className="relative bg-[#FF8A00] hover:bg-[#FF9D2E] text-white py-10 rounded-[20px] flex items-center justify-center transition-all border-b-4 border-white/20">
-                    <h1 className="text-7xl font-black italic tracking-tighter uppercase drop-shadow-md">MATCH!</h1>
+                  <div className="relative bg-[#FF8A00] hover:bg-[#FF9D2E] text-white py-6 sm:py-8 md:py-10 rounded-[20px] flex items-center justify-center transition-all border-b-4 border-white/20">
+                    <h1 className="text-4xl sm:text-5xl md:text-7xl font-black italic tracking-tighter uppercase drop-shadow-md">MATCH!</h1>
                   </div>
                 </button>
               )}
@@ -339,22 +339,22 @@ const ManualPage = () => {
             </div>
 
             {/* Body */}
-            <div className="p-6 bg-[#C4C9E2]">
+            <div className="p-4 sm:p-6 bg-[#C4C9E2]">
               <p className="text-center text-xl font-black text-[#5B5EA6] mb-5">
                 {tsGroupSize} <span className="font-bold">:Members</span>
               </p>
 
-              <div className="bg-[#E8EAF3] rounded-2xl p-5">
-                <div className="grid grid-cols-4 gap-3">
+              <div className="bg-[#E8EAF3] rounded-2xl p-3 sm:p-5">
+                <div className="grid grid-cols-4 gap-2 sm:gap-3">
                   {/* Icons row */}
                   {tsTypes.map((t) => (
                     <div key={t.key} className="flex flex-col items-center gap-1">
-                      <div className="w-12 h-12 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}22` }}>
-                        <img src={t.icon} alt={t.label} className="w-7 h-7 object-contain" />
+                      <div className="w-9 h-9 sm:w-12 sm:h-12 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}22` }}>
+                        <img src={t.icon} alt={t.label} className="w-5 h-5 sm:w-7 sm:h-7 object-contain" />
                       </div>
-                      <span className="text-[9px] font-black text-[#3D3D6B] text-center leading-tight">{t.label}</span>
+                      <span className="text-[8px] sm:text-[9px] font-black text-[#3D3D6B] text-center leading-tight">{t.label}</span>
                       {t.subtitle && (
-                        <span className="text-[8px] font-bold px-1 rounded" style={{ backgroundColor: `${roleColor(t.icon)}22`, color: roleColor(t.icon) }}>{t.subtitle}</span>
+                        <span className="text-[7px] sm:text-[8px] font-bold px-1 rounded" style={{ backgroundColor: `${roleColor(t.icon)}22`, color: roleColor(t.icon) }}>{t.subtitle}</span>
                       )}
                     </div>
                   ))}
@@ -365,9 +365,10 @@ const ManualPage = () => {
                       <button
                         onClick={() => tsIncrement(t.key)}
                         disabled={tsTotal >= tsGroupSize}
-                        className="w-9 h-9 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
+                        className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
                       >
-                        <Plus size={18} strokeWidth={3} />
+                        <Plus size={14} strokeWidth={3} className="sm:hidden" />
+                        <Plus size={18} strokeWidth={3} className="hidden sm:block" />
                       </button>
                     </div>
                   ))}
@@ -377,7 +378,7 @@ const ManualPage = () => {
                     <div key={t.key + '-count'} className="flex justify-center">
                       <button
                         onClick={() => tsDecrement(t.key)}
-                        className="w-11 h-11 rounded-xl bg-[#8B8FAD] text-white text-lg font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
+                        className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-[#8B8FAD] text-white text-sm sm:text-lg font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
                       >
                         {tsCounts[t.key] ?? 0}
                       </button>

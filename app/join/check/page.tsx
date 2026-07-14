@@ -63,9 +63,9 @@ export default function JoinCheckPage() {
       <Navbar />
       <main className="w-full max-w-6xl mt-4 px-4 grid grid-cols-1 md:grid-cols-12 gap-6 pb-12">
         <div className="md:col-span-5 flex flex-col gap-6">
-          <div className="bg-white rounded-[20px] p-8 shadow-sm">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-100">
+          <div className="bg-white rounded-[20px] p-5 sm:p-6 md:p-8 shadow-sm">
+            <div className="flex items-center gap-4 mb-6 sm:mb-8">
+              <div className="w-16 h-16 flex-shrink-0 rounded-full overflow-hidden border-2 border-blue-100">
                 <img src={room ? resolveAvatar({ avatarSeed: room.hostAvatarSeed, avatarImage: room.hostAvatarImage }) : '/img/p1.PNG'} alt="Host" className="w-full h-full object-contain" />
               </div>
               <div>
@@ -103,25 +103,25 @@ export default function JoinCheckPage() {
         </div>
 
         <div className="md:col-span-7 flex flex-col gap-4">
-          <div className="bg-[#FFA4A4] rounded-[20px] p-6 text-center shadow-sm">
-            <h1 className="text-[#4A4E69] text-5xl font-black tracking-widest uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
+          <div className="bg-[#FFA4A4] rounded-[20px] p-4 sm:p-6 text-center shadow-sm">
+            <h1 className="text-[#4A4E69] text-3xl sm:text-4xl md:text-5xl font-black tracking-widest uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
           <div className="flex flex-col gap-3">
             {(room?.members ?? []).length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400">ยังไม่มีสมาชิกในห้อง</div>
             ) : (
               (room?.members ?? []).map((member, idx) => (
-                <div key={idx} className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100">
+                <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm border border-gray-100">
+                  <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                    <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">
                       <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-800">{member.name}</p>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-800 truncate">{member.name}</p>
                       <p className="text-xs text-gray-400">นักเรียน</p>
                     </div>
                   </div>
-                  <span className="px-6 py-1.5 rounded-xl font-bold text-white text-sm bg-[#7096D1]">Joined</span>
+                  <span className="px-3 sm:px-6 py-1.5 rounded-xl font-bold text-white text-xs sm:text-sm bg-[#7096D1] flex-shrink-0">Joined</span>
                 </div>
               ))
             )}

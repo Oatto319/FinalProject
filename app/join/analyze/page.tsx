@@ -154,7 +154,7 @@ export default function AnalyzePage() {
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
 
-        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center overflow-hidden">
+        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-4 sm:p-8 md:p-12 shadow-2xl flex flex-col items-center overflow-hidden">
 
           {/* Analysis Results Grid */}
           <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
@@ -236,7 +236,7 @@ export default function AnalyzePage() {
           <button
             onClick={handleConfirm}
             disabled={isAnalyzing}
-            className={`w-full max-w-sm py-5 rounded-[20px] font-black text-3xl transition-all
+            className={`w-full max-w-sm py-4 sm:py-5 rounded-[20px] font-black text-xl sm:text-2xl md:text-3xl transition-all
               ${isAnalyzing
                 ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'
                 : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}

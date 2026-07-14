@@ -75,14 +75,14 @@ function TemplatesContent() {
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
 
-        <div className="flex-1 bg-white rounded-[24px] px-8 pt-3 pb-8 md:px-10 md:pt-3 md:pb-10 shadow-sm flex flex-col items-center">
+        <div className="flex-1 bg-white rounded-[24px] px-4 pt-3 pb-6 sm:px-8 md:px-10 sm:pb-8 md:pb-10 shadow-sm flex flex-col items-center">
 
           <p className="text-sm text-[#2D3142] mb-0 text-center" style={{ fontFamily: 'var(--font-geologica)' }}>
             &ldquo;Choose Templates&rdquo;
           </p>
 
           {/* Templates Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full mt-6">
             {templates.map((item, index) => {
               const done = !!userTypes[item.id];
               const comingSoon = !!(item as { comingSoon?: boolean }).comingSoon;
@@ -104,7 +104,7 @@ function TemplatesContent() {
                       router.push(item.route);
                     }
                   }}
-                  className={`${item.bgColor} rounded-[22px] p-2 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative mx-6 ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
+                  className={`${item.bgColor} rounded-[22px] p-2 flex flex-col items-center transition-transform duration-300 shadow-md min-h-[280px] relative mx-0 sm:mx-4 md:mx-6 ${!isCreateMode && comingSoon ? 'cursor-not-allowed opacity-70' : 'cursor-pointer hover:scale-[1.02]'}`}
                 >
                   {/* Coming Soon Badge */}
                   {comingSoon && !isCreateMode && (
@@ -122,7 +122,7 @@ function TemplatesContent() {
                   )}
 
                   {/* Title Section */}
-                  <h2 className={`text-2xl md:text-3xl font-black mt-4 mb-3 tracking-wider ${item.textColor} text-center uppercase`}
+                  <h2 className={`text-xl sm:text-2xl md:text-3xl font-black mt-4 mb-3 tracking-wider ${item.textColor} text-center uppercase`}
                     style={{ textShadow: `0 3px 0 ${item.shadowColor}` }}>
                     {item.title}
                   </h2>

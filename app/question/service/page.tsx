@@ -132,7 +132,7 @@ const ServiceQuestionnaire = () => {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-xl p-8 md:p-16 flex flex-col gap-12 border-b-8 border-gray-300 mb-8">
+      <div className="w-full max-w-5xl bg-white rounded-[24px] shadow-xl p-4 sm:p-8 md:p-16 flex flex-col gap-8 sm:gap-12 border-b-8 border-gray-300 mb-8">
         {/* Progress indicator */}
         <div className="flex flex-col items-center gap-2">
           <div className="flex items-center gap-2">
@@ -154,31 +154,33 @@ const ServiceQuestionnaire = () => {
 
         {/* Questions for this page */}
         {currentQuestions.map((q, idx) => (
-          <div key={q.id} id={`question-${q.id}`} className={`flex flex-col items-center gap-8 rounded-2xl px-4 pt-4 transition-all duration-300 ${highlightedId === q.id ? 'ring-2 ring-red-400 bg-red-50' : ''}`}>
-            <h3 className="text-[#1A2E44] text-xl md:text-2xl font-black text-center leading-relaxed">&ldquo;{q.text}&rdquo;</h3>
-            <div className="w-full flex items-center justify-between max-w-3xl">
-              <div className="flex items-center gap-3">
-                <span className="text-[#22C55E] font-black text-lg md:text-xl">เห็นด้วย</span>
-                <div className="w-10 h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white">
-                  <Plus size={24} strokeWidth={4} />
+          <div key={q.id} id={`question-${q.id}`} className={`flex flex-col items-center gap-5 sm:gap-8 rounded-2xl px-2 sm:px-4 pt-4 transition-all duration-300 ${highlightedId === q.id ? 'ring-2 ring-red-400 bg-red-50' : ''}`}>
+            <h3 className="text-[#1A2E44] text-lg sm:text-xl md:text-2xl font-black text-center leading-relaxed">&ldquo;{q.text}&rdquo;</h3>
+            <div className="w-full flex items-center justify-between max-w-3xl gap-1 sm:gap-3">
+              <div className="flex flex-col items-center gap-0.5 sm:flex-row sm:gap-3 flex-shrink-0">
+                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full border-2 border-[#22C55E] flex items-center justify-center text-[#22C55E] bg-white flex-shrink-0">
+                  <Plus size={16} strokeWidth={4} className="sm:hidden" />
+                  <Plus size={24} strokeWidth={4} className="hidden sm:block" />
                 </div>
+                <span className="text-[#22C55E] font-black text-[9px] sm:text-lg md:text-xl text-center leading-none">เห็นด้วย</span>
               </div>
-              <div className="flex items-center gap-2 md:gap-4 flex-1 justify-center px-4">
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-1 justify-center px-1 sm:px-4">
                 {[1, 2, 3, 4, 5, 6, 7].map((val) => {
                   const isSelected = answers[q.id] === val;
-                  const sizeClass = val === 4 ? 'w-6 h-6' : (val === 3 || val === 5) ? 'w-8 h-8' : (val === 2 || val === 6) ? 'w-10 h-10' : 'w-12 h-12';
+                  const sizeClass = val === 4 ? 'w-3 h-3 sm:w-4 sm:h-4 md:w-6 md:h-6' : (val === 3 || val === 5) ? 'w-4 h-4 sm:w-5 sm:h-5 md:w-8 md:h-8' : (val === 2 || val === 6) ? 'w-5 h-5 sm:w-7 sm:h-7 md:w-10 md:h-10' : 'w-6 h-6 sm:w-9 sm:h-9 md:w-12 md:h-12';
                   const borderColor = val < 4 ? 'border-[#22C55E]' : val > 4 ? 'border-[#A7F3D0]' : 'border-gray-400';
                   return (
                     <button key={val} onClick={() => handleSelect(q.id, val)}
-                      className={`${sizeClass} rounded-full border-2 transition-all duration-200 ${borderColor} ${isSelected ? (val < 4 ? 'bg-[#22C55E]' : val > 4 ? 'bg-[#A7F3D0]' : 'bg-gray-400') : 'bg-transparent'} hover:scale-110`} />
+                      className={`${sizeClass} rounded-full border-2 transition-all duration-200 flex-shrink-0 ${borderColor} ${isSelected ? (val < 4 ? 'bg-[#22C55E]' : val > 4 ? 'bg-[#A7F3D0]' : 'bg-gray-400') : 'bg-transparent'} hover:scale-110`} />
                   );
                 })}
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full border-2 border-[#A7F3D0] flex items-center justify-center text-[#A7F3D0] bg-white">
-                  <Minus size={24} strokeWidth={4} />
+              <div className="flex flex-col items-center gap-0.5 sm:flex-row sm:gap-3 flex-shrink-0">
+                <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full border-2 border-[#A7F3D0] flex items-center justify-center text-[#A7F3D0] bg-white flex-shrink-0">
+                  <Minus size={16} strokeWidth={4} className="sm:hidden" />
+                  <Minus size={24} strokeWidth={4} className="hidden sm:block" />
                 </div>
-                <span className="text-[#A7F3D0] font-black text-lg md:text-xl whitespace-nowrap">ไม่เห็นด้วย</span>
+                <span className="text-[#A7F3D0] font-black text-[9px] sm:text-lg md:text-xl text-center leading-none sm:whitespace-nowrap">ไม่เห็นด้วย</span>
               </div>
             </div>
             {idx !== currentQuestions.length - 1 && <div className="w-full h-[2px] bg-gray-100 mt-4" />}
@@ -194,8 +196,8 @@ const ServiceQuestionnaire = () => {
 
       {showPopup && jobResult && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
-            <img src={TYPE_IMAGES[jobResult.code]} alt={jobResult.code} className="w-40 h-40 object-contain flex-shrink-0" />
+          <div className="bg-white rounded-[24px] p-5 sm:p-8 flex flex-col items-center gap-5 shadow-2xl w-full max-w-md">
+            <img src={TYPE_IMAGES[jobResult.code]} alt={jobResult.code} className="w-32 h-32 sm:w-40 sm:h-40 object-contain flex-shrink-0" />
             <div className="text-center w-full">
               <h2 className="text-2xl font-black text-[#1A2E44] mb-1">เสร็จแล้ว!</h2>
               <p className="text-xs text-gray-400 font-medium mb-3">ประเภทบุคลิกภาพการทำงานของคุณ · {jobResult.code}</p>
@@ -213,13 +215,13 @@ const ServiceQuestionnaire = () => {
                 <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">สัดส่วนแต่ละมิติบุคลิกภาพ</p>
                 <div className="flex flex-col gap-3">
                   {jobResult.typeScores.map((t) => (
-                    <div key={t.title} className="flex items-center gap-3">
-                      <img src={t.icon} alt={t.title} className="w-8 h-8 object-contain flex-shrink-0" />
-                      <span className="text-sm font-bold text-[#1A2E44] w-40 flex-shrink-0">{t.title}</span>
+                    <div key={t.title} className="flex items-center gap-2 sm:gap-3">
+                      <img src={t.icon} alt={t.title} className="w-6 h-6 sm:w-8 sm:h-8 object-contain flex-shrink-0" />
+                      <span className="text-xs sm:text-sm font-bold text-[#1A2E44] w-20 sm:w-32 md:w-40 flex-shrink-0 truncate">{t.title}</span>
                       <div className="flex-1 bg-gray-100 rounded-full h-2.5">
                         <div className="bg-[#4B3E7A] h-2.5 rounded-full transition-all duration-500" style={{ width: `${t.score}%` }} />
                       </div>
-                      <span className="text-sm font-black text-[#4B3E7A] w-10 text-right flex-shrink-0">{t.score}%</span>
+                      <span className="text-xs sm:text-sm font-black text-[#4B3E7A] w-8 sm:w-10 text-right flex-shrink-0">{t.score}%</span>
                     </div>
                   ))}
                 </div>

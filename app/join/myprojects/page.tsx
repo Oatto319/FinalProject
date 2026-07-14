@@ -83,7 +83,7 @@ export default function MyProjectsPage() {
 
           <div className="flex-1">
             {joinedRooms.length === 0 ? (
-              <div className="bg-white rounded-[24px] p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400">
+              <div className="bg-white rounded-[24px] p-6 sm:p-8 md:p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400">
                 <div className="text-6xl">📭</div>
                 <p className="font-bold text-lg">ยังไม่มีห้องที่เข้าร่วม</p>
                 <p className="text-sm">กด Join เพื่อเข้าร่วมห้องแรกของคุณ</p>

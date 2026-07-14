@@ -133,7 +133,7 @@ export default function VotePage() {
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
 
-        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-8 md:p-12 shadow-2xl flex flex-col items-center">
+        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-4 sm:p-8 md:p-12 shadow-2xl flex flex-col items-center">
 
 
 
@@ -153,7 +153,7 @@ export default function VotePage() {
                   Object.values(groupVotes).forEach((name) => { tally[name] = (tally[name] ?? 0) + 1; });
                   const maxVotes = Math.max(0, ...Object.values(tally));
                   return (
-                    <div className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-3 gap-6 mb-12">
+                    <div className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-12">
                       {members.map((member) => {
                         const isMe = member.name === user?.name;
                         const avatarUrl = resolveAvatar(member);
@@ -167,7 +167,7 @@ export default function VotePage() {
                             key={member.name}
                             onClick={() => setSelectedMember(member.name)}
                             className={`
-                              bg-white rounded-[20px] p-6 flex flex-col items-center gap-3 shadow-sm
+                              bg-white rounded-[20px] p-3 sm:p-6 flex flex-col items-center gap-2 sm:gap-3 shadow-sm
                               transition-all duration-200 border-4 outline-none relative
                               ${selectedMember === member.name
                                 ? 'border-[#7096D1] scale-105 shadow-xl'
@@ -178,22 +178,22 @@ export default function VotePage() {
                             {mbtiType && (
                               <div
                                 onClick={(e) => { e.stopPropagation(); setMbtiPopup({ name: member.name, type: mbtiType }); }}
-                                className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                                className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-7 h-7 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
                                 style={{ backgroundColor: `${typeColor(mbtiType.code)}26` }}
                               >
-                                <span className="text-[8px] font-black" style={{ color: typeColor(mbtiType.code) }}>{mbtiType.code}</span>
+                                <span className="text-[7px] sm:text-[8px] font-black" style={{ color: typeColor(mbtiType.code) }}>{mbtiType.code}</span>
                               </div>
                             )}
 
                             {/* Avatar */}
-                            <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
                               <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                             </div>
 
                             {/* Name + Me tag */}
                             <div className="text-center">
                               <div className="flex items-center justify-center gap-1 flex-wrap">
-                                <h4 className="text-gray-800 text-base leading-tight">{member.name}</h4>
+                                <h4 className="text-gray-800 text-xs sm:text-sm md:text-base leading-tight truncate max-w-full">{member.name}</h4>
                                 {isMe && <span className="bg-[#7096D1] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">คุณ</span>}
                               </div>
 
@@ -205,7 +205,7 @@ export default function VotePage() {
                                     .map(([voter]) => {
                                       const voterMember = members.find((m) => m.name === voter);
                                       return (
-                                        <div key={voter} className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-gray-100">
+                                        <div key={voter} className="w-6 h-6 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-white bg-gray-100">
                                           <img src={voterMember ? resolveAvatar(voterMember) : '/img/p1.PNG'} alt={voter} className="w-full h-full object-contain" />
                                         </div>
                                       );
@@ -240,7 +240,7 @@ export default function VotePage() {
                     disabled={!canVote}
                     onClick={handleVote}
                     className={`
-                      w-full max-w-xs py-5 rounded-[20px] font-black text-3xl transition-all
+                      w-full max-w-xs py-4 sm:py-5 rounded-[20px] font-black text-xl sm:text-2xl md:text-3xl transition-all
                       ${canVote
                         ? 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
                         : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'}

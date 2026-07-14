@@ -96,12 +96,12 @@ const MyTypePage = () => {
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
-        <div className="flex flex-1 gap-1 p-1 bg-white rounded-2xl shadow-sm">
+        <div className="flex flex-1 min-w-0 gap-1 p-1 bg-white rounded-2xl shadow-sm">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => { setActiveTab(tab.id); setModalCode(null); }}
-              className={`flex-1 py-2 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+              className={`flex-1 min-w-0 py-2 px-1 rounded-xl text-[9px] sm:text-sm font-bold leading-tight transition-all ${
                 activeTab === tab.id
                   ? 'bg-[#4B3E7A] text-white shadow-sm'
                   : 'text-gray-400 hover:text-gray-600'
@@ -141,15 +141,15 @@ const MyTypePage = () => {
                 >
                   <span
                     className="font-black leading-none tracking-tight"
-                    style={{ fontSize: '14rem', color: '#ffffff', opacity: 0.25 }}
+                    style={{ fontSize: 'clamp(4rem, 16vw, 14rem)', color: '#ffffff', opacity: 0.25 }}
                   >
                     {group.watermark}
                   </span>
                 </div>
 
                 {/* Section Header */}
-                <div className="relative z-10 px-12 pt-12 pb-3 flex items-baseline gap-2">
-                  <h2 className="text-2xl font-black" style={{ color: group.color }}>
+                <div className="relative z-10 px-4 sm:px-8 md:px-12 pt-6 sm:pt-8 md:pt-12 pb-2 sm:pb-3 flex items-baseline gap-2">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black" style={{ color: group.color }}>
                     {group.label}
                   </h2>
                   <span
@@ -161,7 +161,7 @@ const MyTypePage = () => {
                 </div>
 
                 {/* Cards Grid */}
-                <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 px-10 pb-12">
+                <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-0 px-3 sm:px-6 md:px-10 pb-6 sm:pb-8 md:pb-12">
                   {group.codes.map(code => {
                     const isAutoHighlight = hasQuizForTab && code === autoCode;
                     const avatarSrc = TYPE_IMAGES[code];
@@ -183,21 +183,21 @@ const MyTypePage = () => {
                         <img
                           src={avatarSrc}
                           alt={code}
-                          className="w-32 h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain mb-3 transition-transform duration-300 group-hover:scale-110"
+                          className="w-20 h-20 sm:w-28 sm:h-28 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain mb-3 transition-transform duration-300 group-hover:scale-110"
                         />
 
                         {/* English name */}
-                        <span className="text-2xl md:text-3xl font-black text-center leading-tight" style={{ color: group.color }}>
+                        <span className="text-base sm:text-xl md:text-3xl font-black text-center leading-tight" style={{ color: group.color }}>
                           {ENGLISH_NAMES[code]}
                         </span>
 
                         {/* Code */}
-                        <span className="text-base md:text-lg font-bold text-gray-500 tracking-widest">
+                        <span className="text-sm sm:text-base md:text-lg font-bold text-gray-500 tracking-widest">
                           {code}
                         </span>
 
                         {/* Thai title */}
-                        <span className="text-base md:text-lg font-semibold text-[#4B3E7A] text-center leading-tight">
+                        <span className="text-xs sm:text-base md:text-lg font-semibold text-[#4B3E7A] text-center leading-tight">
                           {info?.title ?? ''}
                         </span>
 
@@ -230,27 +230,27 @@ const MyTypePage = () => {
           >
             {/* Colored header */}
             <div
-              className="rounded-t-[32px] p-10 flex flex-col items-center gap-3"
+              className="rounded-t-[32px] p-6 sm:p-8 md:p-10 flex flex-col items-center gap-3"
               style={{ backgroundColor: modalGroup.color + '18' }}
             >
               <img
                 src={TYPE_IMAGES[modalCode]}
                 alt={modalCode}
-                className="w-48 h-48 object-contain"
+                className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain"
               />
-              <span className="text-4xl font-black" style={{ color: modalGroup.color }}>
+              <span className="text-2xl sm:text-3xl md:text-4xl font-black" style={{ color: modalGroup.color }}>
                 {modalCode}
               </span>
               <span className="text-base font-bold text-gray-400">
                 {ENGLISH_NAMES[modalCode]}
               </span>
-              <span className="text-2xl font-black text-[#4B3E7A] text-center">
+              <span className="text-xl sm:text-2xl font-black text-[#4B3E7A] text-center">
                 {modalInfo?.title ?? ''}
               </span>
             </div>
 
             {/* Body */}
-            <div className="p-10 flex flex-col gap-5">
+            <div className="p-6 sm:p-8 md:p-10 flex flex-col gap-5">
               <p className="text-gray-500 text-base leading-relaxed">
                 {modalInfo?.description ?? ''}
               </p>

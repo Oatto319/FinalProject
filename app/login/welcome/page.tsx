@@ -52,7 +52,7 @@ export default function WelcomePage() {
       </div>
 
       {/* Welcome Text */}
-      <h1 className="text-[#2D3E50] text-7xl md:text-8xl font-black tracking-tighter mb-12 animate-fade-in-down" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>
+      <h1 className="text-[#2D3E50] text-5xl sm:text-6xl md:text-8xl font-black tracking-tighter mb-8 sm:mb-12 animate-fade-in-down text-center px-4" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>
         WELCOME
       </h1>
 

@@ -63,13 +63,13 @@ export default function EditProfilePage() {
   const currentAvatarUrl = resolveAvatar(user);
 
   return (
-    <div className="min-h-screen bg-gray-200 font-sans flex items-start justify-center p-6 pt-10">
-      <div className="w-full max-w-4xl grid grid-cols-[320px_1fr] gap-4">
+    <div className="min-h-screen bg-gray-200 font-sans flex items-start justify-center p-4 sm:p-6 pt-6 sm:pt-10">
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-[320px_1fr] gap-4">
 
         {/* Left Card — Avatar + Name + Save */}
-        <div className="bg-white rounded-[24px] p-8 flex flex-col items-center gap-5">
+        <div className="bg-white rounded-[24px] p-6 sm:p-8 flex flex-col items-center gap-5">
           <div className="relative">
-            <div className="w-56 h-56 rounded-full overflow-hidden bg-blue-100">
+            <div className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 rounded-full overflow-hidden bg-blue-100">
               <img src={currentAvatarUrl} alt="Profile" className="w-full h-full object-cover" />
             </div>
             <button
@@ -91,7 +91,7 @@ export default function EditProfilePage() {
         </div>
 
         {/* Right Card — Edit Fields */}
-        <div className="bg-white rounded-[24px] p-8 flex flex-col gap-6">
+        <div className="bg-white rounded-[24px] p-6 sm:p-8 flex flex-col gap-6">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-semibold text-gray-700">Name</label>
             <input
@@ -115,11 +115,11 @@ export default function EditProfilePage() {
             </div>
           </div>
 
-          <div className="mt-auto flex items-center justify-between">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3">
             <button onClick={() => router.back()} className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
               Cancel
             </button>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <button onClick={() => router.push('/settings')} className="flex items-center gap-2 text-sm text-gray-500 font-semibold hover:text-gray-700 transition-colors">
                 <Settings size={16} />
                 ตั้งค่า
