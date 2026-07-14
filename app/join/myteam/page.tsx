@@ -336,7 +336,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                   })}
                 </div>
 
-                {myGroup?.leaderId && (
+                {myGroup?.leaderId && (myGroup.leaderConfirmedBy?.length ?? 0) < myGroup.members.length && (
                   <div className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm gap-3">
                     <div>
                       <p className="text-xs text-gray-400 font-medium">หัวหน้าทีม</p>
