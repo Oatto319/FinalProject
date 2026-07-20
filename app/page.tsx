@@ -148,10 +148,10 @@ const App = () => {
               <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 bg-[#7ECECA] rounded-full flex items-center justify-center z-10">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl text-[#2B6B6B] tracking-tight">MY TYPE</h1>
               </div>
-              <img src="/img/brain.png" alt="brain" className="absolute top-2 left-2 sm:top-4 sm:left-10 w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 object-contain z-20 -rotate-[30deg]" />
-              <img src="/img/idea.png" alt="idea" className="absolute top-3 right-3 sm:top-8 sm:right-14 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain z-20 rotate-[30deg]" />
-              <img src="/img/pencil.png" alt="pencil" className="absolute bottom-2 left-8 sm:bottom-4 sm:left-28 w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14 object-contain z-20 rotate-[20deg]" />
-              <img src="/img/make.png" alt="make" className="absolute bottom-3 right-10 sm:bottom-6 sm:right-32 w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 object-contain z-20 -rotate-6" />
+              <img src="/img/brain.png" alt="brain" className="absolute top-3 left-8 sm:top-4 sm:left-10 w-20 h-20 sm:w-28 sm:h-28 object-contain z-20 -rotate-[30deg]" />
+              <img src="/img/idea.png" alt="idea" className="absolute top-3 right-8 sm:top-8 sm:right-14 w-14 h-14 sm:w-20 sm:h-20 object-contain z-20 rotate-[30deg]" />
+              <img src="/img/pencil.png" alt="pencil" className="absolute bottom-3 left-20 sm:bottom-4 sm:left-28 w-10 h-10 sm:w-14 sm:h-14 object-contain z-20 rotate-[20deg]" />
+              <img src="/img/make.png" alt="make" className="absolute bottom-3 right-24 sm:bottom-6 sm:right-32 w-7 h-7 sm:w-10 sm:h-10 object-contain z-20 -rotate-6" />
             </div>
 
             {/* Quiz Button */}
