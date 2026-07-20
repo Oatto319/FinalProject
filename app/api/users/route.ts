@@ -5,6 +5,7 @@ import { User, Room } from '@/lib/models';
 import { createSessionToken, hashToken, getSessionUser, SESSION_COOKIE } from '@/lib/auth';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { isValidPassword, PASSWORD_HINT } from '@/lib/validation';
+import { isValidTypesPayload } from '@/lib/mbti-validation';
 
 function safeUser(u: Record<string, unknown>) {
   const obj = { ...u };
@@ -128,6 +129,9 @@ export async function PATCH(req: NextRequest) {
     if (body[key] !== undefined) safeUpdates[key] = body[key];
   }
   if (body.role === 'user' || body.role === 'host') safeUpdates.role = body.role;
+  if (safeUpdates.types !== undefined && !isValidTypesPayload(safeUpdates.types)) {
+    return NextResponse.json({ error: 'ข้อมูลผล MBTI ไม่ถูกต้อง' }, { status: 400 });
+  }
   if (Object.keys(safeUpdates).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
   const user = await User.findOneAndUpdate(
     { gmail: lowerGmail },

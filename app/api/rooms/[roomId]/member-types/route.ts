@@ -73,12 +73,7 @@ export async function GET(
     if (!userData) continue;
 
     const userTypes = (userData.types as Record<string, unknown>) ?? {};
-    let typeResult = userTypes[templateKey];
-
-    // fallback: ลองดู template อื่นถ้าไม่มี template ของห้อง
-    if (!typeResult) {
-      typeResult = Object.values(userTypes).find((t: unknown) => (t as { icon?: string })?.icon);
-    }
+    const typeResult = userTypes[templateKey];
 
     if (typeResult && (typeResult as { icon?: string }).icon) {
       const t = typeResult as { code: string; title: string; icon: string; description?: string; jobs?: string[]; typeScores?: { title: string; icon: string; score: number }[] };
