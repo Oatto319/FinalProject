@@ -122,7 +122,7 @@ const ProgrammingQuestionnaire = () => {
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
-      <Navbar />
+      <div className="sticky top-0 z-40 w-full"><Navbar /></div>
       <div className="w-full max-w-5xl flex items-start gap-4 mt-4 px-4 md:px-0">
         {/* Back button — desktop/tablet: sits beside the card */}
         <button
@@ -254,7 +254,7 @@ const ProgrammingQuestionnaire = () => {
           ))}
 
           <div className="flex justify-center mt-8">
-            <button onClick={handlePageNext} className="bg-[#4B3E7A] text-white px-12 py-4 rounded-2xl font-black text-xl hover:bg-[#3b3161] transition-colors shadow-lg">
+            <button onClick={handlePageNext} className="bg-[#2D3E50] text-white px-12 py-4 rounded-[20px] font-black italic tracking-tighter text-xl shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all">
               {currentPage < totalPages - 1 ? 'ถัดไป' : 'ส่งคำตอบ'}
             </button>
           </div>

@@ -86,6 +86,15 @@ const MyTypePage = () => {
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col">
+      <style>{`
+        @keyframes sheetSlideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
+        }
+        .sheet-slide-up {
+          animation: sheetSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+      `}</style>
       <Navbar />
 
       {/* Top bar: back button + template tabs */}
@@ -225,46 +234,47 @@ const MyTypePage = () => {
           onClick={() => setModalCode(null)}
         >
           <div
-            className="bg-white rounded-[32px] w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-[32px] w-full max-w-lg flex flex-col sheet-slide-up"
+            style={{ maxHeight: '88dvh' }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Colored header */}
+            {/* Colored header — fixed, does not scroll */}
             <div
-              className="rounded-t-[32px] p-6 sm:p-8 md:p-10 flex flex-col items-center gap-3"
+              className="rounded-t-[32px] px-6 pt-5 pb-3 sm:p-8 md:p-10 flex flex-col items-center gap-2 sm:gap-3 flex-shrink-0"
               style={{ backgroundColor: modalGroup.color + '18' }}
             >
               <img
                 src={TYPE_IMAGES[modalCode]}
                 alt={modalCode}
-                className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain"
+                className="w-20 h-20 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain"
               />
               <span className="text-2xl sm:text-3xl md:text-4xl font-black" style={{ color: modalGroup.color }}>
                 {modalCode}
               </span>
-              <span className="text-base font-bold text-gray-400">
+              <span className="text-sm sm:text-base font-bold text-gray-400">
                 {ENGLISH_NAMES[modalCode]}
               </span>
-              <span className="text-xl sm:text-2xl font-black text-[#4B3E7A] text-center">
+              <span className="text-base sm:text-2xl font-black text-[#4B3E7A] text-center">
                 {modalInfo?.title ?? ''}
               </span>
             </div>
 
-            {/* Body */}
-            <div className="p-6 sm:p-8 md:p-10 flex flex-col gap-5">
-              <p className="text-gray-500 text-base leading-relaxed">
+            {/* Body — scrollable only if needed */}
+            <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-8 md:p-10 flex flex-col gap-4 sm:gap-5">
+              <p className="text-gray-500 text-sm sm:text-base leading-relaxed">
                 {modalInfo?.description ?? ''}
               </p>
 
               {modalInfo?.jobs && modalInfo.jobs.length > 0 && (
                 <div>
-                  <p className="text-sm font-black text-gray-400 uppercase tracking-widest mb-3">
+                  <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-2 sm:mb-3">
                     ตำแหน่งงานที่เหมาะสม
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {modalInfo.jobs.map(job => (
                       <span
                         key={job}
-                        className="text-sm font-bold px-4 py-2 rounded-full"
+                        className="text-xs sm:text-sm font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full"
                         style={{ backgroundColor: modalGroup.color + '18', color: modalGroup.color }}
                       >
                         {job}
@@ -276,7 +286,7 @@ const MyTypePage = () => {
 
               <button
                 onClick={() => setModalCode(null)}
-                className="mt-2 w-full py-4 rounded-2xl font-black text-white text-base"
+                className="mt-1 w-full py-3 sm:py-4 rounded-2xl font-black text-white text-sm sm:text-base"
                 style={{ backgroundColor: modalGroup.color }}
               >
                 ปิด

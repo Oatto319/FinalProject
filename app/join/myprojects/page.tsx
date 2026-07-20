@@ -70,18 +70,17 @@ export default function MyProjectsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
+    <div className="h-dvh bg-gray-300 font-sans flex flex-col items-center overflow-hidden">
       <Navbar />
-      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
-        <div className="flex items-start gap-3">
+      <main className="flex-1 overflow-hidden w-full max-w-5xl px-4 flex flex-col sm:flex-row sm:items-start gap-3 pt-4 pb-4">
 
-          {/* Back Button */}
-          <button onClick={() => router.push('/')}
-            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-            <ChevronLeft size={24} strokeWidth={2.5} />
-          </button>
+        {/* Back Button */}
+        <button onClick={() => router.push('/')}
+          className="flex-shrink-0 self-start sm:mt-2 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+          <ChevronLeft size={24} strokeWidth={2.5} />
+        </button>
 
-          <div className="flex-1">
+        <div className="flex-1 overflow-y-auto h-full pb-2">
             {joinedRooms.length === 0 ? (
               <div className="bg-white rounded-[24px] p-6 sm:p-8 md:p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400">
                 <div className="text-6xl">📭</div>
@@ -157,7 +156,6 @@ export default function MyProjectsPage() {
                 })}
               </div>
             )}
-          </div>
         </div>
       </main>
 
