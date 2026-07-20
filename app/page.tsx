@@ -11,18 +11,18 @@ type RevealState = {
 };
 
 const SCATTERED_TEXT = [
-  { top: '6%',  left: '4%',  fontSize: '7rem',  rotate: '-18deg', opacity: 0.18 },
-  { top: '3%',  left: '55%', fontSize: '3.5rem', rotate: '12deg',  opacity: 0.14 },
-  { top: '8%',  left: '78%', fontSize: '5.5rem', rotate: '-8deg',  opacity: 0.20 },
-  { top: '28%', left: '2%',  fontSize: '3rem',   rotate: '22deg',  opacity: 0.13 },
-  { top: '32%', left: '60%', fontSize: '8rem',   rotate: '-14deg', opacity: 0.16 },
-  { top: '48%', left: '18%', fontSize: '5rem',   rotate: '10deg',  opacity: 0.18 },
-  { top: '52%', left: '75%', fontSize: '3.5rem', rotate: '-20deg', opacity: 0.14 },
-  { top: '65%', left: '5%',  fontSize: '6rem',   rotate: '16deg',  opacity: 0.20 },
-  { top: '68%', left: '48%', fontSize: '4rem',   rotate: '-6deg',  opacity: 0.15 },
-  { top: '80%', left: '22%', fontSize: '9rem',   rotate: '-12deg', opacity: 0.17 },
-  { top: '82%', left: '72%', fontSize: '4.5rem', rotate: '18deg',  opacity: 0.13 },
-  { top: '90%', left: '50%', fontSize: '3rem',   rotate: '-25deg', opacity: 0.15 },
+  { top: '6%',  left: '4%',  fontSize: 'clamp(1.5rem, 10vw, 7rem)',  rotate: '-18deg', opacity: 0.18 },
+  { top: '3%',  left: '55%', fontSize: 'clamp(1rem,   5vw,  3.5rem)', rotate: '12deg',  opacity: 0.14 },
+  { top: '8%',  left: '72%', fontSize: 'clamp(1.2rem, 8vw,  5.5rem)', rotate: '-8deg',  opacity: 0.20 },
+  { top: '28%', left: '2%',  fontSize: 'clamp(1rem,   4vw,  3rem)',   rotate: '22deg',  opacity: 0.13 },
+  { top: '35%', left: '55%', fontSize: 'clamp(1.5rem, 11vw, 8rem)',   rotate: '-14deg', opacity: 0.16 },
+  { top: '50%', left: '15%', fontSize: 'clamp(1.2rem, 7vw,  5rem)',   rotate: '10deg',  opacity: 0.18 },
+  { top: '55%', left: '70%', fontSize: 'clamp(1rem,   5vw,  3.5rem)', rotate: '-20deg', opacity: 0.14 },
+  { top: '65%', left: '5%',  fontSize: 'clamp(1.2rem, 9vw,  6rem)',   rotate: '16deg',  opacity: 0.20 },
+  { top: '70%', left: '45%', fontSize: 'clamp(1rem,   6vw,  4rem)',   rotate: '-6deg',  opacity: 0.15 },
+  { top: '80%', left: '18%', fontSize: 'clamp(1.5rem, 12vw, 9rem)',   rotate: '-12deg', opacity: 0.17 },
+  { top: '83%', left: '68%', fontSize: 'clamp(1rem,   6vw,  4.5rem)', rotate: '18deg',  opacity: 0.13 },
+  { top: '91%', left: '48%', fontSize: 'clamp(1rem,   4vw,  3rem)',   rotate: '-25deg', opacity: 0.15 },
 ];
 
 const App = () => {
