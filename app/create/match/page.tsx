@@ -121,7 +121,7 @@ const MatchPage = () => {
                 copied ? 'bg-green-400 text-white' : 'bg-[#4B3E7A]/10 text-[#4B3E7A]'
               }`}>
                 <Copy size={13} />
-                {copied ? 'Copied!' : 'Copy'}
+                <span className="hidden lg:inline">{copied ? 'Copied!' : 'Copy'}</span>
               </span>
             </button>
 
