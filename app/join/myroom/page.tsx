@@ -100,12 +100,12 @@ export default function MyRoomPage() {
   return (
     <div className="h-dvh bg-[#E5E7EB] font-sans flex flex-col items-center overflow-hidden">
       <Navbar />
-      <div className="flex-1 w-full max-w-6xl px-4 mt-4 flex flex-col min-h-0">
+      <div className="flex-1 w-full lg:max-w-6xl lg:px-4 lg:mt-4 flex flex-col min-h-0">
 
         {/* Header */}
-        <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4 flex-shrink-0">
+        <div className="bg-[#F8A4A4] lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4 flex-shrink-0">
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => router.push('/')}
               title="กลับหน้าหลัก"
@@ -123,14 +123,26 @@ export default function MyRoomPage() {
                 {copied ? 'Copied!' : 'Copy'}
               </span>
             </button>
+
+            {/* Mobile-only: compact ready button */}
+            <button
+              onClick={handleReady}
+              className={`lg:hidden px-4 py-2 rounded-full font-black text-sm uppercase transition-all ${
+                isReady
+                  ? 'bg-green-500 text-white shadow-[0_4px_0_0_#15803d] hover:shadow-[0_2px_0_0_#15803d] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]'
+                  : 'bg-[#7096D1] text-white shadow-[0_4px_0_0_#4A6FA5] hover:shadow-[0_2px_0_0_#4A6FA5] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]'
+              }`}
+            >
+              {isReady ? 'READY ✓' : 'READY'}
+            </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden bg-[#D1D5DB]/40 p-6 md:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 border-b-8 border-gray-300 shadow-inner">
+        <div className="flex-1 overflow-hidden bg-[#D1D5DB]/40 p-4 lg:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 lg:border-b-8 lg:border-gray-300 shadow-inner">
 
           {/* Left: Members */}
-          <div className="overflow-y-auto flex flex-col gap-3 min-h-0 max-h-[40dvh] lg:max-h-none lg:flex-1">
+          <div className="order-2 lg:order-1 overflow-y-auto flex flex-col gap-3 min-h-0 max-h-[40dvh] lg:max-h-none lg:flex-1">
             {members.filter((m) => m.name !== room?.hostName).length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอสมาชิกเข้าร่วม...</div>
             ) : (
@@ -161,7 +173,7 @@ export default function MyRoomPage() {
           </div>
 
           {/* Right: Host info + Ready button */}
-          <div className="flex flex-col gap-6 lg:flex-1">
+          <div className="order-1 lg:order-2 flex flex-col gap-6 lg:flex-1">
             <div className="bg-white rounded-[20px] p-5 sm:p-6 md:p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-6 sm:mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
@@ -198,7 +210,7 @@ export default function MyRoomPage() {
             </div>
 
             <button onClick={handleReady}
-              className={`mt-auto w-full py-5 sm:py-6 md:py-8 rounded-[20px] font-black text-2xl sm:text-3xl md:text-5xl uppercase tracking-widest sm:tracking-[0.2em] text-white transition-all
+              className={`hidden lg:block mt-auto w-full py-5 sm:py-6 md:py-8 rounded-[20px] font-black text-2xl sm:text-3xl md:text-5xl uppercase tracking-widest sm:tracking-[0.2em] text-white transition-all
                 ${isReady
                   ? 'bg-green-500 shadow-[0_10px_0_0_#15803d] hover:shadow-[0_5px_0_0_#15803d] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
                   : 'bg-[#7096D1] shadow-[0_10px_0_0_#4A6FA5] hover:shadow-[0_5px_0_0_#4A6FA5] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
