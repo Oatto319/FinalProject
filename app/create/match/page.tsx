@@ -90,10 +90,10 @@ const MatchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
+    <div className="h-dvh bg-[#E5E7EB] font-sans flex flex-col items-center overflow-hidden">
       <Navbar />
-      <div className="w-full max-w-6xl px-4 mt-4 pb-12">
-        <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
+      <div className="flex-1 w-full max-w-6xl px-4 mt-4 flex flex-col min-h-0">
+        <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
@@ -118,12 +118,12 @@ const MatchPage = () => {
           </button>
         </div>
 
-        <div className="bg-[#D1D5DB]/40 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-b-[40px] border-b-8 border-gray-300 shadow-inner">
+        <div className="flex-1 overflow-y-auto bg-[#D1D5DB]/40 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 border-b-8 border-gray-300 shadow-inner">
           <div className="flex flex-col gap-3">
-            {members.length === 0 ? (
+            {members.filter((m) => m.name !== room?.hostName).length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอนักเรียนเข้าร่วม...</div>
             ) : (
-              members.map((member, idx) => {
+              members.filter((m) => m.name !== room?.hostName).map((member, idx) => {
                 const isSelf = member.name === user?.name;
                 return (
                 <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm cursor-pointer hover:scale-[1.01] transition-all border-2 border-transparent hover:border-blue-200">
