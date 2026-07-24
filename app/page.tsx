@@ -28,6 +28,7 @@ const SCATTERED_TEXT = [
 const App = () => {
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [reveal, setReveal] = useState<RevealState | null>(null);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ const App = () => {
       router.replace('/login');
     } else {
       setReady(true);
+      setTimeout(() => setMounted(true), 10);
     }
   }, [router]);
 
@@ -104,7 +106,7 @@ const App = () => {
 
         <Navbar />
 
-        <main className="px-4 py-4 flex justify-center">
+        <main className={`px-4 py-4 flex justify-center transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
           <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {/* Left Section: Create, Join, Team */}
