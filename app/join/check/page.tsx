@@ -6,7 +6,7 @@ import { ArrowRightCircle } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
-interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface RoomData {
   roomId: string; title: string; description: string; totalMembers: number;
   groupSize: number; deadline?: string | null; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null;
@@ -118,7 +118,7 @@ export default function JoinCheckPage() {
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold text-gray-800 truncate">{member.name}</p>
-                      <p className="text-xs text-gray-400">นักเรียน</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${(member.role ?? 'user') === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>{member.role ?? 'user'}</span>
                     </div>
                   </div>
                   <span className="px-3 sm:px-6 py-1.5 rounded-xl font-bold text-white text-xs sm:text-sm bg-[#7096D1] flex-shrink-0">Joined</span>

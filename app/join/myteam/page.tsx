@@ -38,8 +38,11 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const [roomTitle, setRoomTitle] = useState('');
   const [template, setTemplate] = useState('programming');
   const [leaderTip, setLeaderTip] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatVisible, setIsChatVisible] = useState(false);
   const roomIdRef = useRef<string>('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const mobileChatRef = useRef<HTMLDivElement>(null);
   const groupIdRef = useRef<number | null>(null);
   const memberTypesFetchedRef = useRef(false);
   const initialScrollDoneRef = useRef(false);
@@ -157,6 +160,14 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     }
   }, [isLoadingMessages]);
 
+  useEffect(() => {
+    if (isChatOpen) {
+      setTimeout(() => {
+        if (mobileChatRef.current) mobileChatRef.current.scrollTop = mobileChatRef.current.scrollHeight;
+      }, 50);
+    }
+  }, [isChatOpen, messages]);
+
   const handleSend = async () => {
     if (!message.trim() || !user || !roomIdRef.current || groupIdRef.current === null) return;
     const now = new Date();
@@ -199,6 +210,9 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   };
 
 
+  const openChat = () => { setIsChatOpen(true); setTimeout(() => setIsChatVisible(true), 10); };
+  const closeChat = () => { setIsChatVisible(false); setTimeout(() => setIsChatOpen(false), 300); };
+
   const roleIcons: Record<string, string> = {
     'นักวิเคราะห์': '/img/brain.png',
     'นักคิดสร้างสรรค์': '/img/idea.png',
@@ -218,26 +232,30 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   return (
     <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center">
       <Navbar bgColor="#122031" nameColor="white" />
-      <div className="w-full max-w-7xl px-4 sm:px-6 mt-4 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-3">
-          <button className="bg-[#FF9142] text-white px-6 sm:px-10 md:px-16 py-2.5 sm:py-3 rounded-t-2xl font-bold text-base sm:text-lg md:text-xl shadow-lg truncate max-w-[45vw] sm:max-w-none">{myGroup?.name ?? 'My team'}</button>
-          <button onClick={() => { setEditingName(myGroup?.name ?? ''); setIsEditingName(true); }} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors flex-shrink-0"><Edit2 size={20} /></button>
+      <div className="w-full lg:max-w-7xl lg:px-4 mt-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 lg:gap-4">
+        {/* Row 1: team name (left) + buttons (right, mobile only) */}
+        <div className="flex items-center justify-between lg:justify-start gap-3">
+          <div className="flex items-center gap-3">
+            <button className="bg-[#FF9142] text-white px-6 sm:px-10 md:px-16 py-2.5 sm:py-3 rounded-tr-2xl rounded-br-2xl lg:rounded-tl-2xl lg:rounded-br-none font-bold text-base sm:text-lg md:text-xl shadow-lg truncate max-w-[45vw] sm:max-w-none">{myGroup?.name ?? 'My team'}</button>
+            <button onClick={() => { setEditingName(myGroup?.name ?? ''); setIsEditingName(true); }} className="bg-[#2D3E50] p-2 rounded-full text-white hover:bg-slate-700 transition-colors flex-shrink-0"><Edit2 size={16} /></button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="bg-[#7096D1] text-white px-4 sm:px-6 md:px-10 py-2.5 sm:py-3 rounded-tl-2xl rounded-tr-2xl font-bold text-sm sm:text-lg md:text-xl flex items-center gap-2 sm:gap-3 shadow-inner min-w-0">
-            <span className="truncate max-w-[30vw] sm:max-w-none">{roomTitle}</span>
+        {/* Row 2 (mobile): blue bar flush left + buttons / Row right (desktop): blue bar + buttons */}
+        <div className="flex items-center gap-2 lg:gap-4">
+          <div className="bg-[#7096D1] text-white px-4 sm:px-6 md:px-10 py-2.5 sm:py-3 rounded-tr-2xl lg:rounded-tl-2xl font-bold text-sm sm:text-lg md:text-xl flex items-center gap-2 sm:gap-3 shadow-inner min-w-0">
+            <span className="truncate max-w-[30vw] lg:max-w-none">{roomTitle}</span>
             <span className="opacity-40">|</span>
             <span className="whitespace-nowrap">{myGroup ? myGroup.members.length : teamMembers.length} :Members</span>
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <button onClick={() => router.push('/')} className="bg-[#2D3E50] p-3 rounded-lg text-white hover:bg-slate-700 transition-colors"><Home size={20} /></button>
-            <MbtiTagLegend template={template} className="bg-[#2D3E50] p-3 rounded-full text-white hover:bg-slate-700 transition-colors flex items-center justify-center" />
+            <button onClick={() => router.push('/')} className="bg-[#2D3E50] p-2 rounded-lg text-white hover:bg-slate-700 transition-colors"><Home size={16} /></button>
+            <MbtiTagLegend template={template} className="bg-[#2D3E50] p-2 rounded-full text-white hover:bg-slate-700 transition-colors flex items-center justify-center" />
           </div>
         </div>
       </div>
 
-      <main className="w-full max-w-7xl px-4 sm:px-6 flex-1 flex flex-col">
-        <div className="bg-[#E5E7EB] rounded-tr-[40px] p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 shadow-2xl">
+      <main className="w-full lg:max-w-7xl lg:px-4 flex-1 flex flex-col">
+        <div className="bg-[#E5E7EB] lg:rounded-tr-[40px] p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 shadow-2xl">
           <div className="lg:col-span-5 flex flex-col gap-6 overflow-y-auto">
             {!isMatched ? (
               <div className="bg-white rounded-2xl p-8 text-center text-gray-400 flex flex-col items-center gap-3">
@@ -375,62 +393,143 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
             </div>
           </div>
 
-          <div className="lg:col-span-7 bg-white rounded-[20px] flex flex-col overflow-hidden shadow-inner">
-            <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-[#BACEE0]">
-              {isLoadingMessages ? (
-                <>
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className={`flex items-end gap-2 ${i % 2 === 0 ? 'flex-row-reverse' : ''}`}>
-                      {i % 2 !== 0 && <div className="w-11 h-11 rounded-full bg-white/50 animate-pulse flex-shrink-0" />}
-                      <div className={`flex flex-col gap-1 ${i % 2 === 0 ? 'items-end' : 'items-start'}`}>
-                        {i % 2 !== 0 && <div className="h-3 w-16 bg-white/50 rounded-full animate-pulse mb-1" />}
-                        <div className={`h-9 rounded-2xl animate-pulse ${i % 2 === 0 ? 'bg-[#00B900]/40 w-36' : 'bg-white/60 w-44'} ${[28, 44, 32, 52][i] ? '' : ''}`}
-                          style={{ width: `${[144, 176, 120, 200][i]}px` }} />
+          <div className="lg:col-span-7">
+            {/* Mobile mini chat — tap to open full screen */}
+            <div className="lg:hidden bg-white rounded-[20px] overflow-hidden shadow-inner cursor-pointer" onClick={openChat}>
+              <div className="p-3 bg-[#BACEE0] flex flex-col gap-2 min-h-[60px]">
+                {messages.length === 0 ? (
+                  <p className="text-center text-xs text-gray-500 py-3">ยังไม่มีข้อความ — แตะเพื่อเริ่มแชท</p>
+                ) : (
+                  messages.slice(-6).map((msg) => {
+                    const isMe = msg.sender === user?.name;
+                    return (
+                      <div key={msg.id} className={`flex items-end gap-1.5 ${isMe ? 'flex-row-reverse' : ''}`}>
+                        {!isMe && (
+                          <div className="w-7 h-7 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                            <img src={(() => { const found = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender); return found ? resolveAvatar(found) : resolveAvatar({ avatarSeed: msg.avatarSeed, avatarImage: msg.avatarImage }); })()} alt={msg.sender} className="w-full h-full object-contain" />
+                          </div>
+                        )}
+                        <div className={`px-3 py-1.5 text-xs font-medium shadow-sm max-w-[65%] ${isMe ? 'bg-[#00B900] text-white rounded-t-2xl rounded-bl-2xl rounded-br' : 'bg-white text-gray-800 rounded-t-2xl rounded-br-2xl rounded-bl'}`}>
+                          {msg.text}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </>
-              ) : null}
-              {!isLoadingMessages && messages.map((msg) => {
-                const isMe = msg.sender === user?.name;
-                return (
-                  <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
-                    {!isMe && (
-                      <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 self-end">
-                        <img
-                          src={(() => {
-                            const found = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender);
-                            return found ? resolveAvatar(found) : resolveAvatar({ avatarSeed: msg.avatarSeed, avatarImage: msg.avatarImage });
-                          })()}
-                          alt={msg.sender}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    )}
-                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
-                      {!isMe && <span className="text-xs text-gray-600 mb-1 px-1 font-medium">{msg.sender}</span>}
-                      <div className="flex items-end gap-1.5">
-                        {isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
-                        <div className={`px-4 py-2 text-sm font-medium shadow-sm ${isMe ? 'bg-[#00B900] text-white rounded-t-2xl rounded-bl-2xl rounded-br' : 'bg-white text-gray-800 rounded-t-2xl rounded-br-2xl rounded-bl'}`}>{msg.text}</div>
-                        {!isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })
+                )}
+              </div>
+              <div className="px-4 py-2.5 bg-white border-t border-gray-100 flex items-center gap-2 text-gray-400">
+                <span className="flex-1 text-sm">เริ่มแชท......</span>
+                <Send size={15} />
+              </div>
             </div>
-            <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
-              <input
-                type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder="เริ่มแชท......" className="flex-1 bg-gray-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700"
-              />
-              <button onClick={handleSend} className="w-14 h-14 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all">
-                <Send size={28} />
-              </button>
+
+            {/* Desktop full chat */}
+            <div className="hidden lg:flex bg-white rounded-[20px] flex-col overflow-hidden shadow-inner h-full">
+              <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 bg-[#BACEE0]">
+                {isLoadingMessages ? (
+                  <>
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className={`flex items-end gap-2 ${i % 2 === 0 ? 'flex-row-reverse' : ''}`}>
+                        {i % 2 !== 0 && <div className="w-11 h-11 rounded-full bg-white/50 animate-pulse flex-shrink-0" />}
+                        <div className={`flex flex-col gap-1 ${i % 2 === 0 ? 'items-end' : 'items-start'}`}>
+                          {i % 2 !== 0 && <div className="h-3 w-16 bg-white/50 rounded-full animate-pulse mb-1" />}
+                          <div className={`h-9 rounded-2xl animate-pulse ${i % 2 === 0 ? 'bg-[#00B900]/40 w-36' : 'bg-white/60 w-44'}`} style={{ width: `${[144, 176, 120, 200][i]}px` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : null}
+                {!isLoadingMessages && messages.map((msg) => {
+                  const isMe = msg.sender === user?.name;
+                  return (
+                    <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
+                      {!isMe && (
+                        <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 self-end">
+                          <img src={(() => { const found = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender); return found ? resolveAvatar(found) : resolveAvatar({ avatarSeed: msg.avatarSeed, avatarImage: msg.avatarImage }); })()} alt={msg.sender} className="w-full h-full object-contain" />
+                        </div>
+                      )}
+                      <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[70%]`}>
+                        {!isMe && <span className="text-xs text-gray-600 mb-1 px-1 font-medium">{msg.sender}</span>}
+                        <div className="flex items-end gap-1.5">
+                          {isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
+                          <div className={`px-4 py-2 text-sm font-medium shadow-sm ${isMe ? 'bg-[#00B900] text-white rounded-t-2xl rounded-bl-2xl rounded-br' : 'bg-white text-gray-800 rounded-t-2xl rounded-br-2xl rounded-bl'}`}>{msg.text}</div>
+                          {!isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3">
+                <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={handleKeyDown}
+                  placeholder="เริ่มแชท......" className="flex-1 bg-gray-50 rounded-2xl py-4 px-6 focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700" />
+                <button onClick={handleSend} className="w-14 h-14 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all">
+                  <Send size={28} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Mobile full-screen chat modal */}
+      {isChatOpen && (
+        <div className={`fixed inset-0 z-50 flex flex-col lg:hidden bg-[#BACEE0] transition-transform duration-300 ease-in-out ${isChatVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+          <div className="flex items-center justify-between px-4 py-3 bg-[#122031] flex-shrink-0">
+            <p className="text-white font-bold text-base truncate">{roomTitle}</p>
+            <button onClick={closeChat} className="text-white p-1 hover:opacity-70 transition-opacity"><X size={22} /></button>
+          </div>
+          <div className="flex-1 relative overflow-hidden">
+            {/* Member avatars row — absolute overlay so messages scroll behind it */}
+            <div className="absolute top-0 left-0 right-0 z-10 flex items-center gap-3 px-4 py-3 bg-[#1D324B]/40 backdrop-blur-md overflow-x-auto">
+              {(myGroup?.members ?? teamMembers).map((member, idx) => {
+                const isMe = (user?.gmail && member.gmail === user.gmail) || member.name === user?.name;
+                return (
+                  <div key={idx} className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border-2 border-white/20">
+                        <img src={resolveAvatar(member)} alt={member.name} className="w-full h-full object-contain" />
+                      </div>
+                      {isMe && <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-[#1D324B]" />}
+                    </div>
+                    <span className="text-[9px] text-white/70 font-medium truncate max-w-[44px] text-center">{isMe ? 'คุณ' : member.name.split(' ')[0]}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div ref={mobileChatRef} className="h-full p-4 pt-[84px] overflow-y-auto flex flex-col gap-3">
+            {messages.length === 0 && <p className="text-center text-sm text-gray-500 mt-8">ยังไม่มีข้อความ</p>}
+            {messages.map((msg) => {
+              const isMe = msg.sender === user?.name;
+              return (
+                <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
+                  {!isMe && (
+                    <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 self-end">
+                      <img src={(() => { const found = (myGroup?.members ?? teamMembers).find((m) => m.name === msg.sender); return found ? resolveAvatar(found) : resolveAvatar({ avatarSeed: msg.avatarSeed, avatarImage: msg.avatarImage }); })()} alt={msg.sender} className="w-full h-full object-contain" />
+                    </div>
+                  )}
+                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                    {!isMe && <span className="text-xs text-gray-600 mb-1 px-1 font-medium">{msg.sender}</span>}
+                    <div className="flex items-end gap-1.5">
+                      {isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
+                      <div className={`px-4 py-2 text-sm font-medium shadow-sm ${isMe ? 'bg-[#00B900] text-white rounded-t-2xl rounded-bl-2xl rounded-br' : 'bg-white text-gray-800 rounded-t-2xl rounded-br-2xl rounded-bl'}`}>{msg.text}</div>
+                      {!isMe && <span className="text-[10px] text-gray-500 whitespace-nowrap flex-shrink-0 mb-0.5">{msg.time}</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            </div>
+          </div>
+          <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-3 flex-shrink-0">
+            <input type="text" value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={handleKeyDown}
+              placeholder="เริ่มแชท......" className="flex-1 bg-gray-50 rounded-2xl py-3 px-5 focus:outline-none focus:ring-2 focus:ring-blue-100 text-gray-700" />
+            <button onClick={handleSend} className="w-12 h-12 bg-white border-2 border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-blue-500 hover:border-blue-100 transition-all">
+              <Send size={22} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Room Deleted Modal */}
       {roomDeleted && (

@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   }
 
   const { roomId } = await params;
-  const member = { name: sessionUser.name, avatarSeed: sessionUser.avatarSeed, avatarImage: sessionUser.avatarImage, gmail: sessionUser.gmail };
+  const member = { name: sessionUser.name, avatarSeed: sessionUser.avatarSeed, avatarImage: sessionUser.avatarImage, gmail: sessionUser.gmail, role: sessionUser.role ?? 'user' };
 
   const joined = await Room.findOneAndUpdate(
     {

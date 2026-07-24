@@ -6,7 +6,7 @@ import { Copy, Home, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
-interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; }
+interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; description: string;
   totalMembers: number; groupSize: number; template: string;
@@ -155,7 +155,7 @@ const MatchPage = () => {
                         <p className="font-bold text-gray-700 leading-tight truncate">{member.name}</p>
                         {isSelf && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                       </div>
-                      <p className="text-[10px] text-gray-400 uppercase font-medium">นักเรียน</p>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${(member.role ?? 'user') === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>{member.role ?? 'user'}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -189,14 +189,16 @@ const MatchPage = () => {
                     <p className="font-bold text-gray-800">{user?.name ?? '...'}</p>
                     <span className="bg-[#94A3B8] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-tighter">HOST</span>
                   </div>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user?.role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
-                    {user?.role ?? 'host'}
-                  </span>
-                  {matchMode && (
-                    <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
-                      {matchMode === 'auto' ? '⚡ จับคู่อัตโนมัติ' : '🎛 กำหนดเอง'}
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user?.role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
+                      {user?.role ?? 'host'}
                     </span>
-                  )}
+                    {matchMode && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
+                        {matchMode === 'auto' ? 'จับคู่อัตโนมัติ' : 'กำหนดเอง'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="space-y-4">
