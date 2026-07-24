@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ChevronLeft, CheckCircle2, Clock, Trash2 } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronLeft, CheckCircle2, Clock, Trash2, AlertCircle } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
@@ -11,6 +11,7 @@ interface RoomData {
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null;
   hostRole?: string; members: { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string }[];
   matchDone?: boolean; matchMode?: string; createdAt?: string;
+  evalStatus?: 'pending' | 'done';
 }
 
 const TEMPLATE_COLORS: Record<string, string> = {
@@ -22,6 +23,9 @@ const TEMPLATE_COLORS: Record<string, string> = {
 
 export default function MyProjectsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isEvaluateMode = searchParams.get('mode') === 'evaluate';
+
   const [user, setUser]             = useState<{ name: string; avatarSeed: number; role?: string; gmail?: string } | null>(null);
   const [joinedRooms, setJoinedRooms] = useState<RoomData[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<RoomData | null>(null);
@@ -34,14 +38,15 @@ export default function MyProjectsPage() {
     const u = JSON.parse(raw);
     setUser(u);
 
-    fetch('/api/myrooms')
+    const url = isEvaluateMode ? '/api/evaluations/rooms' : '/api/myrooms';
+    fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error(`API ${r.status}`);
         return r.json();
       })
       .then((data) => setJoinedRooms(data.rooms ?? []))
       .catch(() => setJoinedRooms([]));
-  }, []);
+  }, [isEvaluateMode]);
 
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -88,13 +93,15 @@ export default function MyProjectsPage() {
             </button>
             {joinedRooms.length === 0 ? (
               <div className="bg-white rounded-[24px] p-6 sm:p-8 md:p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400">
-                <div className="text-6xl">📭</div>
-                <p className="font-bold text-lg">ยังไม่มีห้องที่เข้าร่วม</p>
-                <p className="text-sm">กด Join เพื่อเข้าร่วมห้องแรกของคุณ</p>
-                <button onClick={() => router.push('/join/roomid')}
-                  className="mt-2 bg-[#2D3E50] text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
-                  Join ห้องใหม่
-                </button>
+                <div className="text-6xl">{isEvaluateMode ? '📋' : '📭'}</div>
+                <p className="font-bold text-lg">{isEvaluateMode ? 'ยังไม่มีกลุ่มที่สิ้นสุดแล้ว' : 'ยังไม่มีห้องที่เข้าร่วม'}</p>
+                <p className="text-sm">{isEvaluateMode ? 'กลุ่มที่จับแล้วและหมดเวลาจะแสดงที่นี่' : 'กด Join เพื่อเข้าร่วมห้องแรกของคุณ'}</p>
+                {!isEvaluateMode && (
+                  <button onClick={() => router.push('/join/roomid')}
+                    className="mt-2 bg-[#2D3E50] text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
+                    Join ห้องใหม่
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -143,12 +150,18 @@ export default function MyProjectsPage() {
 
                         {/* Status + Delete */}
                         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                          {room.matchDone ? (
+                          {isEvaluateMode ? (
+                            room.evalStatus === 'done' ? (
+                              <span className="flex items-center gap-1 text-green-500 text-xs font-bold"><CheckCircle2 size={12} />ประเมินแล้ว</span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-red-500 text-xs font-bold"><AlertCircle size={12} />ยังไม่ได้ประเมิน</span>
+                            )
+                          ) : room.matchDone ? (
                             <span className="flex items-center gap-1 text-green-500 text-xs font-bold"><CheckCircle2 size={12} />จับกลุ่มแล้ว</span>
                           ) : (
                             <span className="flex items-center gap-1 text-yellow-500 text-xs font-bold"><Clock size={12} />รอ Match</span>
                           )}
-                          {isHost ? (
+                          {!isEvaluateMode && isHost ? (
                             <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(room); setDeleteInput(''); setDeleteError(''); }}
                               className="flex items-center gap-1.5 text-red-400 text-xs font-bold hover:text-red-600 transition-colors">
                               <Trash2 size={13} /> ลบห้อง

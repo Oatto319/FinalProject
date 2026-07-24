@@ -141,6 +141,7 @@ const App = () => {
               <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)] relative z-10">Team</h1>
               <p className="text-[#4D34B8] font-bold text-xs sm:text-sm not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ทีมของฉัน</p>
             </button>
+
           </div>
 
           {/* Right Section */}
@@ -160,13 +161,26 @@ const App = () => {
               <img src="/img/make.png" alt="make" className="absolute bottom-3 right-24 sm:bottom-6 sm:right-32 w-7 h-7 sm:w-10 sm:h-10 object-contain z-20 -rotate-6" />
             </div>
 
-            {/* Quiz Button */}
-            <div
-              onClick={() => router.push('/templates')}
-              className="bg-[#FFAAAA] rounded-[20px] flex-1 cursor-pointer shadow-[0_8px_0_0_#D87878] hover:shadow-[0_4px_0_0_#D87878] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 p-4 sm:p-8"
-            >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(216,120,120,0.5)]">Quiz</h1>
-              <img src="/img/quiz.png" alt="Quiz" className="h-20 sm:h-32 md:h-48 w-auto object-contain drop-shadow-lg" />
+            {/* Quiz + Evaluate row */}
+            <div className="flex gap-4 flex-1 mt-2">
+              {/* Quiz Button — square */}
+              <div
+                onClick={() => router.push('/templates')}
+                className="flex-1 aspect-square bg-[#FFAAAA] rounded-[20px] cursor-pointer shadow-[0_8px_0_0_#D87878] hover:shadow-[0_4px_0_0_#D87878] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-2 p-4 overflow-hidden"
+              >
+                <h1 className="text-3xl sm:text-4xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(216,120,120,0.5)]">Quiz</h1>
+                <img src="/img/quiz.png" alt="Quiz" className="h-16 sm:h-24 md:h-28 w-auto object-contain drop-shadow-lg" />
+              </div>
+
+              {/* Evaluate Button — square */}
+              <button
+                className="flex-1 aspect-square bg-[#FFAD60] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#E8854A] hover:shadow-[0_4px_0_0_#E8854A] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-2 p-4 relative overflow-hidden"
+                onClick={(e) => handleReveal(e, '#FFAD60', '#A05A20', 'Evaluate', '/join/myprojects?mode=evaluate')}
+              >
+                <img src="/img/analyze.PNG" alt="" aria-hidden="true" className="absolute bottom-0 right-0 h-[70%] w-auto object-contain opacity-25 pointer-events-none select-none" />
+                <h1 className="text-3xl sm:text-4xl text-[#A05A20] [text-shadow:0_4px_0_rgba(160,90,32,0.4)] relative z-10">Evaluate</h1>
+                <p className="text-[#A05A20] font-bold text-[10px] sm:text-xs not-italic tracking-normal text-center relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ประเมินเพื่อนร่วมทีม</p>
+              </button>
             </div>
 
           </div>
