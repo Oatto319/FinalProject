@@ -213,7 +213,7 @@ const ManualPage = () => {
         </div>
 
         <div className="flex-1 overflow-hidden bg-[#D1D5DB]/40 p-4 lg:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 lg:border-b-8 lg:border-gray-300 shadow-inner">
-          <div className="order-2 lg:order-1 overflow-y-auto flex flex-col gap-3 min-h-0 max-h-[40dvh] lg:max-h-none lg:flex-1">
+          <div className="order-2 lg:order-1 overflow-y-auto flex flex-col gap-3 min-h-0 flex-1">
             {members.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอนักเรียนเข้าร่วม...</div>
             ) : (
