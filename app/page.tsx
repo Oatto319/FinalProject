@@ -111,29 +111,33 @@ const App = () => {
           <div className="bg-white rounded-[24px] px-4 sm:px-6 pt-5 pb-6 sm:pb-8 shadow-sm flex flex-col gap-4 sm:gap-6">
             {/* Create Button (Yellow) */}
             <button
-              className="h-28 sm:h-32 md:h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
+              className="h-28 sm:h-32 md:h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
               onClick={(e) => handleReveal(e, '#FFDB10', '#A88200', 'Create', '/templates?mode=create')}
             >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)]">Create</h1>
-              <p className="text-[#A88200] font-bold text-xs sm:text-sm not-italic tracking-normal" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>สร้างห้อง</p>
+              <img src="/img/teacher.png" alt="" aria-hidden="true" className="absolute right-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none translate-y-4" />
+              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)] relative z-10">Create</h1>
+              <p className="text-[#A88200] font-bold text-xs sm:text-sm not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>สร้างห้อง</p>
             </button>
 
             {/* Join Button (Blue) */}
             <button
-              className="h-28 sm:h-32 md:h-36 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
+              className="h-28 sm:h-32 md:h-36 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-end justify-center pr-5 relative overflow-hidden"
               onClick={(e) => handleReveal(e, '#74D1FF', '#2D85A0', 'Join', '/join/roomid')}
             >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)]">Join</h1>
-              <p className="text-[#2D85A0] font-bold text-xs sm:text-sm not-italic tracking-normal" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เข้าร่วมด้วยรหัส</p>
+              <img src="/img/team.png" alt="" aria-hidden="true" className="absolute left-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none" />
+              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)] relative z-10">Join</h1>
+              <p className="text-[#2D85A0] font-bold text-xs sm:text-sm not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เข้าร่วมด้วยรหัส</p>
             </button>
 
             {/* Team Button (Purple) */}
             <button
-              className="h-28 sm:h-32 md:h-36 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-1"
+              className="h-28 sm:h-32 md:h-36 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
               onClick={(e) => handleReveal(e, '#7F5CFF', '#4D34B8', 'Team', '/join/myprojects')}
             >
-              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)]">Team</h1>
-              <p className="text-[#4D34B8] font-bold text-xs sm:text-sm not-italic tracking-normal" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ทีมของฉัน</p>
+              <img src="/img/student.png" alt="" aria-hidden="true" className="absolute right-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none translate-y-4" />
+              <img src="/img/crown.PNG" alt="" aria-hidden="true" className="absolute top-4 left-[30%] h-10 w-auto object-contain opacity-70 rotate-[10deg] pointer-events-none select-none" />
+              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)] relative z-10">Team</h1>
+              <p className="text-[#4D34B8] font-bold text-xs sm:text-sm not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ทีมของฉัน</p>
             </button>
           </div>
 
