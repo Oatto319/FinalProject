@@ -166,7 +166,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
         if (mobileChatRef.current) mobileChatRef.current.scrollTop = mobileChatRef.current.scrollHeight;
       }, 50);
     }
-  }, [isChatOpen, messages]);
+  }, [isChatOpen]);
 
   const handleSend = async () => {
     if (!message.trim() || !user || !roomIdRef.current || groupIdRef.current === null) return;
@@ -397,6 +397,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
             {/* Mobile mini chat — tap to open full screen */}
             <div className="lg:hidden bg-white rounded-[20px] overflow-hidden shadow-inner cursor-pointer" onClick={openChat}>
               <div className="p-3 bg-[#BACEE0] flex flex-col gap-2 min-h-[60px]">
+                <p className="text-[10px] text-gray-500 text-center font-medium">แตะเพื่อดูแชทแบบเต็ม</p>
                 {messages.length === 0 ? (
                   <p className="text-center text-xs text-gray-500 py-3">ยังไม่มีข้อความ — แตะเพื่อเริ่มแชท</p>
                 ) : (
@@ -417,9 +418,18 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                   })
                 )}
               </div>
-              <div className="px-4 py-2.5 bg-white border-t border-gray-100 flex items-center gap-2 text-gray-400">
-                <span className="flex-1 text-sm">เริ่มแชท......</span>
-                <Send size={15} />
+              <div className="px-4 py-2.5 bg-white border-t border-gray-100 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="text"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="เริ่มแชท......"
+                  className="flex-1 text-sm text-gray-700 bg-transparent focus:outline-none"
+                />
+                <button onClick={handleSend} className="text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0">
+                  <Send size={15} />
+                </button>
               </div>
             </div>
 

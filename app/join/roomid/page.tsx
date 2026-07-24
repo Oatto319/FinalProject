@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ArrowRightCircle } from 'lucide-react';
 import Navbar from '../../navbar/page';
@@ -10,6 +10,12 @@ export default function EnterRoomIdPage() {
   const [roomId, setRoomId] = useState('');
   const [error, setError]   = useState('');
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 10); return () => clearTimeout(t); }, []);
+
+  const handleBack = () => { setLeaving(true); setTimeout(() => router.back(), 480); };
 
   const handleNext = async () => {
     if (loading) return;
@@ -31,7 +37,7 @@ export default function EnterRoomIdPage() {
   return (
     <div className="h-screen bg-[#E8E8E8] font-sans flex flex-col overflow-hidden" style={{ fontFamily: 'var(--font-geologica), sans-serif' }}>
       <Navbar />
-      <main className="flex-1 flex flex-col w-full max-w-5xl mx-auto mt-4 px-4 overflow-hidden">
+      <main className={`flex-1 flex flex-col w-full max-w-5xl mx-auto mt-4 px-4 overflow-hidden transition-transform duration-500 ease-out ${mounted && !leaving ? 'translate-y-0' : 'translate-y-full'}`}>
         <div className="bg-white rounded-[24px] rounded-bl-none rounded-br-none p-4 sm:p-8 md:p-12 shadow-sm flex flex-col items-center flex-1 relative">
           <div className="w-full flex justify-center -mt-20 sm:-mt-36 mb-4 relative z-10">
             <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[460px] h-auto object-contain drop-shadow-xl"
@@ -46,7 +52,7 @@ export default function EnterRoomIdPage() {
             {error && <p className="text-red-300 text-sm font-bold">{error}</p>}
           </div>
           <div className="w-full max-w-[380px] flex justify-between items-center mt-8">
-            <button className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95" onClick={() => router.back()}>
+            <button className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95" onClick={handleBack}>
               <ChevronLeft size={24} strokeWidth={2.5} />
             </button>
             <button onClick={handleNext} disabled={loading}
