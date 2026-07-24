@@ -98,14 +98,21 @@ export default function MyRoomPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col items-center">
+    <div className="h-dvh bg-[#E5E7EB] font-sans flex flex-col items-center overflow-hidden">
       <Navbar />
-      <div className="w-full max-w-6xl px-4 mt-4 pb-12">
+      <div className="flex-1 w-full max-w-6xl px-4 mt-4 flex flex-col min-h-0">
 
         {/* Header */}
-        <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4">
+        <div className="bg-[#F8A4A4] rounded-t-[40px] p-6 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4 flex-shrink-0">
           <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/')}
+              title="กลับหน้าหลัก"
+              className="w-11 h-11 bg-white rounded-full flex items-center justify-center text-[#4B3E7A] shadow-md hover:bg-white/90 transition-all active:scale-95"
+            >
+              <Home size={20} />
+            </button>
             <button
               onClick={copyToClipboard}
               className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white text-[#4B3E7A] hover:bg-white/90"
@@ -116,25 +123,18 @@ export default function MyRoomPage() {
                 {copied ? 'Copied!' : 'Copy'}
               </span>
             </button>
-            <button
-              onClick={() => router.push('/')}
-              title="กลับหน้าหลัก"
-              className="w-11 h-11 bg-white rounded-full flex items-center justify-center text-[#4B3E7A] shadow-md hover:bg-white/90 transition-all active:scale-95"
-            >
-              <Home size={20} />
-            </button>
           </div>
         </div>
 
         {/* Content */}
-        <div className="bg-[#D1D5DB]/40 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 rounded-b-[40px] border-b-8 border-gray-300 shadow-inner">
+        <div className="flex-1 overflow-hidden bg-[#D1D5DB]/40 p-6 md:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 border-b-8 border-gray-300 shadow-inner">
 
           {/* Left: Members */}
-          <div className="flex flex-col gap-3">
-            {members.length === 0 ? (
+          <div className="overflow-y-auto flex flex-col gap-3 min-h-0 max-h-[40dvh] lg:max-h-none lg:flex-1">
+            {members.filter((m) => m.name !== room?.hostName).length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอสมาชิกเข้าร่วม...</div>
             ) : (
-              members.map((member, idx) => {
+              members.filter((m) => m.name !== room?.hostName).map((member, idx) => {
                 const isMe = member.name === user?.name;
                 const avatarUrl = resolveAvatar(member);
                 return (
@@ -161,7 +161,7 @@ export default function MyRoomPage() {
           </div>
 
           {/* Right: Host info + Ready button */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 lg:flex-1">
             <div className="bg-white rounded-[20px] p-5 sm:p-6 md:p-8 shadow-sm">
               <div className="flex items-center gap-4 mb-6 sm:mb-8">
                 <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">

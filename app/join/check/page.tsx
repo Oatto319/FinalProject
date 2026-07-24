@@ -107,10 +107,10 @@ export default function JoinCheckPage() {
             <h1 className="text-[#4A4E69] text-3xl sm:text-4xl md:text-5xl font-black tracking-widest uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
           <div className="flex flex-col gap-3">
-            {(room?.members ?? []).length === 0 ? (
+            {(room?.members ?? []).filter((m) => m.name !== room?.hostName).length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400">ยังไม่มีสมาชิกในห้อง</div>
             ) : (
-              (room?.members ?? []).map((member, idx) => (
+              (room?.members ?? []).filter((m) => m.name !== room?.hostName).map((member, idx) => (
                 <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm border border-gray-100">
                   <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                     <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100">

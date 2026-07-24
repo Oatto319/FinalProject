@@ -75,7 +75,7 @@ const WaitingRoom = () => {
           </div>
         </div>
 
-        <div className="p-6 md:p-10 bg-[#E5E7EB] grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="p-6 md:p-10 bg-[#E5E7EB] grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-8">
           <div className="flex flex-col gap-3">
             {members.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอนักเรียนเข้าร่วม...</div>

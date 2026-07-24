@@ -165,7 +165,7 @@ const ManualPage = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
-              className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95"
+              className="hidden lg:flex w-10 h-10 bg-white/80 hover:bg-white rounded-full items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95"
               title="กลับหน้าหลัก"
             >
               <Home size={18} />
@@ -173,6 +173,13 @@ const ManualPage = () => {
             <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/')}
+              className="lg:hidden w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95"
+              title="กลับหน้าหลัก"
+            >
+              <Home size={18} />
+            </button>
             <button
               onClick={handleCopy}
               className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white text-[#4B3E7A] hover:bg-white/90"
@@ -195,7 +202,7 @@ const ManualPage = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-[#D1D5DB]/40 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-8 border-b-8 border-gray-300 shadow-inner">
+        <div className="flex-1 overflow-y-auto bg-[#D1D5DB]/40 p-6 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-8 border-b-8 border-gray-300 shadow-inner">
           <div className="flex flex-col gap-3">
             {members.length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอนักเรียนเข้าร่วม...</div>
