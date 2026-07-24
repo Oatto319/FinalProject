@@ -106,40 +106,40 @@ const App = () => {
 
         <Navbar />
 
-        <main className={`px-4 py-4 flex justify-center transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-4">
+        <main className={`px-4 py-4 lg:px-8 lg:py-6 flex justify-center transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+          <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
 
           {/* Left Section: Create, Join, Team */}
-          <div className="bg-white rounded-[24px] px-4 sm:px-6 pt-5 pb-6 sm:pb-8 shadow-sm flex flex-col gap-4 sm:gap-6">
+          <div className="bg-white rounded-[24px] px-4 sm:px-6 lg:px-8 pt-5 pb-6 sm:pb-8 lg:pt-7 lg:pb-10 shadow-sm flex flex-col gap-4 sm:gap-6 lg:gap-8">
             {/* Create Button (Yellow) */}
             <button
-              className="h-28 sm:h-32 md:h-36 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
+              className="h-28 sm:h-32 md:h-36 lg:h-44 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
               onClick={(e) => handleReveal(e, '#FFDB10', '#A88200', 'Create', '/templates?mode=create')}
             >
               <img src="/img/teacher.png" alt="" aria-hidden="true" className="absolute right-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none translate-y-4" />
-              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)] relative z-10">Create</h1>
-              <p className="text-[#A88200] font-bold text-xs sm:text-sm not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>สร้างห้อง</p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)] relative z-10">Create</h1>
+              <p className="text-[#A88200] font-bold text-xs sm:text-sm lg:text-base not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>สร้างห้อง</p>
             </button>
 
             {/* Join Button (Blue) */}
             <button
-              className="h-28 sm:h-32 md:h-36 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-end justify-center pr-5 relative overflow-hidden"
+              className="h-28 sm:h-32 md:h-36 lg:h-44 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-end justify-center pr-5 relative overflow-hidden"
               onClick={(e) => handleReveal(e, '#74D1FF', '#2D85A0', 'Join', '/join/roomid')}
             >
               <img src="/img/team.png" alt="" aria-hidden="true" className="absolute left-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none" />
-              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)] relative z-10">Join</h1>
-              <p className="text-[#2D85A0] font-bold text-xs sm:text-sm not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เข้าร่วมด้วยรหัส</p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)] relative z-10">Join</h1>
+              <p className="text-[#2D85A0] font-bold text-xs sm:text-sm lg:text-base not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เข้าร่วมด้วยรหัส</p>
             </button>
 
             {/* Team Button (Purple) */}
             <button
-              className="h-28 sm:h-32 md:h-36 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
+              className="h-28 sm:h-32 md:h-36 lg:h-44 w-full bg-[#7F5CFF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#5B3FD4] hover:shadow-[0_4px_0_0_#5B3FD4] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
               onClick={(e) => handleReveal(e, '#7F5CFF', '#4D34B8', 'Team', '/join/myprojects')}
             >
               <img src="/img/student.png" alt="" aria-hidden="true" className="absolute right-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none translate-y-4" />
               <img src="/img/crown.PNG" alt="" aria-hidden="true" className="absolute top-4 left-[30%] h-10 w-auto object-contain opacity-70 rotate-[10deg] pointer-events-none select-none" />
-              <h1 className="text-3xl sm:text-4xl md:text-5xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)] relative z-10">Team</h1>
-              <p className="text-[#4D34B8] font-bold text-xs sm:text-sm not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ทีมของฉัน</p>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#4D34B8] [text-shadow:0_4px_0_rgba(91,63,212,0.5)] relative z-10">Team</h1>
+              <p className="text-[#4D34B8] font-bold text-xs sm:text-sm lg:text-base not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ทีมของฉัน</p>
             </button>
 
           </div>
@@ -150,15 +150,12 @@ const App = () => {
             {/* My Type Button */}
             <div
               onClick={() => router.push('/mytype')}
-              className="bg-white rounded-[20px] h-48 sm:h-56 md:h-64 cursor-pointer shadow-[0_8px_0_0_#d1d5db] hover:shadow-[0_4px_0_0_#d1d5db] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all relative flex items-center justify-center overflow-hidden"
+              className="bg-[#EEF9F9] rounded-[20px] h-48 sm:h-56 md:h-64 lg:h-80 cursor-pointer shadow-[0_8px_0_0_#BDE0E0] hover:shadow-[0_4px_0_0_#BDE0E0] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all relative flex items-center justify-center overflow-hidden"
             >
-              <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 bg-[#7ECECA] rounded-full flex items-center justify-center z-10">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl text-[#2B6B6B] tracking-tight">MY TYPE</h1>
+              <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-64 lg:h-64 bg-[#7ECECA] rounded-full flex items-center justify-center z-10 flex-shrink-0">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#2B6B6B] tracking-tight">MY TYPE</h1>
               </div>
-              <img src="/img/brain.png" alt="brain" className="absolute top-3 left-8 sm:top-4 sm:left-10 w-20 h-20 sm:w-28 sm:h-28 object-contain z-20 -rotate-[30deg]" />
-              <img src="/img/idea.png" alt="idea" className="absolute top-3 right-8 sm:top-8 sm:right-14 w-14 h-14 sm:w-20 sm:h-20 object-contain z-20 rotate-[30deg]" />
-              <img src="/img/pencil.png" alt="pencil" className="absolute bottom-3 left-20 sm:bottom-4 sm:left-28 w-10 h-10 sm:w-14 sm:h-14 object-contain z-20 rotate-[20deg]" />
-              <img src="/img/make.png" alt="make" className="absolute bottom-3 right-24 sm:bottom-6 sm:right-32 w-7 h-7 sm:w-10 sm:h-10 object-contain z-20 -rotate-6" />
+              <img src="/img/b2.PNG" alt="" aria-hidden="true" className="absolute right-4 bottom-8 h-[72%] w-auto object-contain pointer-events-none select-none z-20" />
             </div>
 
             {/* Quiz + Evaluate row */}
@@ -168,8 +165,8 @@ const App = () => {
                 onClick={() => router.push('/templates')}
                 className="flex-1 aspect-square bg-[#FFAAAA] rounded-[20px] cursor-pointer shadow-[0_8px_0_0_#D87878] hover:shadow-[0_4px_0_0_#D87878] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-2 p-4 overflow-hidden"
               >
-                <h1 className="text-3xl sm:text-4xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(216,120,120,0.5)]">Quiz</h1>
-                <img src="/img/quiz.png" alt="Quiz" className="h-16 sm:h-24 md:h-28 w-auto object-contain drop-shadow-lg" />
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(216,120,120,0.5)]">Quiz</h1>
+                <img src="/img/quiz.png" alt="Quiz" className="h-16 sm:h-24 md:h-28 lg:h-36 w-auto object-contain drop-shadow-lg" />
               </div>
 
               {/* Evaluate Button — square */}
@@ -178,8 +175,8 @@ const App = () => {
                 onClick={(e) => handleReveal(e, '#FFAD60', '#A05A20', 'Evaluate', '/join/myprojects?mode=evaluate')}
               >
                 <img src="/img/analyze.PNG" alt="" aria-hidden="true" className="absolute bottom-0 right-0 h-[70%] w-auto object-contain opacity-25 pointer-events-none select-none" />
-                <h1 className="text-3xl sm:text-4xl text-[#A05A20] [text-shadow:0_4px_0_rgba(160,90,32,0.4)] relative z-10">Evaluate</h1>
-                <p className="text-[#A05A20] font-bold text-[10px] sm:text-xs not-italic tracking-normal text-center relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ประเมินเพื่อนร่วมทีม</p>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#A05A20] [text-shadow:0_4px_0_rgba(160,90,32,0.4)] relative z-10">Evaluate</h1>
+                <p className="text-[#A05A20] font-bold text-[10px] sm:text-xs lg:text-sm not-italic tracking-normal text-center relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>ประเมินเพื่อนร่วมทีม</p>
               </button>
             </div>
 
