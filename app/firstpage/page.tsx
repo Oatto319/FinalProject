@@ -29,8 +29,8 @@ const AppContent = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#E5E7EB] p-4 font-sans text-[#2D3748]">
       {/* ส่วนหัวข้อหลัก */}
-      <div className="mb-10 text-center">
-        <h1 className="text-5xl font-black tracking-tighter text-[#1A202C] md:text-6xl" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter text-[#1A202C]" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>
           WHO ARE YOU?
         </h1>
         <p className="mt-2 text-sm font-medium text-gray-600">
@@ -39,24 +39,20 @@ const AppContent = () => {
       </div>
 
       {/* ส่วนการ์ดตัวเลือก */}
-      <div className="flex flex-col gap-6 md:flex-row md:gap-8">
+      <div className="flex flex-row gap-4 sm:gap-8 w-full max-w-xl px-2">
         {/* Card: USER */}
         <button
           onClick={() => handleSelect('user')}
-          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80 min-h-[380px]"
+          className="group flex flex-1 flex-col items-center rounded-[1.5rem] sm:rounded-[2rem] bg-white p-4 sm:p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl min-h-[200px] sm:min-h-[380px]"
         >
-          <h2 className="mb-8 text-4xl font-bold tracking-tight text-[#E5A546]">
+          <h2 className="mb-3 sm:mb-8 text-2xl sm:text-4xl font-bold tracking-tight text-[#E5A546]">
             USER
           </h2>
-          <div className="relative h-56 w-full overflow-hidden rounded-xl mt-4">
+          <div className="relative h-28 sm:h-56 w-full overflow-hidden rounded-xl mt-2 sm:mt-4">
             <img
               src="/img/student.png"
               alt="User"
               className="h-full w-full object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "https://placeholder.com/300x200?text=User+Image";
-              }}
             />
           </div>
         </button>
@@ -64,20 +60,16 @@ const AppContent = () => {
         {/* Card: HOST */}
         <button
           onClick={() => handleSelect('host')}
-          className="group flex w-72 flex-col items-center rounded-[2rem] bg-white p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl md:w-80 min-h-[380px]"
+          className="group flex flex-1 flex-col items-center rounded-[1.5rem] sm:rounded-[2rem] bg-white p-4 sm:p-8 shadow-sm transition-all hover:scale-105 hover:shadow-xl min-h-[200px] sm:min-h-[380px]"
         >
-          <h2 className="mb-8 text-4xl font-bold tracking-tight text-[#9F7AEA]">
+          <h2 className="mb-3 sm:mb-8 text-2xl sm:text-4xl font-bold tracking-tight text-[#9F7AEA]">
             HOST
           </h2>
-          <div className="relative h-56 w-full overflow-hidden rounded-xl mt-4">
+          <div className="relative h-28 sm:h-56 w-full overflow-hidden rounded-xl mt-2 sm:mt-4">
             <img
               src="/img/teacher.png"
               alt="Host"
               className="h-full w-full object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "https://placeholder.com/300x200?text=Host+Image";
-              }}
             />
           </div>
         </button>
