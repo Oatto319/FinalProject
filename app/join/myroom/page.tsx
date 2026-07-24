@@ -133,7 +133,7 @@ export default function MyRoomPage() {
                   : 'bg-[#7096D1] text-white shadow-[0_4px_0_0_#4A6FA5] hover:shadow-[0_2px_0_0_#4A6FA5] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px]'
               }`}
             >
-              {isReady ? 'READY ✓' : 'READY'}
+              READY
             </button>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function MyRoomPage() {
                   ? 'bg-green-500 shadow-[0_10px_0_0_#15803d] hover:shadow-[0_5px_0_0_#15803d] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
                   : 'bg-[#7096D1] shadow-[0_10px_0_0_#4A6FA5] hover:shadow-[0_5px_0_0_#4A6FA5] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
                 }`}>
-              {isReady ? 'READY ✓' : 'READY'}
+              READY
             </button>
           </div>
 
