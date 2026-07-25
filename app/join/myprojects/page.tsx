@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, CheckCircle2, Clock, Trash2, AlertCircle } from 'lucide-react';
 import Navbar from '../../navbar/page';
@@ -21,7 +21,7 @@ const TEMPLATE_COLORS: Record<string, string> = {
   design: '#8C71EF',
 };
 
-export default function MyProjectsPage() {
+function MyProjectsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEvaluateMode = searchParams.get('mode') === 'evaluate';
@@ -203,5 +203,13 @@ export default function MyProjectsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MyProjectsPage() {
+  return (
+    <Suspense>
+      <MyProjectsContent />
+    </Suspense>
   );
 }
