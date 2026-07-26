@@ -15,7 +15,10 @@ interface RoomData {
 
 const formatDeadline = (deadline?: string | null) => {
   if (!deadline) return null;
-  return new Date(deadline).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+  const d = new Date(deadline);
+  const dateLabel = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+  const timeLabel = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  return `${dateLabel} เวลา ${timeLabel}`;
 };
 
 export default function JoinCheckPage() {

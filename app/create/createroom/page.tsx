@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ArrowRight, ChevronDown } from 'lucide-react';
 import { todayDateString, toDateString, dateStringToUtcDate } from '@/lib/date';
+import DeadlinePicker from '@/app/components/DeadlinePicker';
 
 interface CurrentUser {
   name: string;
@@ -32,14 +33,15 @@ export default function CreateRoomPage() {
 
   const todayStr = () => todayDateString();
   // นับวันแบบ absolute instant (ไม่พึ่ง timezone ของเครื่อง client) แล้วค่อยแปลงกลับเป็นวันที่ตามเขตเวลาไทย
-  const addDaysStr = (days: number) => {
+  // deadline แบบด่วนตั้งเวลาไว้สิ้นวัน (23:59) ให้เป็นค่าเริ่มต้นที่สมเหตุสมผลที่สุด
+  const addDaysDeadline = (days: number) => {
     const base = dateStringToUtcDate(todayDateString());
     base.setUTCDate(base.getUTCDate() + days);
-    return toDateString(base);
+    return `${toDateString(base)}T23:59`;
   };
 
   const selectDeadline = (days: number) => {
-    setFormData((prev) => ({ ...prev, deadline: addDaysStr(days) }));
+    setFormData((prev) => ({ ...prev, deadline: addDaysDeadline(days) }));
   };
 
   const selectOption = (name: string, value: number) => {
@@ -79,7 +81,7 @@ export default function CreateRoomPage() {
       setShowError(true);
       return;
     }
-    if (deadline && deadline < todayStr()) { setShowError(true); return; }
+    if (deadline && deadline.split('T')[0] < todayStr()) { setShowError(true); return; }
     setShowError(false);
     setLoading(true);
 
@@ -259,15 +261,14 @@ export default function CreateRoomPage() {
               {/* Deadline */}
               <div className="bg-[#1D324B] rounded-[20px] p-5">
                 <p className="text-white font-bold text-base mb-3">&ldquo;When is the deadline?&rdquo;</p>
-                <input
-                  type="date" name="deadline" value={formData.deadline} onChange={handleChange}
-                  min={todayStr()}
-                  className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                <DeadlinePicker
+                  value={formData.deadline}
+                  onChange={(deadline) => setFormData((prev) => ({ ...prev, deadline }))}
                 />
                 <div className="flex flex-wrap gap-2 mt-3">
                   {dayOptions.map((d) => (
                     <button key={d} type="button" onClick={() => selectDeadline(d)}
-                      className={`px-4 py-2 rounded-full font-bold text-sm transition-colors ${formData.deadline === addDaysStr(d) ? 'bg-blue-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                      className={`px-4 py-2 rounded-full font-bold text-sm transition-colors ${formData.deadline === addDaysDeadline(d) ? 'bg-blue-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
                       {d} วัน
                     </button>
                   ))}

@@ -18,3 +18,8 @@ export function toDateString(date: Date): string {
 export function dateStringToUtcDate(dateStr: string): Date {
   return new Date(`${dateStr}T00:00:00+07:00`);
 }
+
+/** แปลง YYYY-MM-DDTHH:mm (วันเวลาตามเขตเวลาไทย) ให้เป็น Date จริง */
+export function dateTimeStringToUtcDate(dateTimeStr: string): Date {
+  return new Date(`${dateTimeStr}:00+07:00`);
+}
