@@ -33,11 +33,12 @@ export default function CreateRoomPage() {
 
   const todayStr = () => todayDateString();
   // นับวันแบบ absolute instant (ไม่พึ่ง timezone ของเครื่อง client) แล้วค่อยแปลงกลับเป็นวันที่ตามเขตเวลาไทย
-  // deadline แบบด่วนตั้งเวลาไว้สิ้นวัน (23:59) ให้เป็นค่าเริ่มต้นที่สมเหตุสมผลที่สุด
+  // deadline แบบด่วนตั้งเวลาไว้ใกล้สิ้นวัน (23:55) ให้เป็นค่าเริ่มต้นที่สมเหตุสมผลที่สุด
+  // ใช้ 23:55 แทน 23:59 ให้ตรงกับ step 5 นาทีของวงล้อเลือกเวลาใน DeadlinePicker
   const addDaysDeadline = (days: number) => {
     const base = dateStringToUtcDate(todayDateString());
     base.setUTCDate(base.getUTCDate() + days);
-    return `${toDateString(base)}T23:59`;
+    return `${toDateString(base)}T23:55`;
   };
 
   const selectDeadline = (days: number) => {

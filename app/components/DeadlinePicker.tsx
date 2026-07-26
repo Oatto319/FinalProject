@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CalendarClock, ChevronDown } from 'lucide-react';
+import { dateStringToUtcDate, dateTimeStringToUtcDate, todayDateString, toDateString } from '@/lib/date';
 
 const OPTION_HEIGHT = 34;
 const WHEEL_PAD = 51; // (136 - OPTION_HEIGHT) / 2 — keeps the centered option in the middle of the 136px-tall wheel
@@ -25,10 +26,12 @@ function parseValue(value: string): Draft | null {
   return { year, month: month - 1, day, hour, minute };
 }
 
+// ใช้เขตเวลาไทยตายตัวเสมอ (เหมือน lib/date.ts) แทนเขตเวลาของเครื่อง client เพื่อไม่ให้ "วันนี้"/"ผ่านมาแล้วหรือยัง" ต่างกันตามอุปกรณ์
 function defaultDraft(): Draft {
-  const base = new Date();
-  base.setDate(base.getDate() + 7);
-  return { year: base.getFullYear(), month: base.getMonth(), day: base.getDate(), hour: 23, minute: 55 };
+  const base = dateStringToUtcDate(todayDateString());
+  base.setUTCDate(base.getUTCDate() + 7);
+  const [year, month, day] = toDateString(base).split('-').map(Number);
+  return { year, month: month - 1, day, hour: 23, minute: 55 };
 }
 
 function formatValue(d: Draft): string {
@@ -52,8 +55,13 @@ function WheelColumn({ options, selectedIndex, onSettle, flex, scrollKey }: {
   const ref = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Clamp defensively: an out-of-range index would set an over-large scrollTop that the browser
+  // silently clamps, which fires a native 'scroll' event and makes handleScroll "settle" onto that
+  // clamped position — silently mutating the value behind the caller's back.
+  const clampedIndex = Math.min(Math.max(selectedIndex, 0), options.length - 1);
+
   useLayoutEffect(() => {
-    if (ref.current) ref.current.scrollTop = scrollTopFromIndex(selectedIndex);
+    if (ref.current) ref.current.scrollTop = scrollTopFromIndex(clampedIndex);
     // Only re-sync when the wheel is (re)mounted/reset — not on every settle, or user scroll would fight this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollKey]);
@@ -81,7 +89,7 @@ function WheelColumn({ options, selectedIndex, onSettle, flex, scrollKey }: {
           key={i}
           style={{ height: OPTION_HEIGHT, scrollSnapAlign: 'center' }}
           className={`flex items-center justify-center font-medium tabular-nums transition-colors ${
-            i === selectedIndex ? 'text-[#1D324B] font-bold text-[17px]' : 'text-gray-300 text-[15px]'
+            i === clampedIndex ? 'text-[#1D324B] font-bold text-[17px]' : 'text-gray-300 text-[15px]'
           }`}
         >
           {label}
@@ -116,7 +124,7 @@ export default function DeadlinePicker({ value, onChange }: DeadlinePickerProps)
   const maxDay = daysInMonth(draft.month, draft.year);
   const dayOptions = useMemo(() => Array.from({ length: maxDay }, (_, i) => String(i + 1)), [maxDay]);
   const monthOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => monthLabel(i)), []);
-  const yearStart = useMemo(() => new Date().getFullYear(), []);
+  const yearStart = useMemo(() => Number(todayDateString().slice(0, 4)), []);
   const yearOptions = useMemo(() => Array.from({ length: YEAR_COUNT }, (_, i) => `${yearStart + i + 543}`), [yearStart]);
   const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, i) => pad2(i)), []);
   const minuteOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => pad2(i * 5)), []);
@@ -132,8 +140,8 @@ export default function DeadlinePicker({ value, onChange }: DeadlinePickerProps)
 
   const handleConfirm = () => {
     const composed = formatValue(draft);
-    const target = new Date(draft.year, draft.month, draft.day, draft.hour, draft.minute);
-    if (target.getTime() < Date.now()) {
+    // เทียบเป็น instant จริงผ่านเขตเวลาไทยเสมอ (เดียวกับที่ server ใช้ตรวจ) แทนการตีความ y/m/d/h/m ตามเขตเวลาของเครื่อง client
+    if (dateTimeStringToUtcDate(composed).getTime() < Date.now()) {
       setError('เลือกเวลาที่ยังไม่ผ่านมาได้เท่านั้น');
       return;
     }
