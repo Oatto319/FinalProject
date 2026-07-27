@@ -11,6 +11,12 @@ const MODES = [
     subtitle: 'AUTO MATCH',
     description: 'ระบบวิเคราะห์ MBTI ของสมาชิกทุกคนแล้วจัดกลุ่มให้สมดุล แต่ละทีมจะได้สมาชิกที่มีความถนัดหลากหลายและเสริมกัน',
     icon: <Sparkles className="w-8 h-8" />,
+    bg: 'bg-[#E39B56]',
+    shadow: 'shadow-[0_6px_0_0_#B9743A]',
+    hoverShadow: 'hover:shadow-[0_3px_0_0_#B9743A]',
+    ring: 'ring-white/40',
+    iconBgActive: 'bg-white text-[#E39B56]',
+    iconBgIdle: 'bg-white/20 text-white',
   },
   {
     id: 'selection',
@@ -18,6 +24,12 @@ const MODES = [
     subtitle: 'SELECTION',
     description: 'คุณเป็นคนกำหนดว่าแต่ละกลุ่มจะประกอบด้วย MBTI type ไหนบ้าง และจำนวนเท่าไหร่ เหมาะสำหรับงานที่ต้องการทีมในรูปแบบเฉพาะเจาะจง',
     icon: <SlidersHorizontal className="w-8 h-8" />,
+    bg: 'bg-[#9C7BC9]',
+    shadow: 'shadow-[0_6px_0_0_#6D4B98]',
+    hoverShadow: 'hover:shadow-[0_3px_0_0_#6D4B98]',
+    ring: 'ring-white/40',
+    iconBgActive: 'bg-white text-[#9C7BC9]',
+    iconBgIdle: 'bg-white/20 text-white',
   },
 ];
 
@@ -60,7 +72,7 @@ export default function TypeSelectionPage() {
           {/* Back */}
           <button
             onClick={() => router.back()}
-            className="absolute left-4 top-4 sm:left-8 sm:top-8 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+            className="absolute left-4 bottom-4 w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition-colors"
           >
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
@@ -80,45 +92,45 @@ export default function TypeSelectionPage() {
                 key={mode.id}
                 onClick={() => setSelected(mode.id)}
                 className={`
-                  bg-[#2D3E50] rounded-[20px] p-8 flex flex-col items-center text-center gap-4 shadow-xl
-                  transition-all duration-300 border-4 relative group
+                  ${mode.bg} ${mode.shadow} ${mode.hoverShadow}
+                  rounded-[20px] p-6 md:p-8 flex flex-row md:flex-col items-center text-left md:text-center gap-4
+                  transition-all duration-150 transform relative group
                   ${selected === mode.id
-                    ? 'border-[#7096D1] scale-105 ring-4 ring-[#7096D1]/20'
-                    : 'border-transparent hover:border-gray-500'}
+                    ? `scale-105 ring-4 ${mode.ring}`
+                    : 'hover:translate-y-[3px] active:translate-y-[6px] active:shadow-none'}
                 `}
               >
                 {selected === mode.id && (
                   <div className="absolute top-4 right-4 text-white">
-                    <CheckCircle2 size={24} fill="#7096D1" />
+                    <CheckCircle2 size={24} fill="rgba(255,255,255,0.3)" />
                   </div>
                 )}
 
                 <div className={`
-                  w-20 h-20 rounded-full flex items-center justify-center mb-1 transition-colors
-                  ${selected === mode.id ? 'bg-[#7096D1] text-white' : 'bg-white/10 text-white/60 group-hover:bg-white/20'}
+                  w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shrink-0 md:mb-1 transition-colors
+                  ${selected === mode.id ? mode.iconBgActive : mode.iconBgIdle}
                 `}>
                   {mode.icon}
                 </div>
 
-                <div>
-                  <p className="text-[#7096D1] text-xs font-bold tracking-widest uppercase mb-1">{mode.subtitle}</p>
+                <div className="flex flex-col items-start md:items-center">
+                  <p className="text-white/80 text-xs font-bold tracking-widest uppercase mb-1">{mode.subtitle}</p>
                   <h3 className="text-white text-2xl font-black">{mode.title}</h3>
+                  <p className="text-white/90 text-sm leading-relaxed font-medium mt-2 md:mt-0">{mode.description}</p>
                 </div>
-
-                <p className="text-gray-400 text-sm leading-relaxed font-medium">{mode.description}</p>
               </button>
             ))}
           </div>
 
           {/* Confirm */}
-          <div className="w-full flex justify-center">
+          <div className="w-full flex justify-end">
             <button
               disabled={!selected}
               onClick={handleConfirm}
               className={`
-                w-full max-w-sm py-5 rounded-[25px] font-black text-2xl transition-all transform uppercase tracking-widest
+                px-10 py-3 rounded-[18px] font-black text-lg transition-all transform uppercase tracking-widest
                 ${selected
-                  ? 'bg-[#7096D1] text-white shadow-[0_8px_0_0_#4A6FA5] hover:shadow-[0_4px_0_0_#4A6FA5] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
+                  ? 'bg-[#7096D1] text-white shadow-[0_6px_0_0_#4A6FA5] hover:shadow-[0_3px_0_0_#4A6FA5] hover:translate-y-[3px] active:shadow-none active:translate-y-[6px]'
                   : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
               `}
             >
