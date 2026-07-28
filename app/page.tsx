@@ -62,9 +62,38 @@ const App = () => {
           from { clip-path: circle(0% at var(--ox) var(--oy)); }
           to   { clip-path: circle(150% at var(--ox) var(--oy)); }
         }
+
+        @keyframes bgGradientMove {
+          0%   { background-position: 0% 50%; }
+          50%  { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        @keyframes waveDrift1 {
+          0%   { transform: translateX(-5%) translateY(0%); }
+          50%  { transform: translateX(5%) translateY(-3%); }
+          100% { transform: translateX(-5%) translateY(0%); }
+        }
+
+        @keyframes waveDrift2 {
+          0%   { transform: translateX(4%) translateY(0%); }
+          50%  { transform: translateX(-6%) translateY(3%); }
+          100% { transform: translateX(4%) translateY(0%); }
+        }
+
+        @keyframes waveDrift3 {
+          0%   { transform: translateX(-3%) translateY(0%); }
+          50%  { transform: translateX(6%) translateY(4%); }
+          100% { transform: translateX(-3%) translateY(0%); }
+        }
       `}</style>
 
-      <div className="min-h-screen bg-[#E8E8E8] font-sans flex flex-col">
+      <div
+        className="min-h-screen font-sans flex flex-col relative overflow-hidden"
+        style={{
+          background: '#E8E8E8',
+        }}
+      >
         {reveal && (
           <div
             style={{
@@ -106,7 +135,7 @@ const App = () => {
 
         <Navbar />
 
-        <main className={`px-4 py-4 lg:px-8 lg:py-6 flex justify-center transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+        <main className={`relative z-10 px-4 py-4 lg:px-8 lg:py-6 flex justify-center lg:justify-start transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
           <div className="w-full max-w-6xl lg:max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
 
           {/* Left Section: Create, Join, Team */}
