@@ -25,6 +25,24 @@ const SCATTERED_TEXT = [
   { top: '91%', left: '48%', fontSize: 'clamp(1rem,   4vw,  3rem)',   rotate: '-25deg', opacity: 0.15 },
 ];
 
+// ✅ ข้อความ "GROUP GENIUS" ลอยผ่านจอเป็นพื้นหลัง (เพิ่มค่า vw เป็น 2 เท่า ให้ใหญ่ขึ้นบนมือถือ)
+const BACKGROUND_FLOAT_TEXT = [
+  { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.12, drift: 'waveDrift1', duration: '26s', delay: '0s' },
+  { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.10, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
+  { top: '38%', left: '-10%', fontSize: 'clamp(1rem,   12vw, 4rem)',  rotate: '-8deg',  opacity: 0.14, drift: 'waveDrift3', duration: '22s', delay: '-8s' },
+  { top: '56%', left: '-15%', fontSize: 'clamp(1.5rem, 22vw, 9rem)',  rotate: '-18deg', opacity: 0.10, drift: 'waveDrift1', duration: '34s', delay: '-10s' },
+  { top: '74%', left: '-10%', fontSize: 'clamp(1.2rem, 16vw, 6rem)',  rotate: '20deg',  opacity: 0.14, drift: 'waveDrift3', duration: '25s', delay: '-6s' },
+  { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.12, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
+];
+
+// ✅ รูป crown.PNG ลอยแทรกในเลเยอร์เดียวกัน (ขนาดใหญ่ขึ้น + opacity เข้มขึ้นเล็กน้อย)
+const BACKGROUND_FLOAT_CROWN = [
+  { top: '14%', left: '-10%', size: '5rem',   rotate: '-15deg', opacity: 0.16, drift: 'waveDrift2', duration: '28s', delay: '-2s' },
+  { top: '46%', left: '-15%', size: '3.5rem', rotate: '20deg',  opacity: 0.13, drift: 'waveDrift1', duration: '31s', delay: '-9s' },
+  { top: '65%', left: '-10%', size: '5.5rem', rotate: '-10deg', opacity: 0.15, drift: 'waveDrift3', duration: '24s', delay: '-5s' },
+  { top: '84%', left: '-15%', size: '4.2rem', rotate: '12deg',  opacity: 0.12, drift: 'waveDrift2', duration: '27s', delay: '-12s' },
+];
+
 const App = () => {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -70,30 +88,91 @@ const App = () => {
         }
 
         @keyframes waveDrift1 {
-          0%   { transform: translateX(-5%) translateY(0%); }
-          50%  { transform: translateX(5%) translateY(-3%); }
-          100% { transform: translateX(-5%) translateY(0%); }
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(120vw) translateY(-6vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
         }
 
         @keyframes waveDrift2 {
-          0%   { transform: translateX(4%) translateY(0%); }
-          50%  { transform: translateX(-6%) translateY(3%); }
-          100% { transform: translateX(4%) translateY(0%); }
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(115vw) translateY(8vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
         }
 
         @keyframes waveDrift3 {
-          0%   { transform: translateX(-3%) translateY(0%); }
-          50%  { transform: translateX(6%) translateY(4%); }
-          100% { transform: translateX(-3%) translateY(0%); }
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(125vw) translateY(-4vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
         }
       `}</style>
 
       <div
         className="min-h-screen font-sans flex flex-col relative overflow-hidden"
         style={{
-          background: '#E8E8E8',
+          background: '#7F5CFF',
         }}
       >
+        {/* ✅ เลเยอร์พื้นหลัง GROUP GENIUS + crown ลอยผ่านจอ */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
+        >
+          {BACKGROUND_FLOAT_TEXT.map((s, i) => (
+            <div
+              key={`text-${i}`}
+              style={{
+                position: 'absolute',
+                top: s.top,
+                left: s.left,
+                transform: `rotate(${s.rotate})`,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontSize: s.fontSize,
+                  opacity: s.opacity,
+                  color: '#F5F5F5',
+                  fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.03em',
+                  whiteSpace: 'nowrap',
+                  animation: `${s.drift} ${s.duration} linear infinite`,
+                  animationDelay: s.delay,
+                }}
+              >
+                GROUP GENIUS
+              </span>
+            </div>
+          ))}
+
+          {BACKGROUND_FLOAT_CROWN.map((c, i) => (
+            <div
+              key={`crown-${i}`}
+              style={{
+                position: 'absolute',
+                top: c.top,
+                left: c.left,
+                transform: `rotate(${c.rotate})`,
+              }}
+            >
+              <img
+                src="/img/crown.PNG"
+                alt=""
+                style={{
+                  display: 'inline-block',
+                  height: c.size,
+                  width: 'auto',
+                  opacity: c.opacity,
+                  animation: `${c.drift} ${c.duration} linear infinite`,
+                  animationDelay: c.delay,
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
         {reveal && (
           <div
             style={{
@@ -133,7 +212,9 @@ const App = () => {
           </div>
         )}
 
-        <Navbar />
+        <div className="relative z-20">
+          <Navbar bgColor="#5B3FD4" nameColor="white" />
+        </div>
 
         <main className={`relative z-10 px-4 py-4 lg:px-8 lg:py-6 flex justify-center transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
           <div className="w-full max-w-6xl lg:max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
