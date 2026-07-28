@@ -135,7 +135,7 @@ const App = () => {
 
         <Navbar />
 
-        <main className={`relative z-10 px-4 py-4 lg:px-8 lg:py-6 flex justify-center lg:justify-start transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+        <main className={`relative z-10 px-4 py-4 lg:px-8 lg:py-6 flex justify-center transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
           <div className="w-full max-w-6xl lg:max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
 
           {/* Left Section: Create, Join, Team */}
