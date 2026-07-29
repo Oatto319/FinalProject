@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Home, Copy } from 'lucide-react';
+import { X, Home, Copy, Users } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
@@ -139,9 +139,18 @@ const GroupResultPage = () => {
                 <p className="text-xs text-gray-400">{room?.totalMembers} คน · กลุ่มละ {room?.groupSize} คน</p>
                 <p className="text-xs text-gray-400 font-medium">ID: {room?.roomId ?? room?.id ?? '...'}</p>
               </div>
+              {groups.length > 0 && (
+                <button
+                  onClick={() => router.push('/join/myteam')}
+                  className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#4B3E7A] hover:bg-[#3d3268] text-white font-bold text-sm transition-all active:scale-95"
+                >
+                  <Users size={16} />
+                  เข้าห้องทีมของฉัน
+                </button>
+              )}
               <button
                 onClick={() => router.push('/')}
-                className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-sm transition-all active:scale-95"
+                className="mt-2 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-sm transition-all active:scale-95"
               >
                 <Home size={16} />
                 กลับหน้าหลัก
