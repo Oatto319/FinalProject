@@ -6,6 +6,7 @@ import { getSessionUser, isRoomHost, isRoomMember } from '@/lib/auth';
 const CRITERIA_KEYS = [
   'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
   'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
+  'teamwork',
 ] as const;
 type CriteriaKey = typeof CRITERIA_KEYS[number];
 
@@ -51,10 +52,11 @@ export async function GET(
   // สมาชิกเก่าที่ไม่มี gmail เก็บไว้ใน room (ข้อมูลก่อนหน้านี้) — หา gmail จริงจาก User ด้วยชื่อแทน
   // ให้สอดคล้องกับ fallback แบบเดียวกับ /member-types
   const namesWithoutGmail = allMembers.filter((m) => !m.gmail).map((m) => m.name);
-  const usersByName = namesWithoutGmail.length
-    ? await User.find({ name: { $in: namesWithoutGmail } }, { name: 1, gmail: 1, _id: 0 }).lean<
-        { name: string; gmail: string }[]
-      >()
+  const usersByName: { name: string; gmail: string }[] = namesWithoutGmail.length
+    ? await User.find(
+        { name: { $in: namesWithoutGmail } },
+        { name: 1, gmail: 1, _id: 0 }
+      ).lean()
     : [];
   const gmailByName = new Map(usersByName.map((u) => [u.name, u.gmail.toLowerCase()]));
 
@@ -65,10 +67,11 @@ export async function GET(
   }
 
   const gmails = [...new Set(resolvedGmailByMemberName.values())];
-  const evals = gmails.length
-    ? await PeerEvaluation.find({ toGmail: { $in: gmails } }, { toGmail: 1, scores: 1, _id: 0 }).lean<
-        { toGmail: string; scores: Record<CriteriaKey, number> }[]
-      >()
+  const evals: { toGmail: string; scores: Record<CriteriaKey, number> }[] = gmails.length
+    ? await PeerEvaluation.find(
+        { toGmail: { $in: gmails } },
+        { toGmail: 1, scores: 1, _id: 0 }
+      ).lean()
     : [];
 
   const byGmail = new Map<string, Record<CriteriaKey, number>[]>();

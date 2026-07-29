@@ -87,7 +87,9 @@ const PeerEvaluationSchema = new Schema({
     timeManagement:  { type: Number, required: true, min: 1, max: 5 },
     adaptability:    { type: Number, required: true, min: 1, max: 5 },
     qualityOfWork:   { type: Number, required: true, min: 1, max: 5 },
+    teamwork:        { type: Number, required: true, min: 1, max: 5 },
   },
+  comment: { type: String, default: '', trim: true, maxlength: 1000 },
 }, { timestamps: true });
 
 PeerEvaluationSchema.index({ roomId: 1, fromGmail: 1, toGmail: 1 }, { unique: true });
