@@ -32,14 +32,24 @@ interface Teammate { name: string; gmail: string; avatarSeed: number; avatarImag
 interface PendingRoom { roomId: string; roomTitle: string; groupId: number; teammates: Teammate[]; }
 interface QueueItem { roomId: string; roomTitle: string; groupId: number; teammate: Teammate; }
 
+// คีย์เฉพาะของ "การประเมินคนคนนี้ในกลุ่มนี้" — ใช้แยกคะแนนของแต่ละคนออกจากกัน
+const keyFor = (item: Pick<QueueItem, 'roomId' | 'groupId' | 'teammate'>) =>
+  `${item.roomId}:${item.groupId}:${item.teammate.gmail}`;
+
 export default function EvaluationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [index, setIndex] = useState(0);
-  const [ratings, setRatings] = useState<Record<string, number>>({});
+  // เก็บคะแนนแยกเป็นรายบุคคล (key = roomId:groupId:gmail) แทนที่จะใช้ตัวแปรเดียวรวมทุกคน
+  // เดิมใช้ ratings ตัวเดียว แล้ว reset ด้วย useEffect ที่ผูกกับ roomId/groupId เท่านั้น
+  // พอเปลี่ยนคนโดยห้อง/กลุ่มเดิม (กรณีปกติของการประเมินเพื่อนในทีมเดียวกัน) effect ไม่ทำงาน
+  // คะแนนของคนแรกเลยค้างติดไปโชว์ที่การ์ดคนที่สอง — นี่คือสาเหตุของบัค "คะแนนถูกก็อปมา"
+  const [ratingsMap, setRatingsMap] = useState<Record<string, Record<string, number>>>({});
+  const [submittedKeys, setSubmittedKeys] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
   const [extra, setExtra] = useState<{ roomId: string; leaderId?: string; types: Record<string, { code: string }> } | null>(null);
 
   // --- swipeable-stack state ---
@@ -66,9 +76,15 @@ export default function EvaluationPage() {
   useEffect(() => { loadPending(); }, []);
 
   const current = queue[index] ?? null;
+  const currentKey = current ? keyFor(current) : null;
+  const ratings = currentKey ? (ratingsMap[currentKey] ?? {}) : {};
+
+  const setRating = (criterionId: string, value: number) => {
+    if (!currentKey) return;
+    setRatingsMap((prev) => ({ ...prev, [currentKey]: { ...(prev[currentKey] ?? {}), [criterionId]: value } }));
+  };
 
   useEffect(() => {
-    setRatings({});
     if (!current) { setExtra(null); return; }
     if (extra?.roomId === current.roomId) return;
 
@@ -85,10 +101,11 @@ export default function EvaluationPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.roomId, current?.groupId]);
 
-  const allAnswered = useMemo(() => CRITERIA.every((c) => ratings[c.id] !== undefined), [ratings]);
+  const answeredCount = useMemo(() => CRITERIA.filter((c) => ratings[c.id] !== undefined).length, [ratings]);
+  const allAnswered = answeredCount === CRITERIA.length;
 
   const handleSubmit = async () => {
-    if (!current || !allAnswered || submitting) return;
+    if (!current || !currentKey || !allAnswered || submitting) return;
     setSubmitting(true);
     try {
       const res = await fetch('/api/evaluations', {
@@ -97,6 +114,9 @@ export default function EvaluationPage() {
         body: JSON.stringify({ roomId: current.roomId, toGmail: current.teammate.gmail, scores: ratings }),
       });
       if (!res.ok) { setSubmitting(false); return; }
+      setSubmittedKeys((prev) => new Set(prev).add(currentKey));
+      setJustSubmitted(true);
+      setTimeout(() => setJustSubmitted(false), 1400);
       if (index + 1 < queue.length) {
         setIndex(index + 1);
       } else {
@@ -177,9 +197,34 @@ export default function EvaluationPage() {
       <Navbar bgColor="#122031" nameColor="white" />
 
       <div className="flex-1 flex flex-col items-center justify-start px-4 py-6">
-        <p className="text-white/60 font-bold text-sm mb-3">
-          ประเมินเพื่อนร่วมทีม · {current.roomTitle} ({index + 1}/{queue.length})
+        <p className="text-white/60 font-bold text-sm mb-1">
+          ประเมินเพื่อนร่วมทีม · {current.roomTitle}
         </p>
+        <p className="text-white/40 font-medium text-xs mb-3">
+          คนที่ {index + 1} จาก {queue.length}
+        </p>
+
+        {/* Progress dots — ใครทำแล้ว / กำลังทำ / ยังไม่ทำ */}
+        {queue.length > 1 && (
+          <div className="flex items-center gap-1.5 mb-4">
+            {queue.map((item, qIdx) => {
+              const done = submittedKeys.has(keyFor(item));
+              const isCurrent = qIdx === index;
+              return (
+                <div
+                  key={`${item.roomId}-${item.teammate.gmail}`}
+                  title={item.teammate.name}
+                  className="rounded-full transition-all"
+                  style={{
+                    width: isCurrent ? 20 : 7,
+                    height: 7,
+                    backgroundColor: done ? '#4ADE80' : isCurrent ? '#ffffff' : 'rgba(255,255,255,0.25)',
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
 
         {/* Swipeable stack */}
         <div
@@ -274,7 +319,7 @@ export default function EvaluationPage() {
                               return (
                                 <button
                                   key={n}
-                                  onClick={() => setRatings(prev => ({ ...prev, [criterion.id]: n }))}
+                                  onClick={() => setRating(criterion.id, n)}
                                   className="flex flex-col items-center gap-1.5"
                                 >
                                   <div
@@ -307,6 +352,16 @@ export default function EvaluationPage() {
                       >
                         {submitting ? 'กำลังส่ง...' : 'ส่งการประเมิน'}
                       </button>
+                      {!allAnswered && (
+                        <p className="text-center text-xs font-medium text-gray-400 mt-2">
+                          ให้คะแนนแล้ว {answeredCount}/{CRITERIA.length} ข้อ — เหลืออีก {CRITERIA.length - answeredCount} ข้อ
+                        </p>
+                      )}
+                      {justSubmitted && (
+                        <p className="text-center text-xs font-bold mt-2" style={{ color: '#22C55E' }}>
+                          ✓ บันทึกคะแนนของ {current.teammate.name} แล้ว
+                        </p>
+                      )}
                     </div>
                     </div>
                   </>
@@ -323,6 +378,11 @@ export default function EvaluationPage() {
                         <p className="font-bold text-base text-gray-800 truncate">{person.name}</p>
                         <p className="text-sm text-gray-500">นักเรียน</p>
                       </div>
+                      {submittedKeys.has(keyFor(item)) && (
+                        <div className="w-7 h-7 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-black">
+                          ✓
+                        </div>
+                      )}
                     </div>
                     <div className="bg-white flex-1" />
                   </>
