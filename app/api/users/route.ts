@@ -27,16 +27,28 @@ function setSessionCookie(res: NextResponse, token: string) {
 
 // GET /api/users?gmail=xxx  → check duplicate / lookup
 // GET /api/users?name=xxx   → lookup by name (fallback)
+//
+// หมายเหตุ: endpoint นี้ต้องใช้งานได้แม้ "ยังไม่ login" ด้วย เพราะหน้าสมัครสมาชิก
+// (app/login/register/page.tsx) เรียกมาเช็ค gmail ซ้ำ "ก่อน" ที่ผู้ใช้จะมี session
+// เดิมบังคับ getSessionUser ทำให้ผู้ใช้ที่ยังไม่ login โดน 401 เสมอ → เช็คซ้ำไม่เคยทำงานจริง
+// จึงเปลี่ยนมาเป็น: ถ้ามี session ใช้ได้ปกติ, ถ้าไม่มี session ก็ยังอนุญาต แต่ rate-limit ตาม IP
+// กันคนไล่สแกนหา gmail ที่มีอยู่ในระบบ (email enumeration)
 export async function GET(req: NextRequest) {
   await connectDB();
   const sessionUser = await getSessionUser(req);
-  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
   const gmail = searchParams.get('gmail')?.toLowerCase();
   const name  = searchParams.get('name');
 
   if (!gmail && !name) return NextResponse.json({ error: 'gmail or name required' }, { status: 400 });
+
+  if (!sessionUser) {
+    const ip = getClientIp(req);
+    if (!checkRateLimit(`users-lookup:${ip}`, 20, 10 * 60 * 1000)) {
+      return NextResponse.json({ error: 'ค้นหาบ่อยเกินไป กรุณาลองใหม่ในอีกสักครู่' }, { status: 429 });
+    }
+  }
 
   const user = gmail
     ? await User.findOne({ gmail })
