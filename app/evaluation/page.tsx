@@ -16,9 +16,11 @@ const CRITERIA = [
   { id: 'timeManagement', label: 'การบริหารจัดการเวลาและวางแผนงาน' },
   { id: 'adaptability',   label: 'ความยืดหยุ่นและปรับตัวเมื่อสถานการณ์เปลี่ยน' },
   { id: 'qualityOfWork',  label: 'คุณภาพของผลงานที่ทำออกมา' },
+  { id: 'teamwork',       label: 'คะแนนการทำงานร่วมกันเป็นทีมโดยรวม' },
 ] as const;
 
 const RATING_LABELS = ['ปรับปรุง', 'พอใช้', 'ปานกลาง', 'ดี', 'ดีมาก'];
+const COMMENT_MAX_LEN = 1000;
 
 // Swipeable-stack tuning
 const STACK_VISIBLE_DEPTH = 3;
@@ -46,6 +48,8 @@ export default function EvaluationPage() {
   // พอเปลี่ยนคนโดยห้อง/กลุ่มเดิม (กรณีปกติของการประเมินเพื่อนในทีมเดียวกัน) effect ไม่ทำงาน
   // คะแนนของคนแรกเลยค้างติดไปโชว์ที่การ์ดคนที่สอง — นี่คือสาเหตุของบัค "คะแนนถูกก็อปมา"
   const [ratingsMap, setRatingsMap] = useState<Record<string, Record<string, number>>>({});
+  // ความคิดเห็นแบบข้อความ แยกเก็บรายบุคคลด้วยคีย์เดียวกับ ratingsMap (ไม่บังคับกรอก)
+  const [commentMap, setCommentMap] = useState<Record<string, string>>({});
   const [submittedKeys, setSubmittedKeys] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -78,10 +82,16 @@ export default function EvaluationPage() {
   const current = queue[index] ?? null;
   const currentKey = current ? keyFor(current) : null;
   const ratings = currentKey ? (ratingsMap[currentKey] ?? {}) : {};
+  const comment = currentKey ? (commentMap[currentKey] ?? '') : '';
 
   const setRating = (criterionId: string, value: number) => {
     if (!currentKey) return;
     setRatingsMap((prev) => ({ ...prev, [currentKey]: { ...(prev[currentKey] ?? {}), [criterionId]: value } }));
+  };
+
+  const setComment = (value: string) => {
+    if (!currentKey) return;
+    setCommentMap((prev) => ({ ...prev, [currentKey]: value.slice(0, COMMENT_MAX_LEN) }));
   };
 
   useEffect(() => {
@@ -111,7 +121,7 @@ export default function EvaluationPage() {
       const res = await fetch('/api/evaluations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomId: current.roomId, toGmail: current.teammate.gmail, scores: ratings }),
+        body: JSON.stringify({ roomId: current.roomId, toGmail: current.teammate.gmail, scores: ratings, comment }),
       });
       if (!res.ok) { setSubmitting(false); return; }
       setSubmittedKeys((prev) => new Set(prev).add(currentKey));
@@ -134,7 +144,7 @@ export default function EvaluationPage() {
   const handleStackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (queue.length <= 1) return;
     const target = e.target as HTMLElement;
-    if (target.closest('button')) return; // don't hijack rating taps / submit button
+    if (target.closest('button') || target.closest('textarea')) return; // don't hijack rating taps / submit button / comment box
     draggingRef.current = true;
     dragStartXRef.current = e.clientX;
     dragXRef.current = 0;
@@ -341,6 +351,26 @@ export default function EvaluationPage() {
                         </div>
                       </div>
                     ))}
+
+                    {/* Comment */}
+                    <div className="h-px mx-5" style={{ backgroundColor: '#B0B5C8' }} />
+                    <div className="px-5 py-5">
+                      <p className="font-semibold text-sm mb-2" style={{ color: '#2D3748' }}>
+                        ความคิดเห็นเพิ่มเติม <span className="font-normal text-gray-400">(ไม่บังคับ)</span>
+                      </p>
+                      <textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="เช่น ทำอะไรได้ดี หรืออยากให้ปรับอะไร..."
+                        rows={3}
+                        maxLength={COMMENT_MAX_LEN}
+                        className="w-full rounded-xl px-3 py-2 text-sm resize-none focus:outline-none"
+                        style={{ border: '2px solid #CBD5E0', color: '#2D3748' }}
+                      />
+                      <p className="text-right text-[10px] font-medium text-gray-400 mt-1">
+                        {comment.length}/{COMMENT_MAX_LEN}
+                      </p>
+                    </div>
 
                     {/* Submit */}
                     <div className="px-5 pb-6 pt-2">

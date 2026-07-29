@@ -7,7 +7,10 @@ import { getPendingEvaluations } from '@/lib/evaluation';
 const CRITERIA_KEYS = [
   'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
   'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
+  'teamwork',
 ] as const;
+
+const COMMENT_MAX_LEN = 1000;
 
 // GET /api/evaluations → รายการห้องที่จบแล้วและยังมีเพื่อนร่วมกลุ่มที่ยังไม่ได้ประเมิน
 export async function GET(req: NextRequest) {
@@ -26,7 +29,7 @@ export async function POST(req: NextRequest) {
   if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await req.json();
-  const { roomId, toGmail, scores } = body;
+  const { roomId, toGmail, scores, comment } = body;
   if (typeof roomId !== 'string' || typeof toGmail !== 'string' || !scores || typeof scores !== 'object') {
     return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 });
   }
@@ -37,6 +40,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'คะแนนต้องเป็นจำนวนเต็ม 1-5' }, { status: 400 });
     }
   }
+
+  // ความคิดเห็นเป็นข้อความเพิ่มเติม — ไม่บังคับ แต่ต้องเป็น string และไม่ยาวเกินกำหนด
+  if (comment !== undefined && comment !== null && typeof comment !== 'string') {
+    return NextResponse.json({ error: 'ความคิดเห็นต้องเป็นข้อความ' }, { status: 400 });
+  }
+  const trimmedComment = typeof comment === 'string' ? comment.trim().slice(0, COMMENT_MAX_LEN) : '';
 
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
@@ -53,7 +62,13 @@ export async function POST(req: NextRequest) {
 
   const saved = await PeerEvaluation.findOneAndUpdate(
     { roomId, fromGmail, toGmail: target },
-    { $set: { groupId: group.id, scores: Object.fromEntries(CRITERIA_KEYS.map((k) => [k, scores[k]])) } },
+    {
+      $set: {
+        groupId: group.id,
+        scores: Object.fromEntries(CRITERIA_KEYS.map((k) => [k, scores[k]])),
+        comment: trimmedComment,
+      },
+    },
     { upsert: true, new: true }
   );
 
