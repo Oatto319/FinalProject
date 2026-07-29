@@ -2,9 +2,9 @@ import { randomBytes, createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 import { connectDB } from './mongodb';
 import { User } from './models';
-
-export { SESSION_COOKIE } from './session-cookie';
 import { SESSION_COOKIE } from './session-cookie';
+
+export { SESSION_COOKIE };
 
 export function createSessionToken(): string {
   return randomBytes(32).toString('hex');

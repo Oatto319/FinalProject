@@ -110,10 +110,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
 
     case 'match': {
       if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (room.matchDone) {
-        // already matched — no-op so a double-click / double-mount can't wipe votes, leaders, or chat
-        return NextResponse.json({ room: room.toObject() });
-      }
+
       const { matchedGroups, matchMode } = body;
       if (!Array.isArray(matchedGroups)) return NextResponse.json({ error: 'matchedGroups required' }, { status: 400 });
 
@@ -137,8 +134,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
 
       const patch: Record<string, unknown> = { matchedGroups: sanitizedGroups, matchDone: true, matchedAt: new Date() };
       if (matchMode) patch.matchMode = matchMode;
-      const updated = await Room.findOneAndUpdate({ roomId }, { $set: patch }, { returnDocument: 'after' });
-      return NextResponse.json({ room: updated!.toObject() });
+
+      // Atomic: อัปเดตได้ก็ต่อเมื่อ matchDone ยังไม่ true ตอนที่เขียนจริง (ไม่ใช่แค่ตอนอ่านตอนต้นฟังก์ชัน)
+      // กัน double-click/double-mount สองคำขอชนกันแล้วเขียนทับผลจับกลุ่มที่มีอยู่แล้ว
+      const updated = await Room.findOneAndUpdate(
+        { roomId, matchDone: { $ne: true } },
+        { $set: patch },
+        { returnDocument: 'after' }
+      );
+
+      if (!updated) {
+        // มีคำขออื่นจับกลุ่มสำเร็จไปก่อนแล้ว (race) → คืนสถานะปัจจุบันแทนที่จะ error หรือเขียนทับ
+        const current = await Room.findOne({ roomId });
+        return NextResponse.json({ room: current!.toObject() });
+      }
+      return NextResponse.json({ room: updated.toObject() });
     }
 
     case 'endActivity': {
