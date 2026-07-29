@@ -31,6 +31,7 @@ function MyProjectsContent() {
   const [deleteTarget, setDeleteTarget] = useState<RoomData | null>(null);
   const [deleteInput, setDeleteInput]   = useState('');
   const [deleteError, setDeleteError]   = useState('');
+  const [isExiting, setIsExiting]       = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -58,6 +59,11 @@ function MyProjectsContent() {
     setDeleteTarget(null); setDeleteInput(''); setDeleteError('');
   };
 
+  const handleBack = () => {
+    setIsExiting(true);
+    setTimeout(() => router.push('/'), 300);
+  };
+
   const handleSelectRoom = (room: RoomData) => {
     localStorage.setItem('currentRoom', JSON.stringify({ ...room, id: room.roomId }));
     const isHost = room.hostName === user?.name;
@@ -76,18 +82,22 @@ function MyProjectsContent() {
 
   return (
     <div className="h-dvh bg-gray-300 font-sans flex flex-col items-center overflow-hidden">
+      <style>{`
+        @keyframes slideUpIn { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideDownOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(48px); } }
+      `}</style>
       <Navbar />
       <main className="flex-1 overflow-hidden w-full max-w-5xl px-4 flex flex-col sm:flex-row sm:items-start gap-3 pt-0 sm:pt-4 pb-4">
 
         {/* Back Button — desktop only */}
-        <button onClick={() => router.push('/')}
+        <button onClick={handleBack}
           className="hidden sm:flex flex-shrink-0 mt-2 w-12 h-12 bg-white rounded-full items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
 
         <div className="flex-1 overflow-y-auto h-full pb-2">
             {joinedRooms.length === 0 ? (
-              <div className="bg-white rounded-[24px] p-6 sm:p-8 md:p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400">
+              <div className={`bg-white rounded-[24px] p-6 sm:p-8 md:p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400 ${isExiting ? 'animate-[slideDownOut_0.3s_ease-in_forwards]' : 'animate-[slideUpIn_0.4s_ease-out]'}`}>
                 <div className="text-6xl">{isEvaluateMode ? '📋' : '📭'}</div>
                 <p className="font-bold text-lg">{isEvaluateMode ? 'ยังไม่มีกลุ่มที่สิ้นสุดแล้ว' : 'ยังไม่มีห้องที่เข้าร่วม'}</p>
                 <p className="text-sm">{isEvaluateMode ? 'กลุ่มที่จับแล้วและหมดเวลาจะแสดงที่นี่' : 'กด Join เพื่อเข้าร่วมห้องแรกของคุณ'}</p>
@@ -99,7 +109,7 @@ function MyProjectsContent() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 ${isExiting ? 'animate-[slideDownOut_0.3s_ease-in_forwards]' : 'animate-[slideUpIn_0.4s_ease-out]'}`}>
                 {joinedRooms.map((room) => {
                   const isHost = room.hostName === user?.name;
                   const templateColor = TEMPLATE_COLORS[room.template] ?? '#D1D5DB';
@@ -171,7 +181,7 @@ function MyProjectsContent() {
             )}
 
             {/* Back Button — mobile only, moved to bottom, scrolls with content */}
-            <button onClick={() => router.push('/')}
+            <button onClick={handleBack}
               className="sm:hidden mt-4 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
               <ChevronLeft size={24} strokeWidth={2.5} />
             </button>
