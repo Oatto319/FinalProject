@@ -328,7 +328,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           {mbtiType ? (
                             <button
                               onClick={() => setPopup({ member, type: mbtiType })}
-                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
                               style={{ backgroundColor: `${mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon)}26` }}
                             >
                               <span className="text-[9px] sm:text-[10px] md:text-[11px] font-black" style={{ color: mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon) }}>
@@ -338,7 +338,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           ) : isManualRoom && member.role && member.role !== 'ไม่ระบุ' ? (
                             <button
                               onClick={() => setPopup({ member, type: { title: member.role!, icon: roleIcons[member.role!] ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                              className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
                               style={{ backgroundColor: `${roleColor(roleIcons[member.role!] ?? '/img/brain.png')}26` }}
                             >
                               <span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-center px-1" style={{ color: roleColor(roleIcons[member.role!] ?? '/img/brain.png') }}>
@@ -346,7 +346,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               </span>
                             </button>
                           ) : (
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-gray-100" />
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gray-100" />
                           )}
                         </div>
                       </div>
