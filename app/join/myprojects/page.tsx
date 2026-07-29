@@ -86,11 +86,6 @@ function MyProjectsContent() {
         </button>
 
         <div className="flex-1 overflow-y-auto h-full pb-2">
-            {/* Back Button — mobile only, scrolls with content */}
-            <button onClick={() => router.push('/')}
-              className="sm:hidden mb-3 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-              <ChevronLeft size={24} strokeWidth={2.5} />
-            </button>
             {joinedRooms.length === 0 ? (
               <div className="bg-white rounded-[24px] p-6 sm:p-8 md:p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400">
                 <div className="text-6xl">{isEvaluateMode ? '📋' : '📭'}</div>
@@ -104,7 +99,7 @@ function MyProjectsContent() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {joinedRooms.map((room) => {
                   const isHost = room.hostName === user?.name;
                   const templateColor = TEMPLATE_COLORS[room.template] ?? '#D1D5DB';
@@ -121,7 +116,7 @@ function MyProjectsContent() {
                       <div className="p-5">
                         {/* Host profile */}
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="w-16 h-16 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
+                          <div className="w-20 h-20 rounded-full overflow-hidden bg-sky-200 flex-shrink-0">
                             <img src={resolveAvatar({ avatarSeed: room.hostAvatarSeed, avatarImage: room.hostAvatarImage })} alt={room.hostName} className="w-full h-full object-contain" />
                           </div>
                           <div>
@@ -174,6 +169,12 @@ function MyProjectsContent() {
                 })}
               </div>
             )}
+
+            {/* Back Button — mobile only, moved to bottom, scrolls with content */}
+            <button onClick={() => router.push('/')}
+              className="sm:hidden mt-4 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+              <ChevronLeft size={24} strokeWidth={2.5} />
+            </button>
         </div>
       </main>
 
