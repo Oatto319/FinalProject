@@ -118,7 +118,18 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     const res = await fetch(`/api/rooms/${roomId}/messages?groupId=${groupIdRef.current}`);
     if (!res.ok) { setIsLoadingMessages(false); return; }
     const data = await res.json();
-    setMessages((data.messages ?? []).map((m: any) => ({ ...m, id: m._id ?? m.id })));
+    interface RawMessage {
+      _id?: string; id?: string; sender: string; text: string; time: string;
+      avatarSeed?: number; avatarImage?: string | null;
+    }
+    setMessages((data.messages ?? []).map((m: RawMessage) => ({
+      id: m._id ?? m.id ?? '',
+      sender: m.sender,
+      text: m.text,
+      time: m.time,
+      avatarSeed: m.avatarSeed,
+      avatarImage: m.avatarImage,
+    })));
     setIsLoadingMessages(false);
   };
 

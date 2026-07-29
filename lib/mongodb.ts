@@ -36,38 +36,44 @@ interface MongooseCache {
   resolvedUri: string | null;
 }
 
-let cached = (global as any).mongoose as MongooseCache;
+// ประกาศ type ของ global.mongooseCache แทนการ cast เป็น any
+declare global {
+  // eslint-disable-next-line no-var
+  var mongooseCache: MongooseCache | undefined;
+}
+
+let cached = global.mongooseCache;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null, resolvedUri: null };
+  cached = global.mongooseCache = { conn: null, promise: null, resolvedUri: null };
 }
 
 export async function connectDB() {
   // Already connected
-  if (cached.conn && mongoose.connection.readyState === 1) return cached.conn;
+  if (cached!.conn && mongoose.connection.readyState === 1) return cached!.conn;
 
   // Connection in-flight — wait instead of creating duplicate
-  if (cached.promise) {
-    cached.conn = await cached.promise;
-    return cached.conn;
+  if (cached!.promise) {
+    cached!.conn = await cached!.promise;
+    return cached!.conn;
   }
 
   // Resolve SRV once per process lifetime (not every request)
-  if (!cached.resolvedUri) {
-    cached.resolvedUri = await resolveMongoSRV(MONGODB_URI);
+  if (!cached!.resolvedUri) {
+    cached!.resolvedUri = await resolveMongoSRV(MONGODB_URI);
   }
 
-  cached.promise = mongoose.connect(cached.resolvedUri, {
+  cached!.promise = mongoose.connect(cached!.resolvedUri, {
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 0,
     connectTimeoutMS: 10000,
   }).then((m) => m).catch((err) => {
-    cached.promise = null;
-    cached.resolvedUri = null;
+    cached!.promise = null;
+    cached!.resolvedUri = null;
     throw err;
   });
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  cached!.conn = await cached!.promise;
+  return cached!.conn;
 }
