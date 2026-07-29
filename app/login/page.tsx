@@ -42,7 +42,7 @@ export default function LoginPage() {
           <img src="/img/team.png" alt="Team Illustration" className="w-full max-w-[420px] h-auto object-contain drop-shadow-lg"
             onError={(e) => { e.currentTarget.src = 'https://img.freepik.com/free-vector/team-holding-jigsaw-puzzle-pieces_74855-6962.jpg'; }} />
         </div>
-        <h1 className="text-[#2D3142] text-xl font-bold mb-8">เข้าสู่ระบบ</h1>
+        <h1 className="text-[#2D3142] text-xl font-bold mb-8" style={{ textShadow: 'none' }}>เข้าสู่ระบบ</h1>
         <div className="w-full bg-[#D1D5DB] rounded-[20px] p-8 mb-6 flex flex-col gap-4 shadow-inner">
           <div className="flex flex-col gap-2">
             <label className="text-[#4A4E69] font-bold text-lg ml-2">Username</label>
