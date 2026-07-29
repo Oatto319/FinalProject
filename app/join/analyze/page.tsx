@@ -32,6 +32,7 @@ export default function AnalyzePage() {
   const [myGroupId, setMyGroupId] = useState<number | null>(null);
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
+  const [cardVisible, setCardVisible] = useState(false);
   const typesFetchedRef = useRef(false);
   const memberTypesRef = useRef<Record<string, MBTIResult>>({});
   const evalScoresRef = useRef<Record<string, { leadership: number; count: number }>>({});
@@ -110,6 +111,16 @@ export default function AnalyzePage() {
     return () => { clearTimeout(timer); clearInterval(interval); };
   }, []);
 
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setCardVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const handleBack = () => {
+    setCardVisible(false);
+    setTimeout(() => router.back(), 300);
+  };
+
   const bestFitIdx = teamMembers.reduce(
     (best, m, idx) => (m.score > (teamMembers[best]?.score ?? 0) ? idx : best),
     0
@@ -147,17 +158,10 @@ export default function AnalyzePage() {
 
         <div className="flex items-start gap-3 flex-1">
 
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-            <ChevronLeft size={24} strokeWidth={2.5} />
-          </button>
-
-        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-4 sm:p-8 md:p-12 shadow-2xl flex flex-col items-center overflow-hidden">
+        <div className={`flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-4 sm:p-8 md:p-12 shadow-2xl flex flex-col items-center overflow-hidden transition-transform duration-300 ease-out ${cardVisible ? 'translate-y-0' : 'translate-y-full'}`}>
 
           {/* Analysis Results Grid */}
-          <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+          <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-12">
             {teamMembers.length === 0 && !isAnalyzing ? (
               <div className="col-span-3 text-center text-gray-400 font-medium py-8">
                 ไม่พบข้อมูลสมาชิกในทีม
@@ -169,8 +173,8 @@ export default function AnalyzePage() {
                   <div
                     key={idx}
                     className={`
-                      bg-white rounded-[22px] p-6 pb-10 flex flex-col items-center gap-4 shadow-sm relative overflow-hidden
-                      transition-all duration-500 border-4
+                      bg-white rounded-[22px] p-4 sm:p-6 sm:pb-10 flex flex-row sm:flex-col items-center gap-3 sm:gap-4 shadow-sm relative overflow-hidden
+                      transition-all duration-500 border-4 text-left sm:text-center
                       ${isBest ? 'border-yellow-400 scale-105 shadow-2xl' : 'border-transparent'}
                     `}
                   >
@@ -179,11 +183,11 @@ export default function AnalyzePage() {
                         <Sparkles size={16} fill="currentColor" />
                       </div>
                     )}
-                    {/* MBTI badge — top-right */}
+                    {/* MBTI badge — top-right corner (desktop) */}
                     {!isBest && memberTypes[member.name] && (
                       <div
                         onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.name] })}
-                        className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                        className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer hidden sm:flex items-center justify-center"
                         style={{ backgroundColor: `${typeColor(memberTypes[member.name].code)}26` }}
                       >
                         <span className="text-[8px] font-black" style={{ color: typeColor(memberTypes[member.name].code) }}>
@@ -192,7 +196,7 @@ export default function AnalyzePage() {
                       </div>
                     )}
 
-                    <div className="relative w-24 h-24 md:w-28 md:h-28">
+                    <div className="relative w-16 h-16 flex-shrink-0 sm:w-24 sm:h-24 md:w-28 md:h-28">
                       <div className="w-full h-full rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
                         <img
                           src={resolveAvatar(member)}
@@ -207,25 +211,38 @@ export default function AnalyzePage() {
                       )}
                     </div>
 
-                    <div className="text-center w-full">
-                      <h4 className="font-bold text-gray-800 text-lg leading-tight">{member.name}</h4>
+                    <div className="flex-1 min-w-0 w-full text-left sm:text-center">
+                      <p className="font-bold text-gray-800 text-sm sm:text-lg leading-tight [text-shadow:none]">{member.name}</p>
+
+                      <div className="w-full mt-2 sm:mt-4">
+                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                          <div
+                            className="h-full transition-all duration-1000 ease-out"
+                            style={{
+                              width: isAnalyzing ? '0%' : `${member.score}%`,
+                              backgroundColor: isBest ? '#FACC15' : '#7096D1',
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between mt-1 px-1">
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Suitability</span>
+                          <span className="text-[10px] font-bold text-gray-700">{isAnalyzing ? '...' : `${member.score}%`}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="w-full mt-auto">
-                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                        <div
-                          className="h-full transition-all duration-1000 ease-out"
-                          style={{
-                            width: isAnalyzing ? '0%' : `${member.score}%`,
-                            backgroundColor: isBest ? '#FACC15' : '#7096D1',
-                          }}
-                        />
+                    {/* MBTI badge — right side, circular, same size as avatar (mobile only) */}
+                    {!isBest && memberTypes[member.name] && (
+                      <div
+                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.name] })}
+                        className="w-16 h-16 flex-shrink-0 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex sm:hidden items-center justify-center"
+                        style={{ backgroundColor: `${typeColor(memberTypes[member.name].code)}26` }}
+                      >
+                        <span className="text-[11px] font-black" style={{ color: typeColor(memberTypes[member.name].code) }}>
+                          {memberTypes[member.name].code}
+                        </span>
                       </div>
-                      <div className="flex justify-between mt-1 px-1">
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Suitability</span>
-                        <span className="text-[10px] font-bold text-gray-700">{isAnalyzing ? '...' : `${member.score}%`}</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               })
@@ -233,17 +250,26 @@ export default function AnalyzePage() {
           </div>
 
           {/* Result Action Button */}
-          <button
-            onClick={handleConfirm}
-            disabled={isAnalyzing}
-            className={`w-full max-w-sm py-4 sm:py-5 rounded-[20px] font-black text-xl sm:text-2xl md:text-3xl transition-all
-              ${isAnalyzing
-                ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'
-                : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}
-            `}
-          >
-            {isAnalyzing ? 'ANALYZING...' : 'CONFIRM LEADER'}
-          </button>
+          <div className="w-full max-w-sm flex items-center gap-3">
+            {/* Back Button */}
+            <button
+              onClick={handleBack}
+              className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+              <ChevronLeft size={22} strokeWidth={2.5} />
+            </button>
+
+            <button
+              onClick={handleConfirm}
+              disabled={isAnalyzing}
+              className={`flex-1 py-4 sm:py-5 rounded-[20px] font-black text-xl sm:text-2xl md:text-3xl transition-all
+                ${isAnalyzing
+                  ? 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'
+                  : 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'}
+              `}
+            >
+              {isAnalyzing ? 'ANALYZING...' : 'CONFIRM LEADER'}
+            </button>
+          </div>
 
           {/* Helper Legend */}
           <div className="mt-4 flex gap-6 text-gray-500 text-xs font-bold italic opacity-60">
