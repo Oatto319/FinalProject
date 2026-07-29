@@ -35,6 +35,7 @@ export default function VotePage() {
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
   const [voteError, setVoteError] = useState('');
+  const [cardVisible, setCardVisible] = useState(false);
   const roomIdRef = useRef<string>('');
   const typesFetchedRef = useRef(false);
 
@@ -83,6 +84,16 @@ export default function VotePage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setCardVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const handleBack = () => {
+    setCardVisible(false);
+    setTimeout(() => router.back(), 300);
+  };
+
   const handleVote = async () => {
     if (!selectedMember || !myGroup || !user || !roomIdRef.current || submitting) return;
     setSubmitting(true);
@@ -126,14 +137,7 @@ export default function VotePage() {
 
         <div className="flex items-start gap-3 flex-1">
 
-          {/* Back Button */}
-          <button
-            onClick={() => router.back()}
-            className="mt-2 flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-            <ChevronLeft size={24} strokeWidth={2.5} />
-          </button>
-
-        <div className="flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-4 sm:p-8 md:p-12 shadow-2xl flex flex-col items-center">
+        <div className={`flex-1 self-stretch bg-[#E5E7EB] rounded-t-[24px] p-4 sm:p-8 md:p-12 shadow-2xl flex flex-col items-center transition-transform duration-300 ease-out ${cardVisible ? 'translate-y-0' : 'translate-y-full'}`}>
 
 
 
@@ -153,7 +157,7 @@ export default function VotePage() {
                   Object.values(groupVotes).forEach((name) => { tally[name] = (tally[name] ?? 0) + 1; });
                   const maxVotes = Math.max(0, ...Object.values(tally));
                   return (
-                    <div className="w-full max-w-3xl grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-6 mb-12">
+                    <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mb-12">
                       {members.map((member) => {
                         const isMe = member.name === user?.name;
                         const avatarUrl = resolveAvatar(member);
@@ -167,8 +171,8 @@ export default function VotePage() {
                             key={member.name}
                             onClick={() => setSelectedMember(member.name)}
                             className={`
-                              bg-white rounded-[20px] p-3 sm:p-6 flex flex-col items-center gap-2 sm:gap-3 shadow-sm
-                              transition-all duration-200 border-4 outline-none relative
+                              bg-white rounded-[20px] p-3 sm:p-6 flex flex-row sm:flex-col items-center gap-3 sm:gap-3 shadow-sm
+                              transition-all duration-200 border-4 outline-none relative text-left sm:text-center
                               ${selectedMember === member.name
                                 ? 'border-[#7096D1] scale-105 shadow-xl'
                                 : isLeading ? 'border-[#FFB800]' : 'border-transparent hover:border-gray-200'}
@@ -178,7 +182,7 @@ export default function VotePage() {
                             {mbtiType && (
                               <div
                                 onClick={(e) => { e.stopPropagation(); setMbtiPopup({ name: member.name, type: mbtiType }); }}
-                                className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-7 h-7 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
+                                className="absolute top-1.5 right-1.5 sm:top-3 sm:right-3 w-7 h-7 sm:w-10 sm:h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer hidden sm:flex items-center justify-center"
                                 style={{ backgroundColor: `${typeColor(mbtiType.code)}26` }}
                               >
                                 <span className="text-[7px] sm:text-[8px] font-black" style={{ color: typeColor(mbtiType.code) }}>{mbtiType.code}</span>
@@ -186,20 +190,20 @@ export default function VotePage() {
                             )}
 
                             {/* Avatar */}
-                            <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
+                            <div className="w-14 h-14 flex-shrink-0 sm:w-20 sm:h-20 md:w-28 md:h-28 rounded-full overflow-hidden bg-gray-50 border-2 border-gray-100 shadow-inner">
                               <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
                             </div>
 
                             {/* Name + Me tag */}
-                            <div className="text-center">
-                              <div className="flex items-center justify-center gap-1 flex-wrap">
-                                <h4 className="text-gray-800 text-xs sm:text-sm md:text-base leading-tight truncate max-w-full">{member.name}</h4>
+                            <div className="flex-1 min-w-0 text-left sm:text-center">
+                              <div className="flex items-center justify-start sm:justify-center gap-1 flex-wrap">
+                                <p className="text-gray-800 font-bold text-xs sm:text-sm md:text-base leading-tight truncate max-w-full [text-shadow:none]">{member.name}</p>
                                 {isMe && <span className="bg-[#7096D1] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">คุณ</span>}
                               </div>
 
                               {/* Voter avatars */}
                               {voteCount > 0 && (
-                                <div className="flex justify-center -space-x-2 mt-2">
+                                <div className="flex justify-start sm:justify-center -space-x-2 mt-2">
                                   {Object.entries(groupVotes)
                                     .filter(([, votedFor]) => votedFor === member.name)
                                     .map(([voter]) => {
@@ -224,6 +228,17 @@ export default function VotePage() {
                               )}
                             </div>
 
+                            {/* MBTI type badge — right side, circular, same size as avatar (mobile only) */}
+                            {mbtiType && (
+                              <div
+                                onClick={(e) => { e.stopPropagation(); setMbtiPopup({ name: member.name, type: mbtiType }); }}
+                                className="w-14 h-14 flex-shrink-0 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex sm:hidden items-center justify-center"
+                                style={{ backgroundColor: `${typeColor(mbtiType.code)}26` }}
+                              >
+                                <span className="text-[11px] font-black" style={{ color: typeColor(mbtiType.code) }}>{mbtiType.code}</span>
+                              </div>
+                            )}
+
                           </button>
                         );
                       })}
@@ -236,18 +251,27 @@ export default function VotePage() {
                 const alreadyVoted = !!groupVotes[user?.name ?? ''];
                 const canVote = selectedMember !== null && !alreadyVoted && !submitting;
                 return (
-                  <button
-                    disabled={!canVote}
-                    onClick={handleVote}
-                    className={`
-                      w-full max-w-xs py-4 sm:py-5 rounded-[20px] font-black text-xl sm:text-2xl md:text-3xl transition-all
-                      ${canVote
-                        ? 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
-                        : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'}
-                    `}
-                  >
-                    {alreadyVoted ? 'โหวตแล้ว' : 'VOTE'}
-                  </button>
+                  <div className="w-full max-w-xs flex items-center gap-3">
+                    {/* Back Button */}
+                    <button
+                      onClick={handleBack}
+                      className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full flex items-center justify-center text-gray-700 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+                      <ChevronLeft size={22} strokeWidth={2.5} />
+                    </button>
+
+                    <button
+                      disabled={!canVote}
+                      onClick={handleVote}
+                      className={`
+                        flex-1 py-4 sm:py-5 rounded-[20px] font-black text-xl sm:text-2xl md:text-3xl transition-all
+                        ${canVote
+                          ? 'bg-[#2D3E50] text-white shadow-[0_8px_0_0_#111c27] hover:shadow-[0_4px_0_0_#111c27] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px]'
+                          : 'bg-gray-300 text-gray-400 cursor-not-allowed shadow-[0_8px_0_0_#b0b0b0]'}
+                      `}
+                    >
+                      {alreadyVoted ? 'โหวตแล้ว' : 'VOTE'}
+                    </button>
+                  </div>
                 );
               })()}
 
