@@ -25,7 +25,7 @@ const SCATTERED_TEXT = [
   { top: '91%', left: '48%', fontSize: 'clamp(1rem,   4vw,  3rem)',   rotate: '-25deg', opacity: 0.15 },
 ];
 
-// ✅ ข้อความ "GROUP GENIUS" ลอยผ่านจอเป็นพื้นหลัง (เพิ่มค่า vw เป็น 2 เท่า ให้ใหญ่ขึ้นบนมือถือ)
+// ✅ ข้อความ "GROUP GENIUS" ลอยผ่านจอเป็นพื้นหลัง (ใหญ่ขึ้นบนมือถือ)
 const BACKGROUND_FLOAT_TEXT = [
   { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.12, drift: 'waveDrift1', duration: '26s', delay: '0s' },
   { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.10, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
@@ -220,7 +220,7 @@ const App = () => {
           <div className="w-full max-w-6xl lg:max-w-7xl grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
 
           {/* Left Section: Create, Join, Team */}
-          <div className="bg-white rounded-[24px] px-4 sm:px-6 lg:px-8 pt-5 pb-6 sm:pb-8 lg:pt-7 lg:pb-10 shadow-sm flex flex-col gap-4 sm:gap-6 lg:gap-8">
+          <div className="bg-[#FFFFFF] rounded-[24px] px-4 sm:px-6 lg:px-8 pt-5 pb-6 sm:pb-8 lg:pt-7 lg:pb-10 shadow-sm flex flex-col gap-4 sm:gap-6 lg:gap-8">
             {/* Create Button (Yellow) */}
             <button
               className="h-28 sm:h-32 md:h-36 lg:h-44 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
@@ -236,7 +236,7 @@ const App = () => {
               className="h-28 sm:h-32 md:h-36 lg:h-44 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-end justify-center pr-5 relative overflow-hidden"
               onClick={(e) => handleReveal(e, '#74D1FF', '#2D85A0', 'Join', '/join/roomid')}
             >
-              <img src="/img/team.png" alt="" aria-hidden="true" className="absolute left-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none" />
+              <img src="/img/team.png" alt="" aria-hidden="true" className="absolute left-0 bottom-0 h-[145%] w-auto object-contain opacity-90 pointer-events-none select-none" />
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)] relative z-10">Join</h1>
               <p className="text-[#2D85A0] font-bold text-xs sm:text-sm lg:text-base not-italic tracking-normal relative z-10" style={{ fontFamily: 'var(--font-noto-sans-thai), sans-serif' }}>เข้าร่วมด้วยรหัส</p>
             </button>
@@ -258,16 +258,16 @@ const App = () => {
           <div className="flex flex-col gap-4 h-full overflow-hidden pb-2">
 
             {/* My Type Button */}
-            <div
+             <div
               onClick={() => router.push('/mytype')}
-              className="bg-[#EEF9F9] rounded-[20px] h-48 sm:h-56 md:h-64 lg:h-80 cursor-pointer shadow-[0_8px_0_0_#BDE0E0] hover:shadow-[0_4px_0_0_#BDE0E0] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all relative flex items-center justify-center overflow-hidden"
+              className="bg-[#5B3FD4] rounded-[20px] h-48 sm:h-56 md:h-64 lg:h-80 cursor-pointer shadow-[0_8px_0_0_#4630A8] hover:shadow-[0_4px_0_0_#4630A8] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all relative flex items-center justify-center overflow-hidden"
             >
-              <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-64 lg:h-64 bg-[#7ECECA] rounded-full flex items-center justify-center z-10 flex-shrink-0">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[#2B6B6B] tracking-tight">MY TYPE</h1>
+              <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-64 lg:h-64 bg-[#B3A0FF] rounded-full flex items-center justify-center z-10 flex-shrink-0">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white tracking-tight">MY TYPE</h1>
               </div>
               <img src="/img/b2.PNG" alt="" aria-hidden="true" className="absolute right-4 bottom-8 h-[72%] w-auto object-contain pointer-events-none select-none z-20" />
             </div>
-
+            
             {/* Quiz + Evaluate row */}
             <div className="flex gap-4 flex-1 mt-2">
               {/* Quiz Button — square */}
@@ -299,4 +299,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default App; 
