@@ -142,14 +142,14 @@ const ProgrammingQuestionnaire = () => {
               <ChevronLeft size={20} strokeWidth={2.5} />
             </button>
             <div className="bg-[#F8A4A4] px-3 py-1.5 rounded-2xl shadow-sm">
-              <h2 className="text-[#4B3E7A] font-black italic tracking-tight uppercase text-sm">PROGRAMMING</h2>
-            </div>
+  <h2 className="text-[#4B3E7A] font-black italic tracking-tight uppercase text-sm" style={{ textShadow: 'none' }}>PROGRAMMING</h2>
+</div>
           </div>
 
           {/* Template badge — desktop/tablet position */}
           <div className="hidden sm:block absolute top-6 right-6 bg-[#F8A4A4] px-6 py-2 rounded-2xl shadow-sm">
-            <h2 className="text-[#4B3E7A] font-black italic tracking-tight uppercase">PROGRAMMING</h2>
-          </div>
+  <h2 className="text-[#4B3E7A] font-black italic tracking-tight uppercase" style={{ textShadow: 'none' }}>PROGRAMMING</h2>
+</div>
 
           {/* Progress indicator */}
           <div className="flex flex-col items-center gap-2 pt-2">

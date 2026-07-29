@@ -131,21 +131,21 @@ const ServiceQuestionnaire = () => {
         <div className="relative flex-1 bg-white rounded-[24px] shadow-xl p-4 sm:p-8 md:p-16 flex flex-col gap-8 sm:gap-12 border-b-8 border-gray-300">
           {/* Mobile header row — back button + template badge share the same line */}
           <div className="flex sm:hidden items-center justify-between">
-            <button
-              onClick={handleBack}
-              className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
-            >
-              <ChevronLeft size={20} strokeWidth={2.5} />
-            </button>
-            <div className="bg-[#A7F3D0] px-3 py-1.5 rounded-2xl shadow-sm">
-              <h2 className="text-[#FF4D8D] font-black italic tracking-tight uppercase text-sm">CUSTOMER / SERVICE</h2>
-            </div>
-          </div>
+  <button
+    onClick={handleBack}
+    className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
+  >
+    <ChevronLeft size={20} strokeWidth={2.5} />
+  </button>
+  <div className="bg-[#A7F3D0] px-3 py-1.5 rounded-2xl shadow-sm">
+    <h2 className="text-[#FF4D8D] font-black italic tracking-tight uppercase text-sm" style={{ textShadow: 'none' }}>CUSTOMER / SERVICE</h2>
+  </div>
+</div>
 
           {/* Template badge — desktop/tablet position */}
           <div className="hidden sm:block absolute top-6 right-6 bg-[#A7F3D0] px-6 py-2 rounded-2xl shadow-sm">
-            <h2 className="text-[#FF4D8D] font-black italic tracking-tight uppercase">CUSTOMER / SERVICE</h2>
-          </div>
+  <h2 className="text-[#FF4D8D] font-black italic tracking-tight uppercase" style={{ textShadow: 'none' }}>CUSTOMER / SERVICE</h2>
+</div>
 
           {/* Progress indicator */}
         <div className="flex flex-col items-center gap-2">

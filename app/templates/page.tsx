@@ -146,10 +146,10 @@ function TemplatesContent() {
       )}
 
       {/* Title Section */}
-      <h2 className={`text-xl sm:text-2xl md:text-3xl font-black mt-4 mb-3 tracking-wider ${item.textColor} text-center uppercase`}
-        style={{ textShadow: `0 3px 0 ${item.shadowColor}` }}>
-        {item.title}
-      </h2>
+<h2 className={`text-xl sm:text-2xl md:text-3xl font-black mt-4 mb-3 tracking-wider ${item.textColor} text-center uppercase`}
+  style={{ textShadow: 'none' }}>
+  {item.title}
+</h2>
 
       {/* Description Box Section */}
       <div className={`${item.innerColor} rounded-[22px] p-4 mx-2 mb-0 mt-5 flex-grow w-full flex items-center justify-center`}>
