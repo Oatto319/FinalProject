@@ -4,6 +4,37 @@ import { Room, PeerEvaluation } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { isRoomEnded } from '@/lib/room-status';
 
+interface RoomMemberLite {
+  name: string;
+  gmail?: string;
+  avatarSeed?: number;
+  avatarImage?: string | null;
+}
+interface MatchedGroupLite {
+  id: number;
+  name: string;
+  members: RoomMemberLite[];
+}
+interface RoomEvalLite {
+  roomId: string;
+  title: string;
+  description?: string;
+  totalMembers: number;
+  groupSize: number;
+  template?: string;
+  hostName: string;
+  hostAvatarSeed?: number;
+  hostAvatarImage?: string | null;
+  hostRole?: string;
+  members: RoomMemberLite[];
+  matchDone: boolean;
+  matchedGroups?: MatchedGroupLite[];
+  deadline?: Date | null;
+  matchedAt?: Date | null;
+  endedManually?: boolean;
+  updatedAt: Date;
+}
+
 // GET /api/evaluations/rooms → ห้องทั้งหมดที่สิ้นสุดแล้วพร้อมสถานะการประเมิน (pending/done)
 export async function GET(req: NextRequest) {
   await connectDB();
@@ -18,7 +49,7 @@ export async function GET(req: NextRequest) {
   })
     .select('roomId title description totalMembers groupSize template hostName hostAvatarSeed hostAvatarImage hostRole members matchDone matchedGroups deadline matchedAt endedManually updatedAt')
     .sort({ updatedAt: -1 })
-    .lean<any[]>();
+    .lean<RoomEvalLite[]>();
 
   const endedRooms = rawRooms.filter((r) => isRoomEnded(r));
   if (endedRooms.length === 0) return NextResponse.json({ rooms: [] });
@@ -36,12 +67,12 @@ export async function GET(req: NextRequest) {
   }
 
   const rooms = endedRooms.map((room) => {
-    const group = (room.matchedGroups ?? []).find((g: any) =>
-      g.members.some((m: any) => m.gmail === gmail)
+    const group = (room.matchedGroups ?? []).find((g) =>
+      g.members.some((m) => m.gmail === gmail)
     );
-    const teammates = (group?.members ?? []).filter((m: any) => m.gmail && m.gmail !== gmail);
+    const teammates = (group?.members ?? []).filter((m) => m.gmail && m.gmail !== gmail);
     const doneSet = doneByRoom.get(room.roomId) ?? new Set<string>();
-    const evalStatus = teammates.length === 0 || teammates.every((m: any) => doneSet.has(m.gmail))
+    const evalStatus = teammates.length === 0 || teammates.every((m) => doneSet.has(m.gmail!))
       ? 'done'
       : 'pending';
 

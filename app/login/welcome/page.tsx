@@ -11,13 +11,39 @@ interface User {
   avatarImage?: string | null;
 }
 
+interface ConfettiPiece {
+  left: string;
+  bottom: string;
+  width: string;
+  height: string;
+  backgroundColor: string;
+  borderRadius: string;
+  animationDelay: string;
+  animationDuration: string;
+}
+
+const CONFETTI_COLORS = ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'];
+
+function generateConfetti(count: number): ConfettiPiece[] {
+  return Array.from({ length: count }).map(() => ({
+    left: `${Math.random() * 100}%`,
+    bottom: `${Math.random() * 20}%`,
+    width: `${Math.random() * 8 + 4}px`,
+    height: `${Math.random() * 8 + 4}px`,
+    backgroundColor: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+    borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+    animationDelay: `${Math.random() * 3}s`,
+    animationDuration: `${Math.random() * 2 + 2}s`,
+  }));
+}
+
 export default function WelcomePage() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [confetti, setConfetti] = useState<ConfettiPiece[] | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    setConfetti(generateConfetti(50));
     const raw = localStorage.getItem('currentUser');
     if (raw) {
       setUser(JSON.parse(raw));
@@ -33,21 +59,8 @@ export default function WelcomePage() {
 
       {/* Confetti Background Effect */}
       <div className="absolute inset-0 pointer-events-none">
-        {mounted && Array.from({ length: 50 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute animate-bounce opacity-80"
-            style={{
-              left: `${Math.random() * 100}%`,
-              bottom: `${Math.random() * 20}%`,
-              width: `${Math.random() * 8 + 4}px`,
-              height: `${Math.random() * 8 + 4}px`,
-              backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'][Math.floor(Math.random() * 5)],
-              borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${Math.random() * 2 + 2}s`,
-            }}
-          />
+        {confetti?.map((piece, i) => (
+          <div key={i} className="absolute animate-bounce opacity-80" style={piece} />
         ))}
       </div>
 
