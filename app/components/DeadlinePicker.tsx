@@ -76,6 +76,16 @@ function WheelColumn({ options, selectedIndex, onSettle, flex, scrollKey }: {
     }, 60);
   };
 
+  // Let a tap on any visible option jump straight to it, instead of forcing the user
+  // to scroll it precisely into the centered slot.
+  const handleOptionClick = (i: number) => {
+    const el = ref.current;
+    if (!el) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    el.scrollTo({ top: scrollTopFromIndex(i), behavior: 'smooth' });
+    onSettle(i);
+  };
+
   return (
     <div
       ref={ref}
@@ -87,7 +97,11 @@ function WheelColumn({ options, selectedIndex, onSettle, flex, scrollKey }: {
       {options.map((label, i) => (
         <div
           key={i}
-          style={{ height: OPTION_HEIGHT, scrollSnapAlign: 'center' }}
+          onClick={() => handleOptionClick(i)}
+          // scrollSnapStop: 'always' forces momentum/fling scrolling to stop at every option instead of
+          // gliding past several snap points at once — that glide-past is what was skipping over the
+          // day/month/year the user meant to land on during a fast swipe.
+          style={{ height: OPTION_HEIGHT, scrollSnapAlign: 'center', scrollSnapStop: 'always', cursor: 'pointer' }}
           className={`flex items-center justify-center font-medium tabular-nums transition-colors ${
             i === clampedIndex ? 'text-[#1D324B] font-bold text-[17px]' : 'text-gray-300 text-[15px]'
           }`}
