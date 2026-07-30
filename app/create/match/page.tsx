@@ -2,15 +2,38 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Copy, Home, X } from 'lucide-react';
+import { Copy, Home, X, Settings, Sparkles, SlidersHorizontal } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
+import DeadlinePicker from '../../components/DeadlinePicker';
 
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; description: string;
-  totalMembers: number; groupSize: number; template: string;
+  totalMembers: number; groupSize: number; template: string; deadline?: string | null; matchMode?: string;
   hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
+}
+
+/** แปลง ISO date string (UTC จาก DB) ให้เป็น 'YYYY-MM-DDTHH:mm' ตามเขตเวลาไทย สำหรับใส่ค่าเริ่มต้นให้ DeadlinePicker */
+const isoToLocalInput = (iso?: string | null): string => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+  const parts = fmt.formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+};
+
+interface SettingsForm {
+  title: string;
+  description: string;
+  totalMembers: string;
+  groupSize: string;
+  deadline: string;
+  matchMode: string;
 }
 
 const MatchPage = () => {
@@ -23,7 +46,88 @@ const MatchPage = () => {
   const [copied, setCopied]         = useState(false);
   const [kickTarget, setKickTarget] = useState<RoomMember | null>(null);
 
+  const [showSettings, setShowSettings]     = useState(false);
+  const [settingsForm, setSettingsForm]     = useState<SettingsForm | null>(null);
+  const [settingsError, setSettingsError]   = useState('');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
+
+  const openSettings = () => {
+    if (!room) return;
+    setSettingsForm({
+      title: room.title ?? '',
+      description: room.description ?? '',
+      totalMembers: String(room.totalMembers ?? ''),
+      groupSize: String(room.groupSize ?? ''),
+      deadline: isoToLocalInput(room.deadline),
+      matchMode: matchMode || 'auto',
+    });
+    setSettingsError('');
+    setShowSettings(true);
+  };
+
+  const handleSaveSettings = async () => {
+    if (!room || !settingsForm || settingsLoading) return;
+    const { title, description, totalMembers, groupSize, deadline, matchMode: newMode } = settingsForm;
+
+    if (!title.trim() || !description.trim() || !totalMembers || !groupSize) {
+      setSettingsError('กรุณากรอกข้อมูลให้ครบ');
+      return;
+    }
+    const total = parseInt(totalMembers);
+    const size = parseInt(groupSize);
+    if (!(total >= 1) || !(size >= 1)) {
+      setSettingsError('จำนวนคนไม่ถูกต้อง');
+      return;
+    }
+    if (size > total) {
+      setSettingsError('จำนวนคนต่อกลุ่ม ต้องไม่มากกว่าจำนวนคนทั้งหมด');
+      return;
+    }
+    if (total < members.length) {
+      setSettingsError(`จำนวนคนทั้งหมดต้องไม่น้อยกว่าจำนวนคนที่เข้าร่วมแล้ว (${members.length} คน)`);
+      return;
+    }
+
+    setSettingsError('');
+    setSettingsLoading(true);
+    try {
+      const res = await fetch(`/api/rooms/${getRoomId(room)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'settings',
+          title: title.trim(),
+          description: description.trim(),
+          totalMembers: total,
+          groupSize: size,
+          deadline: deadline || null,
+          matchMode: newMode,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setSettingsError(data.error ?? 'บันทึกไม่สำเร็จ กรุณาลองใหม่');
+        return;
+      }
+
+      const updatedRoom = { ...room, ...data.room, id: getRoomId(room) };
+      setRoom(updatedRoom);
+      setMatchMode(newMode);
+      localStorage.setItem('currentRoom', JSON.stringify(updatedRoom));
+      setShowSettings(false);
+
+      // เปลี่ยนเป็นโหมดกำหนดเอง (selection) → ต้องไปตั้งค่าองค์ประกอบ MBTI ของกลุ่มต่อ
+      if (newMode === 'selection') {
+        router.push('/create/manual');
+      }
+    } catch {
+      setSettingsError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
 
   const fetchRoom = async (roomId: string) => {
     const res = await fetch(`/api/rooms/${roomId}`);
@@ -123,6 +227,15 @@ const MatchPage = () => {
                 <Copy size={13} />
                 <span className="hidden lg:inline">{copied ? 'Copied!' : 'Copy'}</span>
               </span>
+            </button>
+
+            <button
+              onClick={openSettings}
+              disabled={!room}
+              title="ตั้งค่าห้อง"
+              className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95 disabled:opacity-50"
+            >
+              <Settings size={18} />
             </button>
 
             {/* Mobile-only: compact match button */}
@@ -251,6 +364,138 @@ const MatchPage = () => {
           </div>
         </div>
       </div>
+
+      {showSettings && settingsForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-8 overflow-y-auto" onClick={() => !settingsLoading && setShowSettings(false)}>
+          <div className="bg-white rounded-[24px] p-6 w-full max-w-lg shadow-2xl my-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-xl font-black text-gray-800">ตั้งค่าห้อง</p>
+              <button
+                onClick={() => !settingsLoading && setShowSettings(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {/* ชื่อกิจกรรม */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 mb-1.5 block">ชื่อกิจกรรม</label>
+                <input
+                  type="text" maxLength={100}
+                  value={settingsForm.title}
+                  onChange={(e) => setSettingsForm((p) => p && { ...p, title: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                />
+              </div>
+
+              {/* คำอธิบาย */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 mb-1.5 block">คำอธิบาย</label>
+                <textarea
+                  rows={2} maxLength={500}
+                  value={settingsForm.description}
+                  onChange={(e) => setSettingsForm((p) => p && { ...p, description: e.target.value })}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                />
+              </div>
+
+              {/* จำนวนคน */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-400 mb-1.5 block">จำนวนคนทั้งหมด</label>
+                  <input
+                    type="number" min={1} max={300}
+                    value={settingsForm.totalMembers}
+                    onChange={(e) => setSettingsForm((p) => p && { ...p, totalMembers: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold text-center focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 mb-1.5 block">จำนวนคนต่อกลุ่ม</label>
+                  <input
+                    type="number" min={1} max={50}
+                    value={settingsForm.groupSize}
+                    onChange={(e) => setSettingsForm((p) => p && { ...p, groupSize: e.target.value })}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-gray-800 font-semibold text-center focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* วันเวลาสิ้นสุด */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 mb-1.5 block">วันและเวลาสิ้นสุด (ไม่บังคับ)</label>
+                <DeadlinePicker
+                  value={settingsForm.deadline}
+                  onChange={(deadline) => setSettingsForm((p) => p && { ...p, deadline })}
+                />
+                {settingsForm.deadline && (
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm((p) => p && { ...p, deadline: '' })}
+                    className="text-xs font-bold text-gray-400 hover:text-gray-600 mt-2 transition-colors"
+                  >
+                    ล้างวันที่
+                  </button>
+                )}
+              </div>
+
+              {/* โหมดการจับคู่ */}
+              <div>
+                <label className="text-xs font-bold text-gray-400 mb-1.5 block">โหมดการจับกลุ่ม</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm((p) => p && { ...p, matchMode: 'auto' })}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 font-bold text-sm transition-all border-2 ${
+                      settingsForm.matchMode === 'auto'
+                        ? 'bg-[#E39B56] text-white border-[#E39B56]'
+                        : 'bg-gray-50 text-gray-500 border-transparent hover:border-gray-200'
+                    }`}
+                  >
+                    <Sparkles size={18} />
+                    Auto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsForm((p) => p && { ...p, matchMode: 'selection' })}
+                    className={`flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 font-bold text-sm transition-all border-2 ${
+                      settingsForm.matchMode === 'selection'
+                        ? 'bg-[#9C7BC9] text-white border-[#9C7BC9]'
+                        : 'bg-gray-50 text-gray-500 border-transparent hover:border-gray-200'
+                    }`}
+                  >
+                    <SlidersHorizontal size={18} />
+                    Manual
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {settingsError && (
+              <p className="text-red-500 font-bold text-sm mt-4">⚠️ {settingsError}</p>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowSettings(false)}
+                disabled={settingsLoading}
+                className="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all disabled:opacity-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                disabled={settingsLoading}
+                className="flex-1 py-3 rounded-2xl bg-[#4B3E7A] text-white font-bold hover:opacity-90 transition-all active:scale-95 disabled:opacity-60"
+              >
+                {settingsLoading ? 'กำลังบันทึก...' : 'บันทึก'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {kickTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setKickTarget(null)}>
