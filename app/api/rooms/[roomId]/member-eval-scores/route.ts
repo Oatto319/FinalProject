@@ -10,11 +10,12 @@ const CRITERIA_KEYS = [
 ] as const;
 type CriteriaKey = typeof CRITERIA_KEYS[number];
 
-// GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนประเมินย้อนหลังเฉพาะกลุ่มนั้น (post-match)
-// GET /api/rooms/:roomId/member-eval-scores               → คะแนนประเมินย้อนหลังทุกคนในห้อง (post-match)
-// GET /api/rooms/:roomId/member-eval-scores?source=members → คะแนนประเมินย้อนหลังทุกคนในห้อง (pre-match, ใช้ตอนจับกลุ่ม)
+// GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนประเมินเฉพาะกลุ่มนั้น (post-match)
+// GET /api/rooms/:roomId/member-eval-scores               → คะแนนประเมินทุกคนในห้อง (post-match)
+// GET /api/rooms/:roomId/member-eval-scores?source=members → คะแนนประเมินทุกคนในห้อง (pre-match, ใช้ตอนจับกลุ่ม)
 //
-// ค่าเฉลี่ยคำนวณจากประวัติแบบประเมินเพื่อนร่วมทีมทุกห้องในอดีต (ไม่ใช่แค่ห้องนี้) เพื่อสะท้อนพฤติกรรมสะสมของแต่ละคน
+// ค่าเฉลี่ยคำนวณจากแบบประเมินเพื่อนร่วมทีม "ของห้องนี้ห้องเดียว" เท่านั้น — ไม่ดึงประวัติจากห้องอื่นมารวม
+// เพื่อไม่ให้คะแนน/ผลวิเคราะห์ของห้องหนึ่งไปปนกับอีกห้องหนึ่ง
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
@@ -67,9 +68,10 @@ export async function GET(
   }
 
   const gmails = [...new Set(resolvedGmailByMemberName.values())];
+  // จำกัดด้วย roomId ปัจจุบันเสมอ — ไม่เอาแบบประเมินที่เคยทำในห้องอื่นมาปนกับห้องนี้
   const evals: { toGmail: string; scores: Record<CriteriaKey, number> }[] = gmails.length
     ? await PeerEvaluation.find(
-        { toGmail: { $in: gmails } },
+        { roomId, toGmail: { $in: gmails } },
         { toGmail: 1, scores: 1, _id: 0 }
       ).lean()
     : [];
