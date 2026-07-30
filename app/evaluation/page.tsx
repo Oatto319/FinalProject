@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Home } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
@@ -146,10 +146,8 @@ export default function EvaluationPage() {
       setJustSubmitted(true);
       setTimeout(() => setJustSubmitted(false), 1400);
       if (personIndex + 1 < queue.length) {
-        // ยังเหลือเพื่อนในห้องนี้ — ไปคนถัดไปในห้องเดียวกัน
         setPersonIndex(personIndex + 1);
       } else {
-        // ทำครบทุกคนในห้องนี้แล้ว — รีเฟรชรายการห้องแล้วกลับไปหน้ารายการห้อง
         await loadPending();
         setActiveRoomId(null);
         setPersonIndex(0);
@@ -159,13 +157,10 @@ export default function EvaluationPage() {
     }
   };
 
-  // --- swipe handlers (front card only): drag follows the finger, releasing past the
-  // threshold advances/rewinds the queue (loops around); a swiped-away card simply
-  // becomes non-front and its own transform transition carries it back into the stack ---
   const handleStackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (queue.length <= 1) return;
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('textarea')) return; // don't hijack rating taps / submit button / comment box
+    if (target.closest('button') || target.closest('textarea')) return;
     draggingRef.current = true;
     dragStartXRef.current = e.clientX;
     dragXRef.current = 0;
@@ -188,7 +183,6 @@ export default function EvaluationPage() {
     setIsDragging(false);
     setDragX(0);
     const delta = dragXRef.current;
-    // วนเฉพาะภายในเพื่อนร่วมทีมของห้องที่เปิดอยู่ — swipe จะไม่มีทางข้ามไปห้องอื่น
     if (queue.length > 1) {
       if (delta <= -SWIPE_THRESHOLD) {
         setPersonIndex((idx) => (idx + 1) % queue.length);
@@ -214,7 +208,18 @@ export default function EvaluationPage() {
         <Navbar bgColor="#122031" nameColor="white" />
         <div className="flex-1 flex flex-col items-center px-4 py-6">
           <div className="w-full max-w-2xl">
-            <p className="text-white text-2xl font-black mb-1">แบบประเมินเพื่อนร่วมทีม</p>
+            <div className="flex items-start justify-between gap-3 mb-1">
+              <div>
+                <p className="text-white text-2xl font-black">แบบประเมินเพื่อนร่วมทีม</p>
+              </div>
+              <button
+                onClick={() => router.push('/')}
+                title="กลับหน้าหลัก"
+                className="w-10 h-10 flex-shrink-0 bg-white rounded-full flex items-center justify-center text-[#1D324B] shadow-md hover:bg-white/90 transition-all active:scale-95"
+              >
+                <Home size={18} />
+              </button>
+            </div>
             <p className="text-white/50 font-medium text-sm mb-6">
               {rooms.length > 0
                 ? 'เลือกห้องที่ต้องการทำแบบประเมิน — ทำทีละห้อง คะแนนของแต่ละห้องจะไม่ปนกัน'
@@ -239,7 +244,6 @@ export default function EvaluationPage() {
                     onClick={() => openRoom(room.roomId)}
                     className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:brightness-95 active:scale-[0.99] transition-all text-left"
                   >
-                    {/* Avatar stack preview */}
                     <div className="flex -space-x-3 flex-shrink-0">
                       {room.teammates.slice(0, 3).map((t) => (
                         <img
@@ -290,15 +294,21 @@ export default function EvaluationPage() {
           >
             <ChevronLeft size={20} strokeWidth={2.5} />
           </button>
-          <p className="text-white/70 font-bold text-sm">
+          <p className="text-white/70 font-bold text-sm flex-1">
             ประเมินเพื่อนร่วมทีม · ห้อง &ldquo;{currentRoom.roomTitle}&rdquo;
           </p>
+          <button
+            onClick={() => router.push('/')}
+            title="กลับหน้าหลัก"
+            className="w-9 h-9 flex-shrink-0 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <Home size={17} />
+          </button>
         </div>
         <p className="text-white/40 font-medium text-xs mb-3">
           คนที่ {index + 1} จาก {queue.length} ในห้องนี้
         </p>
 
-        {/* Progress dots — ใครทำแล้ว / กำลังทำ / ยังไม่ทำ */}
         {queue.length > 1 && (
           <div className="flex items-center gap-1.5 mb-4">
             {queue.map((item, qIdx) => {
@@ -320,7 +330,6 @@ export default function EvaluationPage() {
           </div>
         )}
 
-        {/* Swipeable stack */}
         <div
           className="relative w-full max-w-2xl"
           style={{
@@ -329,8 +338,6 @@ export default function EvaluationPage() {
           }}
         >
           {queue.map((item, qIdx) => {
-            // circular position relative to the front card — a swiped-away card
-            // loops around to the back of the stack instead of disappearing
             const i = ((qIdx - index) % queue.length + queue.length) % queue.length;
             const isFront = i === 0;
             const clampedI = Math.min(i, STACK_VISIBLE_DEPTH);
@@ -368,7 +375,6 @@ export default function EvaluationPage() {
               >
                 {isFront ? (
                   <>
-                    {/* Profile header */}
                     <div className="flex items-center gap-3 px-5 py-6" style={{ backgroundColor: '#CBD6E3' }}>
                       <img
                         src={resolveAvatar(person)}
@@ -392,9 +398,7 @@ export default function EvaluationPage() {
                       )}
                     </div>
 
-                    {/* Body */}
                     <div className="bg-white">
-                    {/* Criteria */}
                     {CRITERIA.map((criterion, idx) => (
                       <div key={criterion.id}>
                         {idx > 0 && <div className="h-px mx-5" style={{ backgroundColor: '#B0B5C8' }} />}
@@ -431,7 +435,6 @@ export default function EvaluationPage() {
                       </div>
                     ))}
 
-                    {/* Comment */}
                     <div className="h-px mx-5" style={{ backgroundColor: '#B0B5C8' }} />
                     <div className="px-5 py-5">
                       <p className="font-semibold text-sm mb-2" style={{ color: '#2D3748' }}>
@@ -451,7 +454,6 @@ export default function EvaluationPage() {
                       </p>
                     </div>
 
-                    {/* Submit */}
                     <div className="px-5 pb-6 pt-2">
                       <button
                         disabled={!allAnswered || submitting}
@@ -476,7 +478,6 @@ export default function EvaluationPage() {
                   </>
                 ) : (
                   <>
-                    {/* Simplified peek card — only a sliver of this ever shows behind the front card */}
                     <div className="flex items-center gap-3 px-5 py-6" style={{ backgroundColor: '#CBD6E3' }}>
                       <img
                         src={resolveAvatar(person)}
