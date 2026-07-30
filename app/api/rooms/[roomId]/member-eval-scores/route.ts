@@ -10,11 +10,14 @@ const CRITERIA_KEYS = [
 ] as const;
 type CriteriaKey = typeof CRITERIA_KEYS[number];
 
-// GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนประเมินย้อนหลังเฉพาะกลุ่มนั้น (post-match)
-// GET /api/rooms/:roomId/member-eval-scores               → คะแนนประเมินย้อนหลังทุกคนในห้อง (post-match)
-// GET /api/rooms/:roomId/member-eval-scores?source=members → คะแนนประเมินย้อนหลังทุกคนในห้อง (pre-match, ใช้ตอนจับกลุ่ม)
+// GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนสะสมของสมาชิกกลุ่มนั้น (เรียกตอนแนะนำหัวหน้าทีม)
+// GET /api/rooms/:roomId/member-eval-scores               → คะแนนสะสมของทุกกลุ่มที่จับไปแล้วในห้องนี้
+// GET /api/rooms/:roomId/member-eval-scores?source=members → คะแนนสะสมของทุกคนในห้อง (pre-match, ใช้ตอนจับกลุ่ม)
 //
-// ค่าเฉลี่ยคำนวณจากประวัติแบบประเมินเพื่อนร่วมทีมทุกห้องในอดีต (ไม่ใช่แค่ห้องนี้) เพื่อสะท้อนพฤติกรรมสะสมของแต่ละคน
+// ค่าเฉลี่ยคำนวณจากแบบประเมินเพื่อนร่วมทีมของแต่ละคน "ข้ามทุกห้อง/ทุกโปรเจกต์ที่เคยผ่านมา" (ตาม toGmail เป็นหลัก)
+// ไม่จำกัดแค่ห้องปัจจุบัน — เพราะทั้งสอง endpoint ด้านบนถูกเรียกตอนจับกลุ่ม/เลือกหัวหน้าของห้องนี้
+// ซึ่งเกิดขึ้น "ก่อน" ที่แบบประเมินของห้องนี้เองจะถูกสร้าง (แบบประเมินเปิดหลังห้องจบเท่านั้น)
+// การจำกัดด้วย roomId ปัจจุบันจึงทำให้ query นี้ว่างเปล่าเสมอ — คะแนนที่มีความหมายต้องมาจากผลงานในห้อง/โปรเจกต์ก่อนหน้านี้เท่านั้น
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
@@ -67,6 +70,8 @@ export async function GET(
   }
 
   const gmails = [...new Set(resolvedGmailByMemberName.values())];
+  // ไม่กรองด้วย roomId — ดึงทุกแบบประเมินที่แต่ละคนเคยได้รับจากทุกห้อง/ทุกโปรเจกต์ที่เคยทำมา
+  // (ห้องปัจจุบันจะไม่มีข้อมูลของตัวเองปนอยู่แล้ว เพราะแบบประเมินของห้องนี้ยังไม่เปิดจนกว่าห้องจะจบ)
   const evals: { toGmail: string; scores: Record<CriteriaKey, number> }[] = gmails.length
     ? await PeerEvaluation.find(
         { toGmail: { $in: gmails } },

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { ChevronLeft, Home } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
@@ -41,8 +42,12 @@ const keyFor = (item: Pick<QueueItem, 'roomId' | 'groupId' | 'teammate'>) =>
 export default function EvaluationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [index, setIndex] = useState(0);
+  // ห้องที่ยังมีแบบประเมินค้างอยู่ — แสดงเป็น "รายการห้อง" ก่อน (เหมือนหน้า myroom/myprojects)
+  // ผู้ใช้ต้องกดเข้าไปทีละห้องเพื่อทำแบบประเมินของห้องนั้นๆ ไม่ปนกับห้องอื่น
+  const [rooms, setRooms] = useState<PendingRoom[]>([]);
+  // ห้องที่กำลังเปิดทำแบบประเมินอยู่ (null = ยังอยู่หน้ารายการห้อง)
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+  const [personIndex, setPersonIndex] = useState(0);
   // เก็บคะแนนแยกเป็นรายบุคคล (key = roomId:groupId:gmail) แทนที่จะใช้ตัวแปรเดียวรวมทุกคน
   // เดิมใช้ ratings ตัวเดียว แล้ว reset ด้วย useEffect ที่ผูกกับ roomId/groupId เท่านั้น
   // พอเปลี่ยนคนโดยห้อง/กลุ่มเดิม (กรณีปกติของการประเมินเพื่อนในทีมเดียวกัน) effect ไม่ทำงาน
@@ -52,7 +57,6 @@ export default function EvaluationPage() {
   const [commentMap, setCommentMap] = useState<Record<string, string>>({});
   const [submittedKeys, setSubmittedKeys] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
-  const [finished, setFinished] = useState(false);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [extra, setExtra] = useState<{ roomId: string; leaderId?: string; types: Record<string, { code: string }> } | null>(null);
 
@@ -68,17 +72,31 @@ export default function EvaluationPage() {
     const res = await fetch('/api/evaluations');
     if (!res.ok) { setLoading(false); return; }
     const data = await res.json();
-    const rooms: PendingRoom[] = data.pending ?? [];
-    const flat: QueueItem[] = rooms.flatMap((r) =>
-      r.teammates.map((t) => ({ roomId: r.roomId, roomTitle: r.roomTitle, groupId: r.groupId, teammate: t }))
-    );
-    setQueue(flat);
-    setIndex(0);
+    setRooms(data.pending ?? []);
     setLoading(false);
   };
 
   useEffect(() => { loadPending(); }, []);
 
+  const openRoom = (roomId: string) => {
+    setActiveRoomId(roomId);
+    setPersonIndex(0);
+  };
+
+  const backToList = () => {
+    setActiveRoomId(null);
+    setPersonIndex(0);
+  };
+
+  const currentRoom = rooms.find((r) => r.roomId === activeRoomId) ?? null;
+  // คิวที่แสดงบนจอ = เฉพาะเพื่อนร่วมทีมของ "ห้องที่เปิดอยู่" เท่านั้น ห้องอื่นจะไม่ปรากฏมาปนจนกว่าจะกลับไปเลือกใหม่
+  const queue: QueueItem[] = useMemo(
+    () => (currentRoom
+      ? currentRoom.teammates.map((t) => ({ roomId: currentRoom.roomId, roomTitle: currentRoom.roomTitle, groupId: currentRoom.groupId, teammate: t }))
+      : []),
+    [currentRoom]
+  );
+  const index = personIndex;
   const current = queue[index] ?? null;
   const currentKey = current ? keyFor(current) : null;
   const ratings = currentKey ? (ratingsMap[currentKey] ?? {}) : {};
@@ -127,24 +145,22 @@ export default function EvaluationPage() {
       setSubmittedKeys((prev) => new Set(prev).add(currentKey));
       setJustSubmitted(true);
       setTimeout(() => setJustSubmitted(false), 1400);
-      if (index + 1 < queue.length) {
-        setIndex(index + 1);
+      if (personIndex + 1 < queue.length) {
+        setPersonIndex(personIndex + 1);
       } else {
         await loadPending();
-        setFinished(true);
+        setActiveRoomId(null);
+        setPersonIndex(0);
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  // --- swipe handlers (front card only): drag follows the finger, releasing past the
-  // threshold advances/rewinds the queue (loops around); a swiped-away card simply
-  // becomes non-front and its own transform transition carries it back into the stack ---
   const handleStackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (queue.length <= 1) return;
     const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('textarea')) return; // don't hijack rating taps / submit button / comment box
+    if (target.closest('button') || target.closest('textarea')) return;
     draggingRef.current = true;
     dragStartXRef.current = e.clientX;
     dragXRef.current = 0;
@@ -169,9 +185,9 @@ export default function EvaluationPage() {
     const delta = dragXRef.current;
     if (queue.length > 1) {
       if (delta <= -SWIPE_THRESHOLD) {
-        setIndex((idx) => (idx + 1) % queue.length);
+        setPersonIndex((idx) => (idx + 1) % queue.length);
       } else if (delta >= SWIPE_THRESHOLD) {
-        setIndex((idx) => (idx - 1 + queue.length) % queue.length);
+        setPersonIndex((idx) => (idx - 1 + queue.length) % queue.length);
       }
     }
   };
@@ -185,36 +201,114 @@ export default function EvaluationPage() {
     );
   }
 
-  if (!current) {
+  // ---------- หน้ารายการห้อง (เลือกห้องที่จะทำแบบประเมิน) ----------
+  if (!currentRoom) {
     return (
       <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#1D324B' }}>
         <Navbar bgColor="#122031" nameColor="white" />
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4 text-center">
-          <p className="text-white text-2xl font-black">{finished ? 'ประเมินครบทุกคนแล้ว ขอบคุณครับ' : 'ไม่มีแบบประเมินที่ต้องทำ'}</p>
-          <button
-            onClick={() => router.push('/')}
-            className="bg-white text-[#1D324B] px-8 py-3 rounded-2xl font-bold hover:bg-gray-100 transition-colors"
-          >
-            กลับหน้าหลัก
-          </button>
+        <div className="flex-1 flex flex-col items-center px-4 py-6">
+          <div className="w-full max-w-2xl">
+            <div className="flex items-start justify-between gap-3 mb-1">
+              <div>
+                <p className="text-white text-2xl font-black">แบบประเมินเพื่อนร่วมทีม</p>
+              </div>
+              <button
+                onClick={() => router.push('/')}
+                title="กลับหน้าหลัก"
+                className="w-10 h-10 flex-shrink-0 bg-white rounded-full flex items-center justify-center text-[#1D324B] shadow-md hover:bg-white/90 transition-all active:scale-95"
+              >
+                <Home size={18} />
+              </button>
+            </div>
+            <p className="text-white/50 font-medium text-sm mb-6">
+              {rooms.length > 0
+                ? 'เลือกห้องที่ต้องการทำแบบประเมิน — ทำทีละห้อง คะแนนของแต่ละห้องจะไม่ปนกัน'
+                : 'ไม่มีแบบประเมินที่ต้องทำ'}
+            </p>
+
+            {rooms.length === 0 ? (
+              <div className="bg-white/5 rounded-3xl p-10 flex flex-col items-center gap-4 text-center">
+                <p className="text-white/70 font-bold">ประเมินครบทุกห้องแล้ว ขอบคุณครับ 🎉</p>
+                <button
+                  onClick={() => router.push('/')}
+                  className="bg-white text-[#1D324B] px-8 py-3 rounded-2xl font-bold hover:bg-gray-100 transition-colors"
+                >
+                  กลับหน้าหลัก
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {rooms.map((room) => (
+                  <button
+                    key={room.roomId}
+                    onClick={() => openRoom(room.roomId)}
+                    className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:brightness-95 active:scale-[0.99] transition-all text-left"
+                  >
+                    <div className="flex -space-x-3 flex-shrink-0">
+                      {room.teammates.slice(0, 3).map((t) => (
+                        <img
+                          key={t.gmail}
+                          src={resolveAvatar(t)}
+                          alt={t.name}
+                          className="w-11 h-11 rounded-full object-cover border-2 border-white bg-gray-100"
+                        />
+                      ))}
+                      {room.teammates.length > 3 && (
+                        <div className="w-11 h-11 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-600">
+                          +{room.teammates.length - 3}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-800 truncate">{room.roomTitle}</p>
+                      <p className="text-xs text-gray-400 font-medium">
+                        ยังไม่ได้ประเมิน {room.teammates.length} คน
+                      </p>
+                    </div>
+
+                    <span className="flex-shrink-0 bg-[#2D3E50] text-white text-xs font-bold px-4 py-2 rounded-xl">
+                      ทำแบบประเมิน
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
+  // ---------- หน้าทำแบบประเมิน (เฉพาะห้องที่เลือก) ----------
   return (
     <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#1D324B' }}>
       <Navbar bgColor="#122031" nameColor="white" />
 
       <div className="flex-1 flex flex-col items-center justify-start px-4 py-6">
-        <p className="text-white/60 font-bold text-sm mb-1">
-          ประเมินเพื่อนร่วมทีม · {current.roomTitle}
-        </p>
+        <div className="w-full max-w-2xl flex items-center gap-3 mb-1">
+          <button
+            onClick={backToList}
+            className="w-9 h-9 flex-shrink-0 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+            title="กลับไปเลือกห้อง"
+          >
+            <ChevronLeft size={20} strokeWidth={2.5} />
+          </button>
+          <p className="text-white/70 font-bold text-sm flex-1">
+            ประเมินเพื่อนร่วมทีม · ห้อง &ldquo;{currentRoom.roomTitle}&rdquo;
+          </p>
+          <button
+            onClick={() => router.push('/')}
+            title="กลับหน้าหลัก"
+            className="w-9 h-9 flex-shrink-0 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <Home size={17} />
+          </button>
+        </div>
         <p className="text-white/40 font-medium text-xs mb-3">
-          คนที่ {index + 1} จาก {queue.length}
+          คนที่ {index + 1} จาก {queue.length} ในห้องนี้
         </p>
 
-        {/* Progress dots — ใครทำแล้ว / กำลังทำ / ยังไม่ทำ */}
         {queue.length > 1 && (
           <div className="flex items-center gap-1.5 mb-4">
             {queue.map((item, qIdx) => {
@@ -236,7 +330,6 @@ export default function EvaluationPage() {
           </div>
         )}
 
-        {/* Swipeable stack */}
         <div
           className="relative w-full max-w-2xl"
           style={{
@@ -245,21 +338,14 @@ export default function EvaluationPage() {
           }}
         >
           {queue.map((item, qIdx) => {
-            // circular position relative to the front card — a swiped-away card
-            // loops around to the back of the stack instead of disappearing
             const i = ((qIdx - index) % queue.length + queue.length) % queue.length;
             const isFront = i === 0;
             const clampedI = Math.min(i, STACK_VISIBLE_DEPTH);
             const translateY = clampedI * STACK_OFFSET_Y;
             const translateX = isFront ? dragX : clampedI * STACK_OFFSET_X;
             const scale = 1 - clampedI * STACK_SCALE_STEP;
-            // cards beyond the visible depth stay pinned (and visible) at the back-most
-            // slot instead of vanishing, so a just-swiped card visibly settles into place
             const opacity = 1;
-            // เอียงเล็กน้อยตามความลึกในกอง (ไม่ผูกกับ index คงที่ของอาร์เรย์) เพื่อให้
-            // ทิศทางเอียงสอดคล้องกับทิศที่เลื่อนออกไปทางขวาเสมอ ไม่ว่าใบไหนจะสลับมาอยู่ตำแหน่งนี้
             const rotate = isFront ? 0 : clampedI * 1.2;
-            // เงาเข้มขึ้นตามความลึกของการ์ด ให้รู้สึกว่ามีแผ่นซ้อนอยู่ข้างหลัง
             const shadow = isFront
               ? '0 12px 24px rgba(0,0,0,0.18)'
               : `0 ${6 + clampedI * 5}px ${14 + clampedI * 8}px rgba(0,0,0,${0.16 + clampedI * 0.09})`;
@@ -289,7 +375,6 @@ export default function EvaluationPage() {
               >
                 {isFront ? (
                   <>
-                    {/* Profile header */}
                     <div className="flex items-center gap-3 px-5 py-6" style={{ backgroundColor: '#CBD6E3' }}>
                       <img
                         src={resolveAvatar(person)}
@@ -313,9 +398,7 @@ export default function EvaluationPage() {
                       )}
                     </div>
 
-                    {/* Body */}
                     <div className="bg-white">
-                    {/* Criteria */}
                     {CRITERIA.map((criterion, idx) => (
                       <div key={criterion.id}>
                         {idx > 0 && <div className="h-px mx-5" style={{ backgroundColor: '#B0B5C8' }} />}
@@ -352,7 +435,6 @@ export default function EvaluationPage() {
                       </div>
                     ))}
 
-                    {/* Comment */}
                     <div className="h-px mx-5" style={{ backgroundColor: '#B0B5C8' }} />
                     <div className="px-5 py-5">
                       <p className="font-semibold text-sm mb-2" style={{ color: '#2D3748' }}>
@@ -372,7 +454,6 @@ export default function EvaluationPage() {
                       </p>
                     </div>
 
-                    {/* Submit */}
                     <div className="px-5 pb-6 pt-2">
                       <button
                         disabled={!allAnswered || submitting}
@@ -389,7 +470,7 @@ export default function EvaluationPage() {
                       )}
                       {justSubmitted && (
                         <p className="text-center text-xs font-bold mt-2" style={{ color: '#22C55E' }}>
-                          ✓ บันทึกคะแนนของ {current.teammate.name} แล้ว
+                          ✓ บันทึกคะแนนของ {person.name} แล้ว
                         </p>
                       )}
                     </div>
@@ -397,7 +478,6 @@ export default function EvaluationPage() {
                   </>
                 ) : (
                   <>
-                    {/* Simplified peek card — only a sliver of this ever shows behind the front card */}
                     <div className="flex items-center gap-3 px-5 py-6" style={{ backgroundColor: '#CBD6E3' }}>
                       <img
                         src={resolveAvatar(person)}

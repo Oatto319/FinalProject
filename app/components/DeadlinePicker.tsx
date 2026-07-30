@@ -1,15 +1,10 @@
 'use client';
 
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarClock, ChevronDown } from 'lucide-react';
 import { dateStringToUtcDate, dateTimeStringToUtcDate, todayDateString, toDateString } from '@/lib/date';
 
-const OPTION_HEIGHT = 34;
-const WHEEL_PAD = 51; // (136 - OPTION_HEIGHT) / 2 — keeps the centered option in the middle of the 136px-tall wheel
 const YEAR_COUNT = 6;
-
-const indexFromScrollTop = (scrollTop: number) => Math.round(scrollTop / OPTION_HEIGHT);
-const scrollTopFromIndex = (index: number) => index * OPTION_HEIGHT;
 
 const monthLabel = (month: number) => new Intl.DateTimeFormat('th-TH', { month: 'short' }).format(new Date(2000, month, 1));
 const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
@@ -44,58 +39,43 @@ function formatThai(d: Draft): string {
   return `${dateLabel} เวลา ${pad2(d.hour)}:${pad2(d.minute)}`;
 }
 
-/** A single scrollable "wheel" column — value is derived purely from scroll position (index * OPTION_HEIGHT). */
-function WheelColumn({ options, selectedIndex, onSettle, flex, scrollKey }: {
+/** One of the tappable pills at the top of a picker group ("วันที่ 6", "เดือน ม.ค.", ...) — click to switch which grid is shown below. */
+function StepPill({ label, value, active, onClick }: { label: string; value: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex-1 rounded-xl px-3 py-2 text-center transition-colors ${
+        active ? 'bg-[#1D324B] text-white' : 'bg-gray-50 text-[#1D324B] hover:bg-blue-50'
+      }`}
+    >
+      <span className={`block text-[10px] font-bold ${active ? 'text-blue-200' : 'text-gray-400'}`}>{label}</span>
+      <span className="block text-sm font-bold">{value}</span>
+    </button>
+  );
+}
+
+/** A grid of tappable options for whichever step is currently active. */
+function OptionGrid({ options, selectedIndex, onSelect, columns }: {
   options: string[];
   selectedIndex: number;
-  onSettle: (index: number) => void;
-  flex?: number;
-  scrollKey: number; // bump to force a re-sync of scrollTop (e.g. when the day count changes under the wheel)
+  onSelect: (index: number) => void;
+  columns: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Clamp defensively: an out-of-range index would set an over-large scrollTop that the browser
-  // silently clamps, which fires a native 'scroll' event and makes handleScroll "settle" onto that
-  // clamped position — silently mutating the value behind the caller's back.
-  const clampedIndex = Math.min(Math.max(selectedIndex, 0), options.length - 1);
-
-  useLayoutEffect(() => {
-    if (ref.current) ref.current.scrollTop = scrollTopFromIndex(clampedIndex);
-    // Only re-sync when the wheel is (re)mounted/reset — not on every settle, or user scroll would fight this.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrollKey]);
-
-  const handleScroll = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      const el = ref.current;
-      if (!el) return;
-      const idx = Math.min(Math.max(indexFromScrollTop(el.scrollTop), 0), options.length - 1);
-      onSettle(idx);
-    }, 60);
-  };
-
   return (
-    <div
-      ref={ref}
-      onScroll={handleScroll}
-      style={{ flex: flex ?? 1, height: 136, overflowY: 'scroll', scrollSnapType: 'y mandatory', scrollbarWidth: 'none', position: 'relative', zIndex: 1 }}
-      className="[&::-webkit-scrollbar]:hidden"
-    >
-      <div style={{ height: WHEEL_PAD }} />
+    <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
       {options.map((label, i) => (
-        <div
+        <button
           key={i}
-          style={{ height: OPTION_HEIGHT, scrollSnapAlign: 'center' }}
-          className={`flex items-center justify-center font-medium tabular-nums transition-colors ${
-            i === clampedIndex ? 'text-[#1D324B] font-bold text-[17px]' : 'text-gray-300 text-[15px]'
+          type="button"
+          onClick={() => onSelect(i)}
+          className={`rounded-lg py-2 text-sm font-bold tabular-nums transition-colors ${
+            i === selectedIndex ? 'bg-[#1D324B] text-white' : 'bg-gray-50 text-[#1D324B] hover:bg-blue-50'
           }`}
         >
           {label}
-        </div>
+        </button>
       ))}
-      <div style={{ height: WHEEL_PAD }} />
     </div>
   );
 }
@@ -109,15 +89,18 @@ export default function DeadlinePicker({ value, onChange }: DeadlinePickerProps)
   const [open, setOpen] = useState(false);
   const [openField, setOpenField] = useState<'date' | 'time' | null>('date');
   const [draft, setDraft] = useState<Draft>(() => parseValue(value) ?? defaultDraft());
-  const [resetTick, setResetTick] = useState(0);
-  const [dayResetTick, setDayResetTick] = useState(0);
   const [error, setError] = useState('');
+
+  // Which sub-step ("วันที่ / เดือน / ปี" or "ชั่วโมง / นาที") is currently showing its grid.
+  const [dateStep, setDateStep] = useState<'day' | 'month' | 'year'>('day');
+  const [timeStep, setTimeStep] = useState<'hour' | 'minute'>('hour');
 
   const openPicker = () => {
     setDraft(parseValue(value) ?? defaultDraft());
     setOpenField('date');
+    setDateStep('day');
+    setTimeStep('hour');
     setError('');
-    setResetTick((t) => t + 1);
     setOpen(true);
   };
 
@@ -129,13 +112,26 @@ export default function DeadlinePicker({ value, onChange }: DeadlinePickerProps)
   const hourOptions = useMemo(() => Array.from({ length: 24 }, (_, i) => pad2(i)), []);
   const minuteOptions = useMemo(() => Array.from({ length: 12 }, (_, i) => pad2(i * 5)), []);
 
-  const setMonth = (i: number) => {
-    setDraft((d) => ({ ...d, month: i, day: Math.min(d.day, daysInMonth(i, d.year)) }));
-    setDayResetTick((t) => t + 1);
+  // Tap a day -> auto-advance to month. Tap a month -> auto-advance to year. Tap a year -> done.
+  const selectDay = (i: number) => {
+    setDraft((d) => ({ ...d, day: i + 1 }));
+    setDateStep('month');
   };
-  const setYear = (i: number) => {
+  const selectMonth = (i: number) => {
+    setDraft((d) => ({ ...d, month: i, day: Math.min(d.day, daysInMonth(i, d.year)) }));
+    setDateStep('year');
+  };
+  const selectYear = (i: number) => {
     setDraft((d) => ({ ...d, year: yearStart + i, day: Math.min(d.day, daysInMonth(d.month, yearStart + i)) }));
-    setDayResetTick((t) => t + 1);
+  };
+
+  // Tap an hour -> auto-advance to minute.
+  const selectHour = (i: number) => {
+    setDraft((d) => ({ ...d, hour: i }));
+    setTimeStep('minute');
+  };
+  const selectMinute = (i: number) => {
+    setDraft((d) => ({ ...d, minute: i * 5 }));
   };
 
   const handleConfirm = () => {
@@ -167,7 +163,7 @@ export default function DeadlinePicker({ value, onChange }: DeadlinePickerProps)
 
       {open && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[24px] w-full max-w-sm shadow-2xl p-6 flex flex-col gap-4">
+          <div className="bg-white rounded-[24px] w-full max-w-sm shadow-2xl p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
                 <CalendarClock size={20} className="text-blue-400" />
@@ -189,16 +185,21 @@ export default function DeadlinePicker({ value, onChange }: DeadlinePickerProps)
                 <ChevronDown size={16} className={`text-gray-300 transition-transform ${openField === 'date' ? 'rotate-180 text-blue-400' : ''}`} />
               </button>
               {openField === 'date' && (
-                <div className="px-3 pb-4">
-                  <div className="relative flex gap-1.5 bg-white rounded-2xl border border-gray-100 py-2.5">
-                    <div className="pointer-events-none absolute left-2.5 right-2.5 top-1/2 -translate-y-1/2 h-[34px] rounded-lg bg-blue-50 border border-blue-100" />
-                    <WheelColumn options={dayOptions} selectedIndex={draft.day - 1} flex={0.8} scrollKey={resetTick + dayResetTick}
-                      onSettle={(i) => setDraft((d) => ({ ...d, day: i + 1 }))} />
-                    <WheelColumn options={monthOptions} selectedIndex={draft.month} flex={1.3} scrollKey={resetTick}
-                      onSettle={setMonth} />
-                    <WheelColumn options={yearOptions} selectedIndex={draft.year - yearStart} scrollKey={resetTick}
-                      onSettle={setYear} />
+                <div className="px-3 pb-4 flex flex-col gap-3">
+                  <div className="flex gap-1.5">
+                    <StepPill label="วันที่" value={String(draft.day)} active={dateStep === 'day'} onClick={() => setDateStep('day')} />
+                    <StepPill label="เดือน" value={monthLabel(draft.month)} active={dateStep === 'month'} onClick={() => setDateStep('month')} />
+                    <StepPill label="ปี" value={String(draft.year + 543)} active={dateStep === 'year'} onClick={() => setDateStep('year')} />
                   </div>
+                  {dateStep === 'day' && (
+                    <OptionGrid options={dayOptions} selectedIndex={draft.day - 1} onSelect={selectDay} columns={7} />
+                  )}
+                  {dateStep === 'month' && (
+                    <OptionGrid options={monthOptions} selectedIndex={draft.month} onSelect={selectMonth} columns={4} />
+                  )}
+                  {dateStep === 'year' && (
+                    <OptionGrid options={yearOptions} selectedIndex={draft.year - yearStart} onSelect={selectYear} columns={3} />
+                  )}
                 </div>
               )}
             </div>
@@ -215,14 +216,17 @@ export default function DeadlinePicker({ value, onChange }: DeadlinePickerProps)
                 <ChevronDown size={16} className={`text-gray-300 transition-transform ${openField === 'time' ? 'rotate-180 text-blue-400' : ''}`} />
               </button>
               {openField === 'time' && (
-                <div className="px-3 pb-4">
-                  <div className="relative flex gap-1.5 bg-white rounded-2xl border border-gray-100 py-2.5">
-                    <div className="pointer-events-none absolute left-2.5 right-2.5 top-1/2 -translate-y-1/2 h-[34px] rounded-lg bg-blue-50 border border-blue-100" />
-                    <WheelColumn options={hourOptions} selectedIndex={draft.hour} scrollKey={resetTick}
-                      onSettle={(i) => setDraft((d) => ({ ...d, hour: i }))} />
-                    <WheelColumn options={minuteOptions} selectedIndex={Math.round(draft.minute / 5)} scrollKey={resetTick}
-                      onSettle={(i) => setDraft((d) => ({ ...d, minute: i * 5 }))} />
+                <div className="px-3 pb-4 flex flex-col gap-3">
+                  <div className="flex gap-1.5">
+                    <StepPill label="ชั่วโมง" value={pad2(draft.hour)} active={timeStep === 'hour'} onClick={() => setTimeStep('hour')} />
+                    <StepPill label="นาที" value={pad2(draft.minute)} active={timeStep === 'minute'} onClick={() => setTimeStep('minute')} />
                   </div>
+                  {timeStep === 'hour' && (
+                    <OptionGrid options={hourOptions} selectedIndex={draft.hour} onSelect={selectHour} columns={6} />
+                  )}
+                  {timeStep === 'minute' && (
+                    <OptionGrid options={minuteOptions} selectedIndex={Math.round(draft.minute / 5)} onSelect={selectMinute} columns={4} />
+                  )}
                 </div>
               )}
             </div>
