@@ -10,12 +10,14 @@ const CRITERIA_KEYS = [
 ] as const;
 type CriteriaKey = typeof CRITERIA_KEYS[number];
 
-// GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนประเมินเฉพาะกลุ่มนั้น (post-match)
-// GET /api/rooms/:roomId/member-eval-scores               → คะแนนประเมินทุกคนในห้อง (post-match)
-// GET /api/rooms/:roomId/member-eval-scores?source=members → คะแนนประเมินทุกคนในห้อง (pre-match, ใช้ตอนจับกลุ่ม)
+// GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนสะสมของสมาชิกกลุ่มนั้น (เรียกตอนแนะนำหัวหน้าทีม)
+// GET /api/rooms/:roomId/member-eval-scores               → คะแนนสะสมของทุกกลุ่มที่จับไปแล้วในห้องนี้
+// GET /api/rooms/:roomId/member-eval-scores?source=members → คะแนนสะสมของทุกคนในห้อง (pre-match, ใช้ตอนจับกลุ่ม)
 //
-// ค่าเฉลี่ยคำนวณจากแบบประเมินเพื่อนร่วมทีม "ของห้องนี้ห้องเดียว" เท่านั้น — ไม่ดึงประวัติจากห้องอื่นมารวม
-// เพื่อไม่ให้คะแนน/ผลวิเคราะห์ของห้องหนึ่งไปปนกับอีกห้องหนึ่ง
+// ค่าเฉลี่ยคำนวณจากแบบประเมินเพื่อนร่วมทีมของแต่ละคน "ข้ามทุกห้อง/ทุกโปรเจกต์ที่เคยผ่านมา" (ตาม toGmail เป็นหลัก)
+// ไม่จำกัดแค่ห้องปัจจุบัน — เพราะทั้งสอง endpoint ด้านบนถูกเรียกตอนจับกลุ่ม/เลือกหัวหน้าของห้องนี้
+// ซึ่งเกิดขึ้น "ก่อน" ที่แบบประเมินของห้องนี้เองจะถูกสร้าง (แบบประเมินเปิดหลังห้องจบเท่านั้น)
+// การจำกัดด้วย roomId ปัจจุบันจึงทำให้ query นี้ว่างเปล่าเสมอ — คะแนนที่มีความหมายต้องมาจากผลงานในห้อง/โปรเจกต์ก่อนหน้านี้เท่านั้น
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
@@ -68,10 +70,11 @@ export async function GET(
   }
 
   const gmails = [...new Set(resolvedGmailByMemberName.values())];
-  // จำกัดด้วย roomId ปัจจุบันเสมอ — ไม่เอาแบบประเมินที่เคยทำในห้องอื่นมาปนกับห้องนี้
+  // ไม่กรองด้วย roomId — ดึงทุกแบบประเมินที่แต่ละคนเคยได้รับจากทุกห้อง/ทุกโปรเจกต์ที่เคยทำมา
+  // (ห้องปัจจุบันจะไม่มีข้อมูลของตัวเองปนอยู่แล้ว เพราะแบบประเมินของห้องนี้ยังไม่เปิดจนกว่าห้องจะจบ)
   const evals: { toGmail: string; scores: Record<CriteriaKey, number> }[] = gmails.length
     ? await PeerEvaluation.find(
-        { roomId, toGmail: { $in: gmails } },
+        { toGmail: { $in: gmails } },
         { toGmail: 1, scores: 1, _id: 0 }
       ).lean()
     : [];
