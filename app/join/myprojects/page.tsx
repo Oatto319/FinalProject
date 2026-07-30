@@ -21,6 +21,24 @@ const TEMPLATE_COLORS: Record<string, string> = {
   design: '#8C71EF',
 };
 
+// ✅ ข้อความ "TEAM" ลอยผ่านจอเป็นพื้นหลัง (แสดงเฉพาะโหมด Team)
+const BACKGROUND_FLOAT_TEXT = [
+  { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.12, drift: 'waveDrift1', duration: '26s', delay: '0s' },
+  { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.10, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
+  { top: '38%', left: '-10%', fontSize: 'clamp(1rem,   12vw, 4rem)',  rotate: '-8deg',  opacity: 0.14, drift: 'waveDrift3', duration: '22s', delay: '-8s' },
+  { top: '56%', left: '-15%', fontSize: 'clamp(1.5rem, 22vw, 9rem)',  rotate: '-18deg', opacity: 0.10, drift: 'waveDrift1', duration: '34s', delay: '-10s' },
+  { top: '74%', left: '-10%', fontSize: 'clamp(1.2rem, 16vw, 6rem)',  rotate: '20deg',  opacity: 0.14, drift: 'waveDrift3', duration: '25s', delay: '-6s' },
+  { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.12, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
+];
+
+// ✅ รูป crown.PNG ลอยแทรกในเลเยอร์เดียวกัน (แสดงเฉพาะโหมด Team)
+const BACKGROUND_FLOAT_CROWN = [
+  { top: '14%', left: '-10%', size: '5rem',   rotate: '-15deg', opacity: 0.16, drift: 'waveDrift2', duration: '28s', delay: '-2s' },
+  { top: '46%', left: '-15%', size: '3.5rem', rotate: '20deg',  opacity: 0.13, drift: 'waveDrift1', duration: '31s', delay: '-9s' },
+  { top: '65%', left: '-10%', size: '5.5rem', rotate: '-10deg', opacity: 0.15, drift: 'waveDrift3', duration: '24s', delay: '-5s' },
+  { top: '84%', left: '-15%', size: '4.2rem', rotate: '12deg',  opacity: 0.12, drift: 'waveDrift2', duration: '27s', delay: '-12s' },
+];
+
 function MyProjectsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -81,13 +99,101 @@ function MyProjectsContent() {
   };
 
   return (
-    <div className="h-dvh bg-gray-300 font-sans flex flex-col items-center overflow-hidden">
+    <div
+      className="h-dvh font-sans flex flex-col items-center overflow-hidden relative"
+      style={{ background: isEvaluateMode ? '#D1D5DB' : '#7F5CFF' }}
+    >
       <style>{`
         @keyframes slideUpIn { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideDownOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(48px); } }
+
+        @keyframes waveDrift1 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(120vw) translateY(-6vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+
+        @keyframes waveDrift2 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(115vw) translateY(8vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+
+        @keyframes waveDrift3 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(125vw) translateY(-4vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
       `}</style>
-      <Navbar />
-      <main className="flex-1 overflow-hidden w-full max-w-5xl px-4 flex flex-col sm:flex-row sm:items-start gap-3 pt-0 sm:pt-4 pb-4">
+
+      {/* ✅ เลเยอร์พื้นหลัง TEAM + crown ลอยผ่านจอ — เฉพาะโหมด Team */}
+      {!isEvaluateMode && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
+        >
+          {BACKGROUND_FLOAT_TEXT.map((s, i) => (
+            <div
+              key={`text-${i}`}
+              style={{
+                position: 'absolute',
+                top: s.top,
+                left: s.left,
+                transform: `rotate(${s.rotate})`,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontSize: s.fontSize,
+                  opacity: s.opacity,
+                  color: '#F5F5F5',
+                  fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.03em',
+                  whiteSpace: 'nowrap',
+                  animation: `${s.drift} ${s.duration} linear infinite`,
+                  animationDelay: s.delay,
+                }}
+              >
+                TEAM
+              </span>
+            </div>
+          ))}
+
+          {BACKGROUND_FLOAT_CROWN.map((c, i) => (
+            <div
+              key={`crown-${i}`}
+              style={{
+                position: 'absolute',
+                top: c.top,
+                left: c.left,
+                transform: `rotate(${c.rotate})`,
+              }}
+            >
+              <img
+                src="/img/crown.PNG"
+                alt=""
+                style={{
+                  display: 'inline-block',
+                  height: c.size,
+                  width: 'auto',
+                  opacity: c.opacity,
+                  animation: `${c.drift} ${c.duration} linear infinite`,
+                  animationDelay: c.delay,
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="relative z-20 w-full">
+        {isEvaluateMode ? <Navbar /> : <Navbar bgColor="#5B3FD4" nameColor="white" />}
+      </div>
+
+      <main className="relative z-10 flex-1 overflow-hidden w-full max-w-5xl px-4 flex flex-col sm:flex-row sm:items-start gap-3 pt-0 sm:pt-4 pb-4">
 
         {/* Back Button — desktop only */}
         <button onClick={handleBack}
