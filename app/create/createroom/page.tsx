@@ -24,9 +24,21 @@ const BACKGROUND_FLOAT_TEXT = [
   { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.14, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
 ];
 
+// ✅ สี & ข้อความลอย ตาม template ที่เลือก (สีอ้างอิงจากหน้า templates)
+const TEMPLATE_BACKGROUNDS: Record<string, { bg: string; floatColor: string; label: string }> = {
+  programming:  { bg: '#FFAAAA', floatColor: '#D87878', label: 'PROGRAMMING' },
+  service:      { bg: '#71EFB8', floatColor: '#5CC095', label: 'CUSTOMER / SERVICE' },
+  presentation: { bg: '#EAFF48', floatColor: '#B2C334', label: 'PRESENTATION' },
+  design:       { bg: '#8C71EF', floatColor: '#6D58B9', label: 'DESIGN / CREATIVE' },
+};
+
+// ค่าเริ่มต้น กรณียังไม่มี template เลือกไว้ (คงพฤติกรรมเดิม)
+const DEFAULT_BACKGROUND = { bg: '#FFDB10', floatColor: '#C9A400', label: 'CREATE' };
+
 export default function CreateRoomPage() {
   const router = useRouter();
   const [user, setUser] = useState<CurrentUser | null>(null);
+  const [template, setTemplate] = useState<string>('');
   const [formData, setFormData] = useState({ title: '', description: '', totalMembers: '', groupSize: '', deadline: '' });
   const [step, setStep] = useState(1);
   const [showError, setShowError] = useState(false);
@@ -65,6 +77,12 @@ export default function CreateRoomPage() {
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (raw) setUser(JSON.parse(raw));
+
+    const pendingRaw = localStorage.getItem('pendingRoom');
+    if (pendingRaw) {
+      const pending = JSON.parse(pendingRaw);
+      if (pending.template) setTemplate(pending.template);
+    }
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -146,6 +164,8 @@ export default function CreateRoomPage() {
     setStep(2);
   };
 
+  const theme = TEMPLATE_BACKGROUNDS[template] ?? DEFAULT_BACKGROUND;
+
   return (
     <>
       <style>{`
@@ -170,7 +190,7 @@ export default function CreateRoomPage() {
 
       <div
         className="min-h-screen font-sans flex flex-col items-center px-4 py-12 relative overflow-hidden"
-        style={{ background: '#FFDB10' }}
+        style={{ background: theme.bg }}
       >
         {/* ✅ เลเยอร์พื้นหลัง CREATE ลอยผ่านจอ */}
         <div
@@ -192,7 +212,7 @@ export default function CreateRoomPage() {
                   display: 'inline-block',
                   fontSize: s.fontSize,
                   opacity: s.opacity,
-                  color: '#C9A400',
+                  color: theme.floatColor,
                   fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
                   fontWeight: 900,
                   fontStyle: 'italic',
@@ -202,7 +222,7 @@ export default function CreateRoomPage() {
                   animationDelay: s.delay,
                 }}
               >
-                CREATE
+                {theme.label}
               </span>
             </div>
           ))}
@@ -217,22 +237,22 @@ export default function CreateRoomPage() {
               <>
                 <div className="flex flex-col gap-4">
                   {/* Room Name */}
-                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                  <div className="bg-[#1D324B] rounded-[20px] p-5">
                     <p className="text-white font-bold text-base mb-3">&ldquo;To name the room&rdquo;</p>
                     <input
                       type="text" name="title" value={formData.title} onChange={handleChange}
                       placeholder="ชื่อกิจกรรม" maxLength={100}
-                      className="w-full bg-white rounded-xl py-4 px-5 text-[#4B2E1E] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                      className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                     />
                   </div>
 
                   {/* Description */}
-                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                  <div className="bg-[#1D324B] rounded-[20px] p-5">
                     <p className="text-white font-bold text-base mb-3">&ldquo;Describe the activity&rdquo;</p>
                     <textarea
                       name="description" value={formData.description} onChange={handleChange}
                       placeholder="รายละเอียดกิจกรรม / กำหนดส่งงาน" rows={2} maxLength={500}
-                      className="w-full bg-white rounded-xl py-4 px-5 text-[#4B2E1E] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 resize-none transition-all"
+                      className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 resize-none transition-all"
                     />
                   </div>
                 </div>
@@ -250,7 +270,7 @@ export default function CreateRoomPage() {
                   </button>
                   <button
                     onClick={handleNext}
-                    className="flex items-center gap-3 bg-[#4B2E1E] text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95"
+                    className="flex items-center gap-3 bg-[#1D324B] text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95"
                   >
                     Next
                     <span className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -263,13 +283,13 @@ export default function CreateRoomPage() {
               <>
                 <div className="flex flex-col gap-4">
                   {/* Total Members */}
-                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                  <div className="bg-[#1D324B] rounded-[20px] p-5">
                     <p className="text-white font-bold text-base mb-3">&ldquo;Maximum people?&rdquo;</p>
                     <div className="relative">
                       <input
                         type="number" name="totalMembers" value={formData.totalMembers} onChange={handleChange}
                         placeholder="30" min={1} max={MAX_TOTAL_MEMBERS}
-                        className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#4B2E1E] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                        className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                       />
                       <button
                         type="button"
@@ -283,7 +303,7 @@ export default function CreateRoomPage() {
                           <div className="grid grid-cols-4">
                             {totalOptions.map((v) => (
                               <button key={v} type="button" onClick={() => selectOption('totalMembers', v)}
-                                className={`py-3 text-center font-bold text-[#4B2E1E] hover:bg-blue-50 transition-colors ${formData.totalMembers === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
+                                className={`py-3 text-center font-bold text-[#1D324B] hover:bg-blue-50 transition-colors ${formData.totalMembers === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
                                 {v}
                               </button>
                             ))}
@@ -294,13 +314,13 @@ export default function CreateRoomPage() {
                   </div>
 
                   {/* Group Size */}
-                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                  <div className="bg-[#1D324B] rounded-[20px] p-5">
                     <p className="text-white font-bold text-base mb-3">&ldquo;How many people per group?&rdquo;</p>
                     <div className="relative">
                       <input
                         type="number" name="groupSize" value={formData.groupSize} onChange={handleChange}
                         placeholder="3" min={1} max={MAX_GROUP_SIZE}
-                        className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#4B2E1E] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                        className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
                       />
                       <button
                         type="button"
@@ -314,7 +334,7 @@ export default function CreateRoomPage() {
                           <div className="grid grid-cols-4">
                             {groupOptions.map((v) => (
                               <button key={v} type="button" onClick={() => selectOption('groupSize', v)}
-                                className={`py-3 text-center font-bold text-[#4B2E1E] hover:bg-blue-50 transition-colors ${formData.groupSize === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
+                                className={`py-3 text-center font-bold text-[#1D324B] hover:bg-blue-50 transition-colors ${formData.groupSize === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
                                 {v}
                               </button>
                             ))}
@@ -330,7 +350,7 @@ export default function CreateRoomPage() {
                   </div>
 
                   {/* Deadline */}
-                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                  <div className="bg-[#1D324B] rounded-[20px] p-5">
                     <p className="text-white font-bold text-base mb-3">&ldquo;When is the deadline?&rdquo;</p>
                     <DeadlinePicker
                       value={formData.deadline}
@@ -367,7 +387,7 @@ export default function CreateRoomPage() {
                   </button>
                   <button
                     onClick={handleCreate} disabled={loading}
-                    className="bg-[#4B2E1E] text-white px-10 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95 disabled:opacity-60"
+                    className="bg-[#1D324B] text-white px-10 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95 disabled:opacity-60"
                   >
                     {loading ? 'กำลังสร้าง...' : 'Create'}
                   </button>
