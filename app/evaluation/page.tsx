@@ -185,7 +185,7 @@ export default function EvaluationPage() {
         <div
           className="relative w-full max-w-2xl"
           style={{
-            touchAction: 'none',
+            touchAction: 'pan-y',
             marginBottom: queue.length > 1 ? Math.min(queue.length - 1, STACK_VISIBLE_DEPTH) * STACK_OFFSET_Y : 0,
           }}
         >
