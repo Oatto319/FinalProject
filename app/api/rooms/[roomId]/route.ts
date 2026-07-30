@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Room, User } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
-import { dateStringToUtcDate } from '@/lib/date';
+import { dateTimeStringToUtcDate } from '@/lib/date';
 
 interface RoomMemberLike { name: string; gmail?: string; }
 interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; leaderConfirmedBy?: string[]; }
@@ -10,6 +10,8 @@ interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]
 const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
 const TEAM_NAME_MAX_LENGTH = 50;
+const MAX_TOTAL_MEMBERS = 300;
+const MAX_GROUP_SIZE = 50;
 
 // GET /api/rooms/:roomId → get room (with fresh avatarSeeds from User collection)
 export async function GET(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
@@ -87,22 +89,68 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
   switch (action) {
     case 'settings': {
       if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (room.matchDone) {
+        return NextResponse.json({ error: 'จับกลุ่มไปแล้ว ไม่สามารถแก้ไขการตั้งค่าห้องได้' }, { status: 400 });
+      }
       if (body.title !== undefined && String(body.title).length > TITLE_MAX_LENGTH) {
         return NextResponse.json({ error: `ชื่อห้องต้องไม่เกิน ${TITLE_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
       }
       if (body.description !== undefined && String(body.description).length > DESCRIPTION_MAX_LENGTH) {
         return NextResponse.json({ error: `รายละเอียดต้องไม่เกิน ${DESCRIPTION_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
       }
-      if (body.deadline !== undefined && body.deadline !== null) {
-        if (typeof body.deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.deadline)) {
+
+      let totalMembers: number | undefined;
+      if (body.totalMembers !== undefined) {
+        totalMembers = Number(body.totalMembers);
+        if (!(totalMembers >= 1) || totalMembers > MAX_TOTAL_MEMBERS) {
+          return NextResponse.json({ error: `จำนวนคนทั้งหมดต้องอยู่ระหว่าง 1-${MAX_TOTAL_MEMBERS} คน` }, { status: 400 });
+        }
+        if (totalMembers < (room.members ?? []).length) {
+          return NextResponse.json({ error: `จำนวนคนทั้งหมดต้องไม่น้อยกว่าจำนวนคนที่เข้าร่วมแล้ว (${room.members.length} คน)` }, { status: 400 });
+        }
+      }
+
+      let groupSize: number | undefined;
+      if (body.groupSize !== undefined) {
+        groupSize = Number(body.groupSize);
+        if (!(groupSize >= 1) || groupSize > MAX_GROUP_SIZE) {
+          return NextResponse.json({ error: `จำนวนคนต่อกลุ่มต้องอยู่ระหว่าง 1-${MAX_GROUP_SIZE} คน` }, { status: 400 });
+        }
+      }
+
+      const effectiveTotal = totalMembers ?? room.totalMembers;
+      const effectiveSize = groupSize ?? room.groupSize;
+      if ((totalMembers !== undefined || groupSize !== undefined) && effectiveSize > effectiveTotal) {
+        return NextResponse.json({ error: 'จำนวนคนต่อกลุ่ม ต้องไม่มากกว่าจำนวนคนทั้งหมด' }, { status: 400 });
+      }
+
+      let deadlineValue: Date | null | undefined;
+      if (body.deadline !== undefined) {
+        if (body.deadline === null || body.deadline === '') {
+          deadlineValue = null;
+        } else if (typeof body.deadline === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(body.deadline)) {
+          deadlineValue = dateTimeStringToUtcDate(body.deadline);
+          if (deadlineValue.getTime() < Date.now()) {
+            return NextResponse.json({ error: 'วันสิ้นสุดต้องไม่ใช่เวลาที่ผ่านมาแล้ว' }, { status: 400 });
+          }
+        } else {
           return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
         }
-        body.deadline = dateStringToUtcDate(body.deadline);
       }
+
+      if (body.matchMode !== undefined && !['auto', 'selection'].includes(body.matchMode)) {
+        return NextResponse.json({ error: 'โหมดการจับคู่ไม่ถูกต้อง' }, { status: 400 });
+      }
+
       const patch: Record<string, unknown> = {};
-      for (const key of ['title', 'description', 'matchMode', 'typeComposition', 'deadline'] as const) {
-        if (body[key] !== undefined) patch[key] = body[key];
-      }
+      if (body.title !== undefined) patch.title = body.title;
+      if (body.description !== undefined) patch.description = body.description;
+      if (body.matchMode !== undefined) patch.matchMode = body.matchMode;
+      if (body.typeComposition !== undefined) patch.typeComposition = body.typeComposition;
+      if (totalMembers !== undefined) patch.totalMembers = totalMembers;
+      if (groupSize !== undefined) patch.groupSize = groupSize;
+      if (deadlineValue !== undefined) patch.deadline = deadlineValue;
+
       if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
       const updated = await Room.findOneAndUpdate({ roomId }, { $set: patch }, { returnDocument: 'after' });
       return NextResponse.json({ room: updated!.toObject() });

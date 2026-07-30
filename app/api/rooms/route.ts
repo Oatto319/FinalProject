@@ -1,341 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { Room, User } from '@/lib/models';
-import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
+import { Room } from '@/lib/models';
+import { getSessionUser } from '@/lib/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { getPendingEvaluations } from '@/lib/evaluation';
 import { dateTimeStringToUtcDate } from '@/lib/date';
-
-interface RoomMemberLike { name: string; gmail?: string; }
-interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; leaderConfirmedBy?: string[]; }
 
 const TITLE_MAX_LENGTH = 100;
 const DESCRIPTION_MAX_LENGTH = 500;
-const TEAM_NAME_MAX_LENGTH = 50;
 const MAX_TOTAL_MEMBERS = 300;
 const MAX_GROUP_SIZE = 50;
 
-// GET /api/rooms/:roomId → get room (with fresh avatarSeeds from User collection)
-export async function GET(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
+// POST /api/rooms → create room (host identity comes from the session, not the body)
+export async function POST(req: NextRequest) {
   await connectDB();
   const sessionUser = await getSessionUser(req);
   if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { roomId } = await params;
-  const room = await Room.findOne({ roomId });
-  if (!room) return NextResponse.json({ room: null }, { status: 404 });
-
-  const roomObj = room.toObject();
-
-  // Build gmail list from members
-  const gmails: string[] = (roomObj.members ?? []).map((m: { gmail: string }) => m.gmail).filter(Boolean);
-
-  // Fetch latest avatarSeed/avatarImage for all members + host in one go
-  const [users, hostUser] = await Promise.all([
-    gmails.length > 0 ? User.find({ gmail: { $in: gmails } }, { gmail: 1, avatarSeed: 1, avatarImage: 1, _id: 0 }) : Promise.resolve([]),
-    User.findOne({ name: roomObj.hostName }, { avatarSeed: 1, avatarImage: 1, _id: 0 }),
-  ]);
-
-  const seedMap = new Map<string, number>(
-    (users as { gmail: string; avatarSeed: number }[]).map((u) => [u.gmail, u.avatarSeed])
-  );
-  const imageMap = new Map<string, string | null>(
-    (users as { gmail: string; avatarImage: string | null }[]).map((u) => [u.gmail, u.avatarImage])
-  );
-
-  // Patch members
-  if (roomObj.members) {
-    roomObj.members = roomObj.members.map((m: { gmail: string; avatarSeed: number; avatarImage?: string | null }) => ({
-      ...m,
-      avatarSeed: seedMap.get(m.gmail) ?? m.avatarSeed,
-      avatarImage: imageMap.has(m.gmail) ? imageMap.get(m.gmail) : m.avatarImage,
-    }));
+  if (!checkRateLimit(`create-room:${sessionUser.gmail}`, 20, 60 * 60 * 1000)) {
+    return NextResponse.json({ error: 'สร้างห้องบ่อยเกินไป กรุณาลองใหม่ในอีกสักครู่' }, { status: 429 });
   }
 
-  // Patch matchedGroups members
-  if (roomObj.matchedGroups) {
-    roomObj.matchedGroups = roomObj.matchedGroups.map((g: { members: { gmail: string; avatarSeed: number; avatarImage?: string | null }[] }) => ({
-      ...g,
-      members: g.members.map((m) => ({
-        ...m,
-        avatarSeed: seedMap.get(m.gmail) ?? m.avatarSeed,
-        avatarImage: imageMap.has(m.gmail) ? imageMap.get(m.gmail) : m.avatarImage,
-      })),
-    }));
+  const pending = await getPendingEvaluations(sessionUser.gmail);
+  if (pending.length > 0) {
+    return NextResponse.json(
+      { error: 'มีแบบประเมินเพื่อนร่วมทีมค้างอยู่ กรุณาทำให้เสร็จก่อนสร้างห้องใหม่', pending },
+      { status: 403 }
+    );
   }
 
-  // Patch host
-  if (hostUser) {
-    roomObj.hostAvatarSeed = (hostUser as { avatarSeed: number }).avatarSeed;
-    roomObj.hostAvatarImage = (hostUser as { avatarImage: string | null }).avatarImage;
-  }
-
-  return NextResponse.json({ room: roomObj });
-}
-
-// PATCH /api/rooms/:roomId → mutate room state via an explicit action, each with its own authorization rule
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
-  await connectDB();
-  const sessionUser = await getSessionUser(req);
-  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { roomId } = await params;
   const body = await req.json();
-  const { action } = body;
-
-  const room = await Room.findOne({ roomId });
-  if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-
-  const caller = { gmail: sessionUser.gmail, name: sessionUser.name };
-
-  switch (action) {
-    case 'settings': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (room.matchDone) {
-        return NextResponse.json({ error: 'จับกลุ่มไปแล้ว ไม่สามารถแก้ไขการตั้งค่าห้องได้' }, { status: 400 });
-      }
-      if (body.title !== undefined && String(body.title).length > TITLE_MAX_LENGTH) {
-        return NextResponse.json({ error: `ชื่อห้องต้องไม่เกิน ${TITLE_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
-      }
-      if (body.description !== undefined && String(body.description).length > DESCRIPTION_MAX_LENGTH) {
-        return NextResponse.json({ error: `รายละเอียดต้องไม่เกิน ${DESCRIPTION_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
-      }
-
-      let totalMembers: number | undefined;
-      if (body.totalMembers !== undefined) {
-        totalMembers = Number(body.totalMembers);
-        if (!(totalMembers >= 1) || totalMembers > MAX_TOTAL_MEMBERS) {
-          return NextResponse.json({ error: `จำนวนคนทั้งหมดต้องอยู่ระหว่าง 1-${MAX_TOTAL_MEMBERS} คน` }, { status: 400 });
-        }
-        if (totalMembers < (room.members ?? []).length) {
-          return NextResponse.json({ error: `จำนวนคนทั้งหมดต้องไม่น้อยกว่าจำนวนคนที่เข้าร่วมแล้ว (${room.members.length} คน)` }, { status: 400 });
-        }
-      }
-
-      let groupSize: number | undefined;
-      if (body.groupSize !== undefined) {
-        groupSize = Number(body.groupSize);
-        if (!(groupSize >= 1) || groupSize > MAX_GROUP_SIZE) {
-          return NextResponse.json({ error: `จำนวนคนต่อกลุ่มต้องอยู่ระหว่าง 1-${MAX_GROUP_SIZE} คน` }, { status: 400 });
-        }
-      }
-
-      const effectiveTotal = totalMembers ?? room.totalMembers;
-      const effectiveSize = groupSize ?? room.groupSize;
-      if ((totalMembers !== undefined || groupSize !== undefined) && effectiveSize > effectiveTotal) {
-        return NextResponse.json({ error: 'จำนวนคนต่อกลุ่ม ต้องไม่มากกว่าจำนวนคนทั้งหมด' }, { status: 400 });
-      }
-
-      let deadlineValue: Date | null | undefined;
-      if (body.deadline !== undefined) {
-        if (body.deadline === null || body.deadline === '') {
-          deadlineValue = null;
-        } else if (typeof body.deadline === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(body.deadline)) {
-          deadlineValue = dateTimeStringToUtcDate(body.deadline);
-          if (deadlineValue.getTime() < Date.now()) {
-            return NextResponse.json({ error: 'วันสิ้นสุดต้องไม่ใช่เวลาที่ผ่านมาแล้ว' }, { status: 400 });
-          }
-        } else {
-          return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
-        }
-      }
-
-      if (body.matchMode !== undefined && !['auto', 'selection'].includes(body.matchMode)) {
-        return NextResponse.json({ error: 'โหมดการจับคู่ไม่ถูกต้อง' }, { status: 400 });
-      }
-
-      const patch: Record<string, unknown> = {};
-      if (body.title !== undefined) patch.title = body.title;
-      if (body.description !== undefined) patch.description = body.description;
-      if (body.matchMode !== undefined) patch.matchMode = body.matchMode;
-      if (body.typeComposition !== undefined) patch.typeComposition = body.typeComposition;
-      if (totalMembers !== undefined) patch.totalMembers = totalMembers;
-      if (groupSize !== undefined) patch.groupSize = groupSize;
-      if (deadlineValue !== undefined) patch.deadline = deadlineValue;
-
-      if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
-      const updated = await Room.findOneAndUpdate({ roomId }, { $set: patch }, { returnDocument: 'after' });
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'match': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-      const { matchedGroups, matchMode } = body;
-      if (!Array.isArray(matchedGroups)) return NextResponse.json({ error: 'matchedGroups required' }, { status: 400 });
-
-      // Build a whitelist of valid members from the authoritative room.members list
-      const validMembers = new Map<string, { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string }>(
-        (room.members ?? []).map((m: { gmail: string; name: string; avatarSeed: number; avatarImage?: string | null }) => [m.gmail, m])
-      );
-
-      // Sanitize each group: only keep fields we control, reject unknown members
-      type RawMember = { gmail?: unknown; role?: unknown };
-      const sanitizedGroups = matchedGroups.map((g: { id: unknown; name: unknown; members?: RawMember[] }) => ({
-        id: Number(g.id),
-        name: String(g.name ?? '').slice(0, TEAM_NAME_MAX_LENGTH),
-        members: (Array.isArray(g.members) ? g.members as RawMember[] : [])
-          .filter((m) => typeof m.gmail === 'string' && validMembers.has(m.gmail))
-          .map((m) => ({
-            ...validMembers.get(m.gmail as string)!,
-            role: typeof m.role === 'string' ? m.role.slice(0, 50) : 'ไม่ระบุ',
-          })),
-      }));
-
-      const patch: Record<string, unknown> = { matchedGroups: sanitizedGroups, matchDone: true, matchedAt: new Date() };
-      if (matchMode) patch.matchMode = matchMode;
-
-      // Atomic: อัปเดตได้ก็ต่อเมื่อ matchDone ยังไม่ true ตอนที่เขียนจริง (ไม่ใช่แค่ตอนอ่านตอนต้นฟังก์ชัน)
-      // กัน double-click/double-mount สองคำขอชนกันแล้วเขียนทับผลจับกลุ่มที่มีอยู่แล้ว
-      const updated = await Room.findOneAndUpdate(
-        { roomId, matchDone: { $ne: true } },
-        { $set: patch },
-        { returnDocument: 'after' }
-      );
-
-      if (!updated) {
-        // มีคำขออื่นจับกลุ่มสำเร็จไปก่อนแล้ว (race) → คืนสถานะปัจจุบันแทนที่จะ error หรือเขียนทับ
-        const current = await Room.findOne({ roomId });
-        return NextResponse.json({ room: current!.toObject() });
-      }
-      return NextResponse.json({ room: updated.toObject() });
-    }
-
-    case 'endActivity': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!room.matchDone) return NextResponse.json({ error: 'ยังไม่ได้จับกลุ่ม ไม่สามารถจบกิจกรรมได้' }, { status: 400 });
-      const updated = await Room.findOneAndUpdate({ roomId }, { $set: { endedManually: true } }, { returnDocument: 'after' });
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'vote': {
-      const { groupId, targetName } = body;
-      if (typeof groupId !== 'number' || typeof targetName !== 'string' || !targetName.trim()) {
-        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      }
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!group.members.some((m) => m.name === targetName)) {
-        return NextResponse.json({ error: 'Invalid target' }, { status: 400 });
-      }
-
-      const groupKey = String(groupId);
-      const afterVote = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: { [`votes.${groupKey}.${sessionUser.name}`]: targetName } },
-        { returnDocument: 'after' }
-      );
-      if (!afterVote) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-
-      // recompute the leader for this group from the up-to-date tally
-      const votesForGroup: Record<string, string> = afterVote.votes?.[groupKey] ?? {};
-      const tally: Record<string, number> = {};
-      Object.values(votesForGroup).forEach((n) => { tally[n] = (tally[n] ?? 0) + 1; });
-      const entries = Object.entries(tally);
-      const winner = entries.length > 0 ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : targetName;
-
-      // เปลี่ยนตัวหัวหน้าทีม → ต้องให้สมาชิกยืนยันใหม่ทั้งหมด
-      const votePatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': winner };
-      if (winner !== group.leaderId) votePatch['matchedGroups.$[g].leaderConfirmedBy'] = [];
-      const final = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: votePatch },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: final!.toObject() });
-    }
-
-    case 'setLeader': {
-      const { groupId, leaderName } = body;
-      if (typeof groupId !== 'number' || typeof leaderName !== 'string' || !leaderName.trim()) {
-        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      }
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!group.members.some((m) => m.name === leaderName)) {
-        return NextResponse.json({ error: 'Invalid leader' }, { status: 400 });
-      }
-      const setLeaderPatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': leaderName };
-      if (leaderName !== group.leaderId) setLeaderPatch['matchedGroups.$[g].leaderConfirmedBy'] = [];
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: setLeaderPatch },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'confirmLeader': {
-      const { groupId } = body;
-      if (typeof groupId !== 'number') return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!group.leaderId) return NextResponse.json({ error: 'ยังไม่มีหัวหน้าทีมให้ยืนยัน' }, { status: 400 });
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $addToSet: { 'matchedGroups.$[g].leaderConfirmedBy': sessionUser.name } },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'renameTeam': {
-      const { groupId, name } = body;
-      if (typeof groupId !== 'number' || typeof name !== 'string' || !name.trim()) {
-        return NextResponse.json({ error: 'name required' }, { status: 400 });
-      }
-      if (name.trim().length > TEAM_NAME_MAX_LENGTH) {
-        return NextResponse.json({ error: `ชื่อทีมต้องไม่เกิน ${TEAM_NAME_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
-      }
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: { 'matchedGroups.$[g].name': String(name).trim() } },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'kickMember': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (room.matchDone) return NextResponse.json({ error: 'จับกลุ่มไปแล้ว ไม่สามารถเอาสมาชิกออกได้' }, { status: 400 });
-      const { memberGmail } = body;
-      if (typeof memberGmail !== 'string' || !memberGmail.trim()) {
-        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      }
-      if (memberGmail === room.hostGmail) {
-        return NextResponse.json({ error: 'ไม่สามารถเอาผู้สร้างห้องออกจากห้องได้' }, { status: 400 });
-      }
-      const target: RoomMemberLike | undefined = (room.members ?? []).find((m: { gmail?: string }) => m.gmail === memberGmail);
-      if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $pull: { members: { gmail: memberGmail }, readyUsers: target.name } },
-        { returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    default:
-      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
+  const { roomId, title, description, totalMembers, groupSize, deadline, template, matchMode } = body;
+  if (!roomId || !title) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 });
+  if (String(title).length > TITLE_MAX_LENGTH) {
+    return NextResponse.json({ error: `ชื่อห้องต้องไม่เกิน ${TITLE_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
   }
-}
-
-// DELETE /api/rooms/:roomId → delete room (host only, verified via session)
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
-  await connectDB();
-  const sessionUser = await getSessionUser(req);
-  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { roomId } = await params;
-  const room = await Room.findOne({ roomId });
-  if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-  if (!isRoomHost({ gmail: sessionUser.gmail, name: sessionUser.name }, room)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (description && String(description).length > DESCRIPTION_MAX_LENGTH) {
+    return NextResponse.json({ error: `รายละเอียดต้องไม่เกิน ${DESCRIPTION_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
   }
-  await Room.deleteOne({ roomId });
-  return NextResponse.json({ ok: true });
+  if (!(Number(totalMembers) >= 1) || Number(totalMembers) > MAX_TOTAL_MEMBERS) {
+    return NextResponse.json({ error: `จำนวนคนทั้งหมดต้องอยู่ระหว่าง 1-${MAX_TOTAL_MEMBERS} คน` }, { status: 400 });
+  }
+  if (!(Number(groupSize) >= 1) || Number(groupSize) > MAX_GROUP_SIZE) {
+    return NextResponse.json({ error: `จำนวนคนต่อกลุ่มต้องอยู่ระหว่าง 1-${MAX_GROUP_SIZE} คน` }, { status: 400 });
+  }
+  let deadlineDate: Date | null = null;
+  if (deadline) {
+    if (typeof deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(deadline)) {
+      return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
+    }
+    deadlineDate = dateTimeStringToUtcDate(deadline);
+    if (deadlineDate.getTime() < Date.now()) {
+      return NextResponse.json({ error: 'วันสิ้นสุดต้องไม่ใช่เวลาที่ผ่านมาแล้ว' }, { status: 400 });
+    }
+  }
+
+  // เจ้าของห้องที่เป็น "user" (นักเรียน) สร้างห้องเพื่อร่วมทีมด้วยตัวเอง จึงนับเป็นสมาชิกและพร้อมจับกลุ่มทันที
+  // ส่วนเจ้าของห้องที่เป็น "host" (อาจารย์) ยังคงมีหน้าที่ควบคุมห้องเท่านั้น ไม่นับเป็นสมาชิก
+  const hostRole = sessionUser.role === 'host' ? 'host' : 'user';
+  const selfMember = { name: sessionUser.name, avatarSeed: sessionUser.avatarSeed, avatarImage: sessionUser.avatarImage, gmail: sessionUser.gmail };
+
+  try {
+    const room = await Room.create({
+      roomId, title, description, totalMembers, groupSize, deadline: deadlineDate, template, matchMode,
+      hostName: sessionUser.name,
+      hostGmail: sessionUser.gmail,
+      hostAvatarSeed: sessionUser.avatarSeed,
+      hostAvatarImage: sessionUser.avatarImage,
+      hostRole,
+      members: hostRole === 'user' ? [selfMember] : [],
+      readyUsers: hostRole === 'user' ? [sessionUser.name] : [],
+    });
+    return NextResponse.json({ room: room.toObject() }, { status: 201 });
+  } catch (err: unknown) {
+    if ((err as { code?: number }).code === 11000) {
+      return NextResponse.json({ error: 'Room ID นี้ถูกใช้ไปแล้ว กรุณาลองใหม่' }, { status: 409 });
+    }
+    throw err;
+  }
 }
