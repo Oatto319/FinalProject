@@ -177,8 +177,11 @@ export default function EvaluationPage() {
       <Navbar bgColor="#122031" nameColor="white" />
 
       <div className="flex-1 flex flex-col items-center justify-start px-4 py-6">
+        <p className="text-white text-lg font-black mb-1 text-center px-4">
+          {current.roomTitle}
+        </p>
         <p className="text-white/60 font-bold text-sm mb-3">
-          ประเมินเพื่อนร่วมทีม · {current.roomTitle} ({index + 1}/{queue.length})
+          ประเมินเพื่อนร่วมทีม · ({index + 1}/{queue.length})
         </p>
 
         {/* Swipeable stack */}
