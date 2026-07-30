@@ -14,6 +14,16 @@ interface CurrentUser {
   role?: string;
 }
 
+// ✅ ข้อความ "CREATE" ลอยผ่านจอเป็นพื้นหลัง (รูปแบบเดียวกับ app/join/roomid/page.tsx)
+const BACKGROUND_FLOAT_TEXT = [
+  { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.14, drift: 'waveDrift1', duration: '26s', delay: '0s' },
+  { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.12, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
+  { top: '38%', left: '-10%', fontSize: 'clamp(1rem,   12vw, 4rem)',  rotate: '-8deg',  opacity: 0.16, drift: 'waveDrift3', duration: '22s', delay: '-8s' },
+  { top: '56%', left: '-15%', fontSize: 'clamp(1.5rem, 22vw, 9rem)',  rotate: '-18deg', opacity: 0.12, drift: 'waveDrift1', duration: '34s', delay: '-10s' },
+  { top: '74%', left: '-10%', fontSize: 'clamp(1.2rem, 16vw, 6rem)',  rotate: '20deg',  opacity: 0.16, drift: 'waveDrift3', duration: '25s', delay: '-6s' },
+  { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.14, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
+];
+
 export default function CreateRoomPage() {
   const router = useRouter();
   const [user, setUser] = useState<CurrentUser | null>(null);
@@ -137,176 +147,237 @@ export default function CreateRoomPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center justify-center px-4 py-12">
+    <>
+      <style>{`
+        @keyframes waveDrift1 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(120vw) translateY(-6vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
 
-      <h1 className="text-white font-black uppercase tracking-widest text-4xl sm:text-5xl md:text-6xl mb-6 sm:mb-8" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>CREATE</h1>
+        @keyframes waveDrift2 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(115vw) translateY(8vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
 
-      <div className="w-full max-w-lg bg-white rounded-[24px] p-4 sm:p-6 shadow-2xl">
+        @keyframes waveDrift3 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(125vw) translateY(-4vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+      `}</style>
 
-        {step === 1 ? (
-          <>
-            <div className="flex flex-col gap-4">
-              {/* Room Name */}
-              <div className="bg-[#1D324B] rounded-[20px] p-5">
-                <p className="text-white font-bold text-base mb-3">&ldquo;To name the room&rdquo;</p>
-                <input
-                  type="text" name="title" value={formData.title} onChange={handleChange}
-                  placeholder="ชื่อกิจกรรม" maxLength={100}
-                  className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
-                />
-              </div>
-
-              {/* Description */}
-              <div className="bg-[#1D324B] rounded-[20px] p-5">
-                <p className="text-white font-bold text-base mb-3">&ldquo;Describe the activity&rdquo;</p>
-                <textarea
-                  name="description" value={formData.description} onChange={handleChange}
-                  placeholder="รายละเอียดกิจกรรม / กำหนดส่งงาน" rows={2} maxLength={500}
-                  className="w-full bg-white rounded-xl py-4 px-5 text-[#1D324B] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 resize-none transition-all"
-                />
-              </div>
-            </div>
-
-            {showError && (
-              <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกชื่อและรายละเอียด</p>
-            )}
-
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={() => router.push('/')}
-                className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+      <div
+        className="min-h-screen font-sans flex flex-col items-center px-4 py-12 relative overflow-hidden"
+        style={{ background: '#FFDB10' }}
+      >
+        {/* ✅ เลเยอร์พื้นหลัง CREATE ลอยผ่านจอ */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
+        >
+          {BACKGROUND_FLOAT_TEXT.map((s, i) => (
+            <div
+              key={`text-${i}`}
+              style={{
+                position: 'absolute',
+                top: s.top,
+                left: s.left,
+                transform: `rotate(${s.rotate})`,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontSize: s.fontSize,
+                  opacity: s.opacity,
+                  color: '#C9A400',
+                  fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.03em',
+                  whiteSpace: 'nowrap',
+                  animation: `${s.drift} ${s.duration} linear infinite`,
+                  animationDelay: s.delay,
+                }}
               >
-                <ChevronLeft size={24} strokeWidth={2.5} />
-              </button>
-              <button
-                onClick={handleNext}
-                className="flex items-center gap-3 bg-[#1D324B] text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95"
-              >
-                Next
-                <span className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <ArrowRight size={18} />
-                </span>
-              </button>
+                CREATE
+              </span>
             </div>
-          </>
-        ) : (
-          <>
-            <div className="flex flex-col gap-4">
-              {/* Total Members */}
-              <div className="bg-[#1D324B] rounded-[20px] p-5">
-                <p className="text-white font-bold text-base mb-3">&ldquo;Maximum people?&rdquo;</p>
-                <div className="relative">
-                  <input
-                    type="number" name="totalMembers" value={formData.totalMembers} onChange={handleChange}
-                    placeholder="30" min={1} max={MAX_TOTAL_MEMBERS}
-                    className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { setShowTotalDrop((v) => !v); setShowGroupDrop(false); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 transition-colors"
-                  >
-                    <ChevronDown size={20} strokeWidth={2.5} />
-                  </button>
-                  {showTotalDrop && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg z-20 overflow-hidden">
-                      <div className="grid grid-cols-4">
-                        {totalOptions.map((v) => (
-                          <button key={v} type="button" onClick={() => selectOption('totalMembers', v)}
-                            className={`py-3 text-center font-bold text-[#1D324B] hover:bg-blue-50 transition-colors ${formData.totalMembers === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
-                            {v}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+          ))}
+        </div>
 
-              {/* Group Size */}
-              <div className="bg-[#1D324B] rounded-[20px] p-5">
-                <p className="text-white font-bold text-base mb-3">&ldquo;How many people per group?&rdquo;</p>
-                <div className="relative">
-                  <input
-                    type="number" name="groupSize" value={formData.groupSize} onChange={handleChange}
-                    placeholder="3" min={1} max={MAX_GROUP_SIZE}
-                    className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#1D324B] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => { setShowGroupDrop((v) => !v); setShowTotalDrop(false); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 transition-colors"
-                  >
-                    <ChevronDown size={20} strokeWidth={2.5} />
-                  </button>
-                  {showGroupDrop && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg z-20 overflow-hidden">
-                      <div className="grid grid-cols-4">
-                        {groupOptions.map((v) => (
-                          <button key={v} type="button" onClick={() => selectOption('groupSize', v)}
-                            className={`py-3 text-center font-bold text-[#1D324B] hover:bg-blue-50 transition-colors ${formData.groupSize === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
-                            {v}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+        <div className="relative z-10 flex flex-col items-center w-full">
+          <h1 className="text-white font-black uppercase tracking-widest text-5xl sm:text-6xl md:text-7xl mb-6 sm:mb-8" style={{ textShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>CREATE</h1>
+
+          <div className="w-full max-w-lg bg-white rounded-[24px] p-4 sm:p-6 shadow-2xl">
+
+            {step === 1 ? (
+              <>
+                <div className="flex flex-col gap-4">
+                  {/* Room Name */}
+                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                    <p className="text-white font-bold text-base mb-3">&ldquo;To name the room&rdquo;</p>
+                    <input
+                      type="text" name="title" value={formData.title} onChange={handleChange}
+                      placeholder="ชื่อกิจกรรม" maxLength={100}
+                      className="w-full bg-white rounded-xl py-4 px-5 text-[#4B2E1E] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                    <p className="text-white font-bold text-base mb-3">&ldquo;Describe the activity&rdquo;</p>
+                    <textarea
+                      name="description" value={formData.description} onChange={handleChange}
+                      placeholder="รายละเอียดกิจกรรม / กำหนดส่งงาน" rows={2} maxLength={500}
+                      className="w-full bg-white rounded-xl py-4 px-5 text-[#4B2E1E] font-semibold text-lg focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 resize-none transition-all"
+                    />
+                  </div>
                 </div>
-                {sizeWarning && (
-                  <p className={`text-sm font-bold mt-3 ${sizeWarning.startsWith('✓') ? 'text-green-400' : 'text-yellow-300'}`}>
-                    {sizeWarning}
-                  </p>
+
+                {showError && (
+                  <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกชื่อและรายละเอียด</p>
                 )}
-              </div>
 
-              {/* Deadline */}
-              <div className="bg-[#1D324B] rounded-[20px] p-5">
-                <p className="text-white font-bold text-base mb-3">&ldquo;When is the deadline?&rdquo;</p>
-                <DeadlinePicker
-                  value={formData.deadline}
-                  onChange={(deadline) => setFormData((prev) => ({ ...prev, deadline }))}
-                />
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {dayOptions.map((d) => (
-                    <button key={d} type="button" onClick={() => selectDeadline(d)}
-                      className={`px-4 py-2 rounded-full font-bold text-sm transition-colors ${formData.deadline === addDaysDeadline(d) ? 'bg-blue-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
-                      {d} วัน
-                    </button>
-                  ))}
-                  {formData.deadline && (
-                    <button type="button" onClick={() => setFormData((prev) => ({ ...prev, deadline: '' }))}
-                      className="px-4 py-2 rounded-full font-bold text-sm text-white/60 hover:text-white transition-colors">
-                      ล้าง
-                    </button>
-                  )}
+                <div className="flex items-center justify-between mt-6">
+                  <button
+                    onClick={() => router.push('/')}
+                    className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+                  >
+                    <ChevronLeft size={24} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    onClick={handleNext}
+                    className="flex items-center gap-3 bg-[#4B2E1E] text-white px-8 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95"
+                  >
+                    Next
+                    <span className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                      <ArrowRight size={18} />
+                    </span>
+                  </button>
                 </div>
-                <p className="text-white/50 text-xs mt-2">ไม่กำหนดก็ได้ (ไม่บังคับ)</p>
-              </div>
-            </div>
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col gap-4">
+                  {/* Total Members */}
+                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                    <p className="text-white font-bold text-base mb-3">&ldquo;Maximum people?&rdquo;</p>
+                    <div className="relative">
+                      <input
+                        type="number" name="totalMembers" value={formData.totalMembers} onChange={handleChange}
+                        placeholder="30" min={1} max={MAX_TOTAL_MEMBERS}
+                        className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#4B2E1E] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { setShowTotalDrop((v) => !v); setShowGroupDrop(false); }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 transition-colors"
+                      >
+                        <ChevronDown size={20} strokeWidth={2.5} />
+                      </button>
+                      {showTotalDrop && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg z-20 overflow-hidden">
+                          <div className="grid grid-cols-4">
+                            {totalOptions.map((v) => (
+                              <button key={v} type="button" onClick={() => selectOption('totalMembers', v)}
+                                className={`py-3 text-center font-bold text-[#4B2E1E] hover:bg-blue-50 transition-colors ${formData.totalMembers === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
+                                {v}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-            {showError && (
-              <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกจำนวนให้ครบ หรือกำหนดวันสิ้นสุดให้ถูกต้อง</p>
+                  {/* Group Size */}
+                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                    <p className="text-white font-bold text-base mb-3">&ldquo;How many people per group?&rdquo;</p>
+                    <div className="relative">
+                      <input
+                        type="number" name="groupSize" value={formData.groupSize} onChange={handleChange}
+                        placeholder="3" min={1} max={MAX_GROUP_SIZE}
+                        className="w-full bg-white rounded-xl py-4 pl-5 pr-14 text-[#4B2E1E] font-semibold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-400 placeholder:text-gray-300 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { setShowGroupDrop((v) => !v); setShowTotalDrop(false); }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center text-gray-500 transition-colors"
+                      >
+                        <ChevronDown size={20} strokeWidth={2.5} />
+                      </button>
+                      {showGroupDrop && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg z-20 overflow-hidden">
+                          <div className="grid grid-cols-4">
+                            {groupOptions.map((v) => (
+                              <button key={v} type="button" onClick={() => selectOption('groupSize', v)}
+                                className={`py-3 text-center font-bold text-[#4B2E1E] hover:bg-blue-50 transition-colors ${formData.groupSize === String(v) ? 'bg-blue-100 text-blue-600' : ''}`}>
+                                {v}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {sizeWarning && (
+                      <p className={`text-sm font-bold mt-3 ${sizeWarning.startsWith('✓') ? 'text-green-400' : 'text-yellow-300'}`}>
+                        {sizeWarning}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Deadline */}
+                  <div className="bg-[#4B2E1E] rounded-[20px] p-5">
+                    <p className="text-white font-bold text-base mb-3">&ldquo;When is the deadline?&rdquo;</p>
+                    <DeadlinePicker
+                      value={formData.deadline}
+                      onChange={(deadline) => setFormData((prev) => ({ ...prev, deadline }))}
+                    />
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {dayOptions.map((d) => (
+                        <button key={d} type="button" onClick={() => selectDeadline(d)}
+                          className={`px-4 py-2 rounded-full font-bold text-sm transition-colors ${formData.deadline === addDaysDeadline(d) ? 'bg-blue-400 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}>
+                          {d} วัน
+                        </button>
+                      ))}
+                      {formData.deadline && (
+                        <button type="button" onClick={() => setFormData((prev) => ({ ...prev, deadline: '' }))}
+                          className="px-4 py-2 rounded-full font-bold text-sm text-white/60 hover:text-white transition-colors">
+                          ล้าง
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-white/50 text-xs mt-2">ไม่กำหนดก็ได้ (ไม่บังคับ)</p>
+                  </div>
+                </div>
+
+                {showError && (
+                  <p className="text-red-500 font-bold text-sm mt-4 px-1">⚠️ กรุณากรอกจำนวนให้ครบ หรือกำหนดวันสิ้นสุดให้ถูกต้อง</p>
+                )}
+
+                <div className="flex items-center justify-between mt-6">
+                  <button
+                    onClick={() => { setStep(1); setShowError(false); }}
+                    className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
+                  >
+                    <ChevronLeft size={24} strokeWidth={2.5} />
+                  </button>
+                  <button
+                    onClick={handleCreate} disabled={loading}
+                    className="bg-[#4B2E1E] text-white px-10 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95 disabled:opacity-60"
+                  >
+                    {loading ? 'กำลังสร้าง...' : 'Create'}
+                  </button>
+                </div>
+              </>
             )}
 
-            <div className="flex items-center justify-between mt-6">
-              <button
-                onClick={() => { setStep(1); setShowError(false); }}
-                className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all"
-              >
-                <ChevronLeft size={24} strokeWidth={2.5} />
-              </button>
-              <button
-                onClick={handleCreate} disabled={loading}
-                className="bg-[#1D324B] text-white px-10 py-4 rounded-full font-bold text-lg hover:opacity-90 transition-all active:scale-95 disabled:opacity-60"
-              >
-                {loading ? 'กำลังสร้าง...' : 'Create'}
-              </button>
-            </div>
-          </>
-        )}
-
+          </div>
+        </div>
       </div>
-
-    </div>
+    </>
   );
 }
