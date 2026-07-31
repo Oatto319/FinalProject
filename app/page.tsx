@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ClipboardList } from 'lucide-react';
 import Navbar from './navbar/page';
 
 type RevealState = {
@@ -48,6 +49,8 @@ const App = () => {
   const [ready, setReady] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [reveal, setReveal] = useState<RevealState | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [showPendingModal, setShowPendingModal] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
@@ -58,6 +61,32 @@ const App = () => {
       setTimeout(() => setMounted(true), 10);
     }
   }, [router]);
+
+  // ✅ เช็คว่ามีแบบประเมินเพื่อนร่วมทีมค้างอยู่หรือไม่ (ใช้กันปุ่ม Create / Join / MY TYPE / Quiz)
+  useEffect(() => {
+    if (!localStorage.getItem('currentUser')) return;
+
+    const check = () => {
+      fetch('/api/evaluations')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => { if (data) setPendingCount((data.pending ?? []).length); })
+        .catch(() => {});
+    };
+
+    check();
+    const interval = setInterval(check, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ ปุ่มที่ต้องถูกกันด้วยแบบประเมิน (ไม่ใช่ Team / Evaluate) จะเรียกผ่านฟังก์ชันนี้
+  // ถ้ามีแบบประเมินค้างอยู่ -> กดเข้าไม่ได้ ขึ้น popup แทนทันที ไม่มีการนำทางเกิดขึ้น
+  const guardedAction = (action: () => void) => {
+    if (pendingCount > 0) {
+      setShowPendingModal(true);
+      return;
+    }
+    action();
+  };
 
   const handleReveal = (e: React.MouseEvent, color: string, textColor: string, label: string, route: string) => {
     setReveal({ x: e.clientX, y: e.clientY, color, textColor, label, route });
@@ -224,7 +253,7 @@ const App = () => {
             {/* Create Button (Yellow) */}
             <button
               className="h-28 sm:h-32 md:h-36 lg:h-44 w-full bg-[#FFDB10] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#C9A800] hover:shadow-[0_4px_0_0_#C9A800] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-start justify-center pl-5 pt-6 relative overflow-hidden"
-              onClick={(e) => handleReveal(e, '#FFDB10', '#A88200', 'Create', '/templates?mode=create')}
+              onClick={(e) => guardedAction(() => handleReveal(e, '#FFDB10', '#A88200', 'Create', '/templates?mode=create'))}
             >
               <img src="/img/teacher.png" alt="" aria-hidden="true" className="absolute right-0 bottom-0 h-[110%] w-auto object-contain opacity-90 pointer-events-none select-none translate-y-4" />
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#A88200] [text-shadow:0_4px_0_rgba(201,168,0,0.5)] relative z-10">Create</h1>
@@ -234,7 +263,7 @@ const App = () => {
             {/* Join Button (Blue) */}
             <button
               className="h-28 sm:h-32 md:h-36 lg:h-44 w-full bg-[#74D1FF] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#3A9EC7] hover:shadow-[0_4px_0_0_#3A9EC7] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-end justify-center pr-5 relative overflow-hidden"
-              onClick={(e) => handleReveal(e, '#74D1FF', '#2D85A0', 'Join', '/join/roomid')}
+              onClick={(e) => guardedAction(() => handleReveal(e, '#74D1FF', '#2D85A0', 'Join', '/join/roomid'))}
             >
               <img src="/img/team.png" alt="" aria-hidden="true" className="absolute left-0 bottom-0 h-[145%] w-auto object-contain opacity-90 pointer-events-none select-none" />
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#2D85A0] [text-shadow:0_4px_0_rgba(58,158,199,0.5)] relative z-10">Join</h1>
@@ -259,7 +288,7 @@ const App = () => {
 
             {/* My Type Button */}
              <div
-              onClick={() => router.push('/mytype')}
+              onClick={() => guardedAction(() => router.push('/mytype'))}
               className="bg-[#5B3FD4] rounded-[20px] h-48 sm:h-56 md:h-64 lg:h-80 cursor-pointer shadow-[0_8px_0_0_#4630A8] hover:shadow-[0_4px_0_0_#4630A8] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all relative flex items-center justify-center overflow-hidden"
             >
               <div className="w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 lg:w-64 lg:h-64 bg-[#B3A0FF] rounded-full flex items-center justify-center z-10 flex-shrink-0">
@@ -272,7 +301,7 @@ const App = () => {
             <div className="flex gap-4 flex-1 mt-2">
               {/* Quiz Button — square */}
               <div
-                onClick={() => router.push('/templates')}
+                onClick={() => guardedAction(() => router.push('/templates'))}
                 className="flex-1 aspect-square bg-[#FFAAAA] rounded-[20px] cursor-pointer shadow-[0_8px_0_0_#D87878] hover:shadow-[0_4px_0_0_#D87878] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-2 p-4 overflow-hidden"
               >
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black italic text-white tracking-tighter [text-shadow:0_4px_0_rgba(216,120,120,0.5)]">Quiz</h1>
@@ -282,7 +311,7 @@ const App = () => {
               {/* Evaluate Button — square */}
               <button
                 className="flex-1 aspect-square bg-[#FFAD60] rounded-[20px] font-black italic tracking-tighter shadow-[0_8px_0_0_#E8854A] hover:shadow-[0_4px_0_0_#E8854A] hover:translate-y-[4px] active:shadow-none active:translate-y-[8px] transition-all flex flex-col items-center justify-center gap-2 p-4 relative overflow-hidden"
-                onClick={(e) => handleReveal(e, '#FFAD60', '#A05A20', 'Evaluate', '/join/myprojects?mode=evaluate')}
+                onClick={(e) => handleReveal(e, '#FFAD60', '#A05A20', 'Evaluate', '/evaluation')}
               >
                 <img src="/img/analyze.PNG" alt="" aria-hidden="true" className="absolute bottom-0 right-0 h-[70%] w-auto object-contain opacity-25 pointer-events-none select-none" />
                 <h1 className="text-3xl sm:text-4xl lg:text-5xl text-[#A05A20] [text-shadow:0_4px_0_rgba(160,90,32,0.4)] relative z-10">Evaluate</h1>
@@ -294,9 +323,36 @@ const App = () => {
           </div>
         </main>
 
+        {/* ✅ Popup แจ้งเตือนแบบประเมินค้างอยู่ — ขึ้นทันทีตอนกด Create / Join / MY TYPE / Quiz โดยไม่นำทางออกจากหน้านี้ */}
+        {showPendingModal && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] px-4">
+            <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl flex flex-col items-center gap-4 text-center">
+              <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
+                <ClipboardList size={32} />
+              </div>
+              <h2 className="text-xl font-black text-gray-800" style={{ textShadow: 'none' }}>มีแบบประเมินเพื่อนร่วมทีมค้างอยู่</h2>
+              <p className="text-gray-500 text-sm">
+                กรุณาประเมินเพื่อนร่วมทีมของกิจกรรมที่จบแล้วให้ครบ ({pendingCount} ห้อง) ก่อนสร้างหรือเข้าร่วมห้องใหม่
+              </p>
+              <button
+                onClick={() => router.push('/evaluation')}
+                className="w-full bg-[#2D3E50] text-white py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95"
+              >
+                ไปทำแบบประเมิน
+              </button>
+              <button
+                onClick={() => setShowPendingModal(false)}
+                className="text-gray-400 text-xs font-semibold hover:underline"
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );
 };
 
-export default App; 
+export default App;
