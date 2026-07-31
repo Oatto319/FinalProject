@@ -36,6 +36,26 @@ interface SettingsForm {
   matchMode: string;
 }
 
+// ✅ ธีมสีตาม template ของห้อง (สีอ้างอิงจากหน้า templates)
+// bg = สีอ่อน (พื้นหลังหน้า), dark = สีเข้ม (navbar + กรอบ header), accent = สีตัวหนังสือบนการ์ดขาว, label = ข้อความลอยพื้นหลัง
+const TEMPLATE_THEMES: Record<string, { bg: string; dark: string; accent: string; label: string }> = {
+  programming:  { bg: '#FFAAAA', dark: '#D87878', accent: '#4F437B', label: 'PROGRAMMING' },
+  service:      { bg: '#71EFB8', dark: '#5CC095', accent: '#FF4573', label: 'CUSTOMER / SERVICE' },
+  presentation: { bg: '#EAFF48', dark: '#B2C334', accent: '#21871C', label: 'PRESENTATION' },
+  design:       { bg: '#8C71EF', dark: '#6D58B9', accent: '#4B3E7A', label: 'DESIGN / CREATIVE' },
+};
+const DEFAULT_THEME = { bg: '#F8A4A4', dark: '#D87878', accent: '#4B3E7A', label: 'PROGRAMMING' };
+
+// ✅ ข้อความ template ลอยผ่านจอเป็นพื้นหลัง (รูปแบบเดียวกับ app/join/roomid/page.tsx)
+const BACKGROUND_FLOAT_TEXT = [
+  { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.14, drift: 'waveDrift1', duration: '26s', delay: '0s' },
+  { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.12, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
+  { top: '38%', left: '-10%', fontSize: 'clamp(1rem,   12vw, 4rem)',  rotate: '-8deg',  opacity: 0.16, drift: 'waveDrift3', duration: '22s', delay: '-8s' },
+  { top: '56%', left: '-15%', fontSize: 'clamp(1.5rem, 22vw, 9rem)',  rotate: '-18deg', opacity: 0.12, drift: 'waveDrift1', duration: '34s', delay: '-10s' },
+  { top: '74%', left: '-10%', fontSize: 'clamp(1.2rem, 16vw, 6rem)',  rotate: '20deg',  opacity: 0.16, drift: 'waveDrift3', duration: '25s', delay: '-6s' },
+  { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.14, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
+];
+
 const MatchPage = () => {
   const router = useRouter();
   const [user, setUser]             = useState<{ name: string; avatarSeed: number; avatarImage?: string | null; role?: string } | null>(null);
@@ -52,6 +72,8 @@ const MatchPage = () => {
   const [settingsLoading, setSettingsLoading] = useState(false);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
+
+  const theme = TEMPLATE_THEMES[room?.template ?? ''] ?? DEFAULT_THEME;
 
   const openSettings = () => {
     if (!room) return;
@@ -136,8 +158,6 @@ const MatchPage = () => {
     if (data.room) {
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
-      // ใช้ DB matchMode เฉพาะเมื่อเป็นค่าที่ไม่ใช่ default ('auto')
-      // หรือเมื่อ localStorage ไม่มีค่า — ป้องกัน default DB override ค่า localStorage
       const pendingRaw = localStorage.getItem('pendingRoom');
       const localMode = pendingRaw ? (JSON.parse(pendingRaw).matchMode ?? '') : '';
       if (data.room.matchMode && data.room.matchMode !== 'auto') {
@@ -194,36 +214,98 @@ const MatchPage = () => {
   };
 
   return (
-    <div className="h-dvh bg-[#E5E7EB] font-sans flex flex-col items-center overflow-hidden">
-      <Navbar />
-      <div className="flex-1 w-full lg:max-w-6xl lg:px-4 lg:mt-4 flex flex-col min-h-0">
-        <div className="bg-[#F8A4A4] lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4 flex-shrink-0">
+    <>
+      <style>{`
+        @keyframes waveDrift1 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(120vw) translateY(-6vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+
+        @keyframes waveDrift2 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(115vw) translateY(8vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+
+        @keyframes waveDrift3 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(125vw) translateY(-4vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+      `}</style>
+
+      <div className="h-dvh font-sans flex flex-col items-center overflow-hidden relative" style={{ background: theme.bg }}>
+        {/* ✅ เลเยอร์พื้นหลัง template ลอยผ่านจอ */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
+        >
+          {BACKGROUND_FLOAT_TEXT.map((s, i) => (
+            <div
+              key={`text-${i}`}
+              style={{
+                position: 'absolute',
+                top: s.top,
+                left: s.left,
+                transform: `rotate(${s.rotate})`,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontSize: s.fontSize,
+                  opacity: s.opacity,
+                  color: theme.dark,
+                  fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.03em',
+                  whiteSpace: 'nowrap',
+                  animation: `${s.drift} ${s.duration} linear infinite`,
+                  animationDelay: s.delay,
+                }}
+              >
+                {theme.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="relative z-20 w-full flex justify-center">
+          <Navbar bgColor={theme.dark} nameColor="white" />
+        </div>
+      <div className="relative z-10 flex-1 w-full lg:max-w-6xl lg:px-4 lg:mt-4 flex flex-col min-h-0">
+        <div className="lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4 flex-shrink-0" style={{ background: theme.bg, border: `4px solid ${theme.dark}` }}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
-              className="hidden lg:flex w-10 h-10 bg-white/80 hover:bg-white rounded-full items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95"
+              className="hidden lg:flex w-10 h-10 bg-white/80 hover:bg-white rounded-full items-center justify-center shadow transition-all active:scale-95"
+              style={{ color: theme.accent }}
               title="กลับหน้าหลัก"
             >
               <Home size={18} />
             </button>
-            <h1 className="text-[#4B3E7A] text-4xl md:text-5xl font-black italic tracking-tighter uppercase">{room?.template ?? 'PROGRAMMING'}</h1>
+            <h1 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase" style={{ color: theme.accent }}>{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push('/')}
-              className="lg:hidden w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95"
+              className="lg:hidden w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow transition-all active:scale-95"
+              style={{ color: theme.accent }}
               title="กลับหน้าหลัก"
             >
               <Home size={18} />
             </button>
             <button
               onClick={handleCopy}
-              className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white text-[#4B3E7A] hover:bg-white/90"
+              className="flex items-center gap-3 px-5 py-2.5 rounded-full font-bold text-sm shadow-md transition-all active:scale-95 bg-white hover:bg-white/90"
+              style={{ color: theme.accent }}
             >
               <span className="text-xl font-black tracking-wider">#{room ? getRoomId(room) : '...'}</span>
               <span className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full transition-all ${
-                copied ? 'bg-green-400 text-white' : 'bg-[#4B3E7A]/10 text-[#4B3E7A]'
-              }`}>
+                copied ? 'bg-green-400 text-white' : ''
+              }`} style={!copied ? { backgroundColor: `${theme.accent}1A`, color: theme.accent } : undefined}>
                 <Copy size={13} />
                 <span className="hidden lg:inline">{copied ? 'Copied!' : 'Copy'}</span>
               </span>
@@ -233,7 +315,8 @@ const MatchPage = () => {
               onClick={openSettings}
               disabled={!room}
               title="ตั้งค่าห้อง"
-              className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow text-[#4B3E7A] transition-all active:scale-95 disabled:opacity-50"
+              className="w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow transition-all active:scale-95 disabled:opacity-50"
+              style={{ color: theme.accent }}
             >
               <Settings size={18} />
             </button>
@@ -250,7 +333,7 @@ const MatchPage = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden bg-[#D1D5DB]/40 p-4 lg:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 lg:border-b-8 lg:border-gray-300 shadow-inner">
+        <div className="flex-1 overflow-hidden bg-[#E5E7EB] p-4 lg:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 lg:border-b-8 lg:border-gray-300 shadow-inner">
           <div className="order-2 lg:order-1 overflow-y-auto flex flex-col gap-3 min-h-0 flex-1">
             {members.filter((m) => m.name !== room?.hostName).length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400 font-medium">รอนักเรียนเข้าร่วม...</div>
@@ -323,7 +406,7 @@ const MatchPage = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-gray-400 text-xs">เข้าร่วมแล้ว:</p>
-                    <p className="text-3xl font-black text-[#4B3E7A] leading-none">{members.length}/{totalMembers}</p>
+                    <p className="text-3xl font-black leading-none" style={{ color: theme.accent }}>{members.length}/{totalMembers}</p>
                   </div>
                 </div>
               </div>
@@ -333,7 +416,7 @@ const MatchPage = () => {
               {!isFull ? (
                 <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[120px] sm:min-h-[160px] border border-white/50">
                   <div className="flex-[3] flex flex-col items-center justify-center gap-1 px-2 sm:px-4">
-                    <span className="text-[#4B3E7A] text-xl sm:text-2xl md:text-4xl font-black italic tracking-tighter uppercase opacity-30 select-none">WAITING</span>
+                    <span className="text-xl sm:text-2xl md:text-4xl font-black italic tracking-tighter uppercase opacity-30 select-none" style={{ color: theme.accent }}>WAITING</span>
                     <span className="text-gray-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-center">รอคนเข้าห้องให้ครบ</span>
                   </div>
                   <div className="flex-[2] bg-gray-400 flex flex-col items-center justify-center text-white">
@@ -344,7 +427,7 @@ const MatchPage = () => {
               ) : !isAllReady ? (
                 <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[120px] sm:min-h-[160px] border border-white/50">
                   <div className="flex-[3] flex items-center justify-center">
-                    <span className="text-[#4B3E7A] text-2xl sm:text-3xl md:text-6xl font-black italic tracking-tighter uppercase opacity-30 select-none">READY</span>
+                    <span className="text-2xl sm:text-3xl md:text-6xl font-black italic tracking-tighter uppercase opacity-30 select-none" style={{ color: theme.accent }}>READY</span>
                   </div>
                   <div className="flex-[2] bg-[#7C3AED] flex flex-col items-center justify-center text-white">
                     <span className="text-2xl sm:text-3xl md:text-6xl font-black leading-none">{readyCount}/{totalMembers}</span>
@@ -509,7 +592,8 @@ const MatchPage = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
