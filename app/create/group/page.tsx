@@ -31,7 +31,7 @@ const GroupResultPage = () => {
   const router = useRouter();
   const [showModal, setShowModal]             = useState(false);
   const [selectedReq, setSelectedReq]         = useState<{id:number;name:string} | null>(null);
-  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[]; endedManually?: boolean } | null>(null);
+  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostGmail?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[]; endedManually?: boolean } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
   const [isManualRoom, setIsManualRoom]        = useState(false);
   const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, MBTIResult>>({});
@@ -69,6 +69,16 @@ const GroupResultPage = () => {
     };
     load();
   }, []);
+
+  // Host เป็นผู้สร้างห้อง ไม่ใช่สมาชิกในกลุ่มโดยอัตโนมัติ — ต้องเช็คว่า host เข้าร่วมเป็นสมาชิกและถูกจับกลุ่มไปด้วยจริงๆ
+  // ก่อนโชว์ปุ่ม "เข้าห้องทีมของฉัน" ไม่งั้น host ที่ไม่ได้อยู่ในกลุ่มไหนเลยจะกดแล้วไปหน้าที่ไม่มีทีมให้ดู
+  // กรณี hostRole === 'user' (นักเรียนที่สร้างห้องเอง) ระบบเพิ่มเป็นสมาชิกให้อัตโนมัติตอนสร้างห้องอยู่แล้ว (ดู app/api/rooms/route.ts)
+  // จึงคงพฤติกรรมเดิมไว้ — เช็คเฉพาะกรณี hostRole === 'host' (อาจารย์) ที่ไม่ได้ join ห้องตัวเองเป็นค่าเริ่มต้น
+  const isHostInGroup = room?.hostRole === 'user'
+    ? groups.length > 0
+    : groups.some((g) =>
+        g.members.some((m) => (room?.hostGmail ? m.gmail === room.hostGmail : m.name === room?.hostName))
+      );
 
   const handleRequest = () => { setShowModal(false); setSelectedReq(null); };
 
@@ -139,7 +149,7 @@ const GroupResultPage = () => {
                 <p className="text-xs text-gray-400">{room?.totalMembers} คน · กลุ่มละ {room?.groupSize} คน</p>
                 <p className="text-xs text-gray-400 font-medium">ID: {room?.roomId ?? room?.id ?? '...'}</p>
               </div>
-              {groups.length > 0 && (
+              {isHostInGroup && (
                 <button
                   onClick={() => router.push('/join/myteam')}
                   className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#4B3E7A] hover:bg-[#3d3268] text-white font-bold text-sm transition-all active:scale-95"
