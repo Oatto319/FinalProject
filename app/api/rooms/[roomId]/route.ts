@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { Room, User } from '@/lib/models';
+import { Room, User, PeerEvaluation } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
 import { dateTimeStringToUtcDate } from '@/lib/date';
 
@@ -202,6 +202,36 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
     case 'endActivity': {
       if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       if (!room.matchDone) return NextResponse.json({ error: 'ยังไม่ได้จับกลุ่ม ไม่สามารถจบกิจกรรมได้' }, { status: 400 });
+      if (room.endedManually) return NextResponse.json({ room: room.toObject() });
+
+      // ต้องให้สมาชิกทุกคนในทุกกลุ่มประเมินเพื่อนร่วมทีมครบทุกคนก่อน ถึงจะจบกิจกรรมได้
+      // (คู่ที่ต้องประเมิน = สมาชิกที่มี gmail ทุกคู่ที่ไม่ใช่ตัวเอง ในกลุ่มเดียวกัน)
+      const groups = (room.matchedGroups ?? []) as MatchedGroupLike[];
+      const pairsNeeded: { fromGmail: string; toGmail: string }[] = [];
+      for (const g of groups) {
+        const withGmail = g.members.filter((m) => m.gmail);
+        for (const from of withGmail) {
+          for (const to of withGmail) {
+            if (from.gmail !== to.gmail) pairsNeeded.push({ fromGmail: from.gmail!, toGmail: to.gmail! });
+          }
+        }
+      }
+
+      if (pairsNeeded.length > 0) {
+        const done = await PeerEvaluation.find(
+          { roomId, fromGmail: { $in: [...new Set(pairsNeeded.map((p) => p.fromGmail))] } },
+          { fromGmail: 1, toGmail: 1, _id: 0 }
+        ).lean<{ fromGmail: string; toGmail: string }[]>();
+        const doneSet = new Set(done.map((d) => `${d.fromGmail}|${d.toGmail}`));
+        const stillMissing = pairsNeeded.some((p) => !doneSet.has(`${p.fromGmail}|${p.toGmail}`));
+        if (stillMissing) {
+          return NextResponse.json(
+            { error: 'ยังมีสมาชิกที่ทำแบบประเมินเพื่อนร่วมทีมไม่ครบ กรุณารอให้ทุกคนประเมินให้เสร็จก่อนจบกิจกรรม' },
+            { status: 400 }
+          );
+        }
+      }
+
       const updated = await Room.findOneAndUpdate({ roomId }, { $set: { endedManually: true } }, { returnDocument: 'after' });
       return NextResponse.json({ room: updated!.toObject() });
     }

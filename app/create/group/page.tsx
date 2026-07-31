@@ -105,9 +105,11 @@ const GroupResultPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'endActivity' }),
       });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setRoom((prev) => (prev ? { ...prev, endedManually: data.room?.endedManually } : prev));
+      } else {
+        alert(data.error ?? 'จบกิจกรรมไม่สำเร็จ');
       }
     } finally {
       setEndingActivity(false);
