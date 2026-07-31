@@ -39,7 +39,7 @@ export default function PendingEvaluationGate() {
         <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
           <ClipboardList size={32} />
         </div>
-        <h2 className="text-xl font-black text-gray-800">มีแบบประเมินเพื่อนร่วมทีมค้างอยู่</h2>
+        <h2 className="text-xl font-black text-gray-800" style={{ textShadow: 'none' }}>มีแบบประเมินเพื่อนร่วมทีมค้างอยู่</h2>
         <p className="text-gray-500 text-sm">
           กรุณาประเมินเพื่อนร่วมทีมของกิจกรรมที่จบแล้วให้ครบ ({pendingCount} ห้อง) ก่อนสร้างหรือเข้าร่วมห้องใหม่
         </p>
