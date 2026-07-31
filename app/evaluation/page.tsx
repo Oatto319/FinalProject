@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Home, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Home } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 
@@ -204,105 +204,78 @@ export default function EvaluationPage() {
   // ---------- หน้ารายการห้อง (เลือกห้องที่จะทำแบบประเมิน) ----------
   if (!currentRoom) {
     return (
-      <div
-        className="h-dvh font-sans flex flex-col items-center overflow-hidden relative"
-        style={{ background: '#D1D5DB' }}
-      >
-        <style>{`
-          @keyframes slideUpIn { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: translateY(0); } }
-        `}</style>
-
-        <div className="relative z-20 w-full">
-          <Navbar />
-        </div>
-
-        <main className="relative z-10 flex-1 overflow-hidden w-full max-w-5xl px-4 flex flex-col sm:flex-row sm:items-start gap-3 pt-0 sm:pt-4 pb-4">
-
-          {/* Back Button — desktop only */}
-          <button onClick={() => router.push('/')}
-            className="hidden sm:flex flex-shrink-0 mt-2 w-12 h-12 bg-white rounded-full items-center justify-center text-gray-600 shadow-[0_5px_0_0_#9ca3af] hover:shadow-[0_3px_0_0_#9ca3af] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-            <ChevronLeft size={24} strokeWidth={2.5} />
-          </button>
-
-          <div className="flex-1 overflow-y-auto h-full pb-2">
-            <div className="mt-4 sm:mt-2 mb-1">
-              <p className="text-[#1D324B] text-2xl font-black">แบบประเมินเพื่อนร่วมทีม</p>
-              <p className="text-gray-500 font-medium text-sm mt-1">
-                {rooms.length > 0
-                  ? 'เลือกห้องที่ต้องการทำแบบประเมิน — ทำทีละห้อง คะแนนของแต่ละห้องจะไม่ปนกัน'
-                  : 'ไม่มีแบบประเมินที่ต้องทำ'}
-              </p>
+      <div className="min-h-screen font-sans flex flex-col" style={{ backgroundColor: '#1D324B' }}>
+        <Navbar bgColor="#122031" nameColor="white" />
+        <div className="flex-1 flex flex-col items-center px-4 py-6">
+          <div className="w-full max-w-2xl">
+            <div className="flex items-start justify-between gap-3 mb-1">
+              <div>
+                <p className="text-white text-2xl font-black">แบบประเมินเพื่อนร่วมทีม</p>
+              </div>
+              <button
+                onClick={() => router.push('/')}
+                title="กลับหน้าหลัก"
+                className="w-10 h-10 flex-shrink-0 bg-white rounded-full flex items-center justify-center text-[#1D324B] shadow-md hover:bg-white/90 transition-all active:scale-95"
+              >
+                <Home size={18} />
+              </button>
             </div>
+            <p className="text-white/50 font-medium text-sm mb-6">
+              {rooms.length > 0
+                ? 'เลือกห้องที่ต้องการทำแบบประเมิน — ทำทีละห้อง คะแนนของแต่ละห้องจะไม่ปนกัน'
+                : 'ไม่มีแบบประเมินที่ต้องทำ'}
+            </p>
 
             {rooms.length === 0 ? (
-              <div className="bg-white rounded-[24px] p-6 sm:p-8 md:p-12 shadow-sm flex flex-col items-center gap-4 text-gray-400 mt-4 animate-[slideUpIn_0.4s_ease-out]">
-                <div className="text-6xl">🎉</div>
-                <p className="font-bold text-lg">ประเมินครบทุกห้องแล้ว ขอบคุณครับ</p>
+              <div className="bg-white/5 rounded-3xl p-10 flex flex-col items-center gap-4 text-center">
+                <p className="text-white/70 font-bold">ประเมินครบทุกห้องแล้ว ขอบคุณครับ 🎉</p>
                 <button
                   onClick={() => router.push('/')}
-                  className="mt-2 bg-[#2D3E50] text-white px-8 py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95"
+                  className="bg-white text-[#1D324B] px-8 py-3 rounded-2xl font-bold hover:bg-gray-100 transition-colors"
                 >
                   กลับหน้าหลัก
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 animate-[slideUpIn_0.4s_ease-out]">
+              <div className="flex flex-col gap-3">
                 {rooms.map((room) => (
-                  <div
+                  <button
                     key={room.roomId}
                     onClick={() => openRoom(room.roomId)}
-                    className="bg-white rounded-[20px] shadow-sm overflow-hidden cursor-pointer hover:brightness-95 transition-all active:scale-[0.98]"
+                    className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm hover:brightness-95 active:scale-[0.99] transition-all text-left"
                   >
-                    {/* Header */}
-                    <div className="px-5 py-3" style={{ backgroundColor: '#FFAD60' }}>
-                      <span className="text-xs font-black uppercase tracking-widest text-white/80">ประเมินเพื่อนร่วมทีม</span>
+                    <div className="flex -space-x-3 flex-shrink-0">
+                      {room.teammates.slice(0, 3).map((t) => (
+                        <img
+                          key={t.gmail}
+                          src={resolveAvatar(t)}
+                          alt={t.name}
+                          className="w-11 h-11 rounded-full object-cover border-2 border-white bg-gray-100"
+                        />
+                      ))}
+                      {room.teammates.length > 3 && (
+                        <div className="w-11 h-11 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-[11px] font-bold text-gray-600">
+                          +{room.teammates.length - 3}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Card body */}
-                    <div className="p-5">
-                      {/* Teammate avatars */}
-                      <div className="flex -space-x-3 mb-4">
-                        {room.teammates.slice(0, 4).map((t) => (
-                          <img
-                            key={t.gmail}
-                            src={resolveAvatar(t)}
-                            alt={t.name}
-                            className="w-14 h-14 rounded-full object-cover border-2 border-white bg-sky-200"
-                          />
-                        ))}
-                        {room.teammates.length > 4 && (
-                          <div className="w-14 h-14 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
-                            +{room.teammates.length - 4}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Room info */}
-                      <p className="font-bold text-gray-800 text-base mb-1">{room.roomTitle}</p>
-                      <p className="text-gray-500 text-sm mb-3">{room.teammates.length} คนในกลุ่ม</p>
-
-                      {/* Status + Action */}
-                      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                        <span className="flex items-center gap-1 text-red-500 text-xs font-bold">
-                          <AlertCircle size={12} />ยังไม่ได้ประเมิน {room.teammates.length} คน
-                        </span>
-                        <span className="flex-shrink-0 bg-[#2D3E50] text-white text-xs font-bold px-4 py-2 rounded-xl">
-                          ทำแบบประเมิน
-                        </span>
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-800 truncate">{room.roomTitle}</p>
+                      <p className="text-xs text-gray-400 font-medium">
+                        ยังไม่ได้ประเมิน {room.teammates.length} คน
+                      </p>
                     </div>
-                  </div>
+
+                    <span className="flex-shrink-0 bg-[#2D3E50] text-white text-xs font-bold px-4 py-2 rounded-xl">
+                      ทำแบบประเมิน
+                    </span>
+                  </button>
                 ))}
               </div>
             )}
-
-            {/* Back Button — mobile only, moved to bottom, scrolls with content */}
-            <button onClick={() => router.push('/')}
-              className="sm:hidden mt-4 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-600 shadow-[0_5px_0_0_#9ca3af] hover:shadow-[0_3px_0_0_#9ca3af] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
-              <ChevronLeft size={24} strokeWidth={2.5} />
-            </button>
           </div>
-        </main>
+        </div>
       </div>
     );
   }
