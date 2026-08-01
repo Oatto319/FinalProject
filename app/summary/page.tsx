@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Crown, Users } from 'lucide-react';
+import { ChevronLeft, Crown, Users, Layers, ShieldCheck } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { typeColor } from '@/lib/mbti';
 
@@ -11,9 +11,13 @@ interface ProjectSummary {
   roomId: string;
   title: string;
   template: string;
+  ended: boolean;
   teamName: string | null;
   mbti: { code: string; title: string; jobs: string[] } | null;
   isLeader: boolean;
+  isHostView: boolean;
+  teamCount: number | null;
+  memberCount: number | null;
   evaluation: { count: number; overall: number | null; byCriteria: CriteriaScore[] };
 }
 
@@ -27,14 +31,31 @@ const TEMPLATE_LABELS: Record<string, string> = {
 export default function SummaryPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/summary')
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((data) => setProjects(data.projects ?? []))
-      .catch(() => setError(true));
-  }, []);
+    let cancelled = false;
+    // cache: 'no-store' — สรุปผลเปลี่ยนได้ทุกครั้งที่มีคนส่งแบบประเมิน จึงต้องไม่ให้เบราว์เซอร์ใช้ของเก่า
+    fetch('/api/summary', { cache: 'no-store' })
+      .then(async (r) => {
+        // session หมดอายุ (cookie ยังอยู่แต่ token ใน DB ไม่ตรงแล้ว) — middleware ไม่ redirect ให้ จึงต้องพากลับไป login เอง
+        if (r.status === 401) {
+          router.replace('/login');
+          return;
+        }
+        const data = await r.json().catch(() => null);
+        if (cancelled) return;
+        if (!r.ok) {
+          setError(data?.error ?? 'โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง');
+          return;
+        }
+        setProjects(data?.projects ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง');
+      });
+    return () => { cancelled = true; };
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col">
@@ -47,13 +68,11 @@ export default function SummaryPage() {
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
-        <h1 className="text-lg font-black text-gray-800">สรุปผลโปรเจกต์</h1>
+        <h1 className="text-lg font-black text-gray-800">สรุปผล</h1>
       </div>
 
       <div className="flex-1 px-3 pb-10 max-w-3xl mx-auto w-full flex flex-col gap-4">
-        {error && (
-          <p className="text-center text-sm text-gray-400 mt-10">โหลดข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง</p>
-        )}
+        {error && <p className="text-center text-sm text-gray-400 mt-10">{error}</p>}
 
         {!error && projects === null && (
           <p className="text-center text-sm text-gray-400 mt-10">กำลังโหลด...</p>
@@ -61,8 +80,8 @@ export default function SummaryPage() {
 
         {!error && projects !== null && projects.length === 0 && (
           <div className="text-center mt-10">
-            <p className="text-sm text-gray-400">ยังไม่มีโปรเจกต์ที่จบแล้ว</p>
-            <p className="text-xs text-gray-300 mt-1">พอโปรเจกต์แรกของคุณจบ สรุปผลจะขึ้นที่นี่</p>
+            <p className="text-sm text-gray-400">ยังไม่มีโปรเจกต์ที่จับกลุ่มแล้ว</p>
+            <p className="text-xs text-gray-300 mt-1">พอห้องแรกของคุณจับกลุ่มเสร็จ สรุปผลจะขึ้นที่นี่</p>
           </div>
         )}
 
@@ -73,13 +92,21 @@ export default function SummaryPage() {
                 <p className="font-black text-gray-800 truncate">{p.title}</p>
                 {p.teamName && <p className="text-xs text-gray-400 truncate">{p.teamName}</p>}
               </div>
-              <span className="flex-shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">
-                จบโปรเจกต์แล้ว
+              <span
+                className={`flex-shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                  p.ended ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                }`}
+              >
+                {p.ended ? 'จบโปรเจกต์แล้ว' : 'กำลังดำเนินการ'}
               </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              {p.mbti ? (
+              {p.isHostView ? (
+                <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                  <ShieldCheck size={12} /> คุณเป็นเจ้าของกิจกรรม
+                </span>
+              ) : p.mbti ? (
                 <span
                   className="text-xs font-black px-2.5 py-1 rounded-lg text-white"
                   style={{ backgroundColor: typeColor(p.mbti.code) }}
@@ -99,25 +126,43 @@ export default function SummaryPage() {
               )}
             </div>
 
-            {p.mbti && p.mbti.jobs.length > 0 && (
+            {p.isHostView ? (
               <div className="flex flex-wrap gap-1.5 mb-4">
-                {p.mbti.jobs.slice(0, 4).map((job) => (
-                  <span key={job} className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
-                    {job}
-                  </span>
-                ))}
+                <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                  <Layers size={12} /> {p.teamCount ?? 0} ทีม
+                </span>
+                <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                  <Users size={12} /> {p.memberCount ?? 0} คน
+                </span>
               </div>
+            ) : (
+              p.mbti && p.mbti.jobs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {p.mbti.jobs.slice(0, 4).map((job) => (
+                    <span key={job} className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                      {job}
+                    </span>
+                  ))}
+                </div>
+              )
             )}
 
             <div className="border-t border-gray-100 pt-4">
               {p.evaluation.count === 0 ? (
                 <p className="text-xs text-gray-400 flex items-center gap-1.5">
-                  <Users size={14} /> เพื่อนร่วมทีมยังไม่ได้ประเมินคุณ
+                  <Users size={14} />
+                  {!p.ended
+                    ? 'แบบประเมินจะเปิดให้ทำเมื่อกิจกรรมจบ'
+                    : p.isHostView
+                      ? 'ยังไม่มีแบบประเมินในห้องนี้'
+                      : 'เพื่อนร่วมทีมยังไม่ได้ประเมินคุณ'}
                 </p>
               ) : (
                 <>
                   <div className="flex items-baseline justify-between mb-3">
-                    <p className="text-xs text-gray-400">คะแนนประเมินจากเพื่อนร่วมทีม</p>
+                    <p className="text-xs text-gray-400">
+                      {p.isHostView ? 'คะแนนประเมินเฉลี่ยของทั้งห้อง' : 'คะแนนประเมินจากเพื่อนร่วมทีม'}
+                    </p>
                     <p className="text-xl font-black text-gray-800">
                       {p.evaluation.overall}
                       <span className="text-xs font-bold text-gray-300"> / 5</span>

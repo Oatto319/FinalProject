@@ -175,7 +175,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         members: (Array.isArray(g.members) ? g.members as RawMember[] : [])
           .filter((m) => typeof m.gmail === 'string' && validMembers.has(m.gmail))
           .map((m) => ({
-            ...validMembers.get(m.gmail as string)!,
+            // ต้อง .toObject() ก่อน spread — subdocument ของ mongoose มี own key เป็น $__/_doc
+            // ตอน cast update mongoose จะเห็นว่าเป็น document แล้วใช้ _doc ตรงๆ ทำให้ role ที่ต่อท้ายหายไปเงียบๆ
+            ...(validMembers.get(m.gmail as string)! as unknown as { toObject: () => Record<string, unknown> }).toObject(),
             role: typeof m.role === 'string' ? m.role.slice(0, 50) : 'ไม่ระบุ',
           })),
       }));

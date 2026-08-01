@@ -1,341 +1,308 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { Room, User } from '@/lib/models';
-import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
-import { dateTimeStringToUtcDate } from '@/lib/date';
+'use client';
 
-interface RoomMemberLike { name: string; gmail?: string; }
-interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; leaderConfirmedBy?: string[]; }
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChevronLeft } from 'lucide-react';
+import Navbar from '../navbar/page';
+import { programmingTypeTable } from '@/lib/mbti-programming';
+import { serviceTypeTable } from '@/lib/mbti-service';
+import { presentationTypeTable } from '@/lib/mbti-presentation';
+import { designTypeTable } from '@/lib/mbti-design';
 
-const TITLE_MAX_LENGTH = 100;
-const DESCRIPTION_MAX_LENGTH = 500;
-const TEAM_NAME_MAX_LENGTH = 50;
-const MAX_TOTAL_MEMBERS = 300;
-const MAX_GROUP_SIZE = 50;
+import { TYPE_IMAGES } from '@/lib/type-images';
 
-// GET /api/rooms/:roomId → get room (with fresh avatarSeeds from User collection)
-export async function GET(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
-  await connectDB();
-  const sessionUser = await getSessionUser(req);
-  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+const ENGLISH_NAMES: Record<string, string> = {
+  INTJ: 'Architect',    INTP: 'Logician',     ENTJ: 'Commander',    ENTP: 'Debater',
+  INFJ: 'Advocate',     INFP: 'Mediator',     ENFJ: 'Protagonist',  ENFP: 'Campaigner',
+  ISTJ: 'Logistician',  ISFJ: 'Defender',     ESTJ: 'Executive',    ESFJ: 'Consul',
+  ISTP: 'Virtuoso',     ISFP: 'Adventurer',   ESTP: 'Entrepreneur', ESFP: 'Entertainer',
+};
 
-  const { roomId } = await params;
-  const room = await Room.findOne({ roomId });
-  if (!room) return NextResponse.json({ room: null }, { status: 404 });
+const GROUPS = [
+  { label: 'Analysts',  watermark: 'ANALYSTS',  suffix: 'NT', codes: ['INTJ','INTP','ENTJ','ENTP'], color: '#6D58B9' },
+  { label: 'Diplomats', watermark: 'DIPLOMATS', suffix: 'NF', codes: ['INFJ','INFP','ENFJ','ENFP'], color: '#3FA796' },
+  { label: 'Sentinels', watermark: 'SENTINELS', suffix: 'SJ', codes: ['ISTJ','ISFJ','ESTJ','ESFJ'], color: '#4F86C6' },
+  { label: 'Explorers', watermark: 'EXPLORERS', suffix: 'SP', codes: ['ISTP','ISFP','ESTP','ESFP'], color: '#E08E45' },
+];
 
-  const roomObj = room.toObject();
+const TABS = [
+  { id: 'programming',  label: 'Programming' },
+  { id: 'service',      label: 'Customer Service' },
+  { id: 'presentation', label: 'Presentation' },
+  { id: 'design',       label: 'Design' },
+] as const;
+type TabId = typeof TABS[number]['id'];
 
-  // Build gmail list from members
-  const gmails: string[] = (roomObj.members ?? []).map((m: { gmail: string }) => m.gmail).filter(Boolean);
+const TYPE_TABLES = {
+  programming: programmingTypeTable,
+  service: serviceTypeTable,
+  presentation: presentationTypeTable,
+  design: designTypeTable,
+};
 
-  // Fetch latest avatarSeed/avatarImage for all members + host in one go
-  const [users, hostUser] = await Promise.all([
-    gmails.length > 0 ? User.find({ gmail: { $in: gmails } }, { gmail: 1, avatarSeed: 1, avatarImage: 1, _id: 0 }) : Promise.resolve([]),
-    User.findOne({ name: roomObj.hostName }, { avatarSeed: 1, avatarImage: 1, _id: 0 }),
-  ]);
+type UserShape = {
+  name: string;
+  avatarSeed: number;
+  gmail?: string;
+  types?: Record<string, unknown>;
+};
 
-  const seedMap = new Map<string, number>(
-    (users as { gmail: string; avatarSeed: number }[]).map((u) => [u.gmail, u.avatarSeed])
+const MyTypePage = () => {
+  const router = useRouter();
+  const [user, setUser] = useState<UserShape | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('programming');
+  const [modalCode, setModalCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const raw = localStorage.getItem('currentUser');
+    if (!raw) return;
+    let local: UserShape;
+    try {
+      local = JSON.parse(raw);
+    } catch {
+      return;
+    }
+    setUser(local);
+
+    fetch(`/api/users?gmail=${encodeURIComponent(local.gmail ?? '')}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.user) {
+          const updated = { ...local, types: data.user.types };
+          setUser(updated);
+          localStorage.setItem('currentUser', JSON.stringify(updated));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+
+  const types = user?.types as Record<string, { code?: string } | undefined> | undefined;
+  const autoCode = types?.[activeTab]?.code ?? null;
+  const hasQuizForTab = autoCode !== null;
+
+  const modalGroup = modalCode ? GROUPS.find(g => g.codes.includes(modalCode)) : null;
+  const modalInfo = modalCode ? TYPE_TABLES[activeTab][modalCode] : null;
+
+  return (
+    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col">
+      <style>{`
+        @keyframes sheetSlideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to   { transform: translateY(0);    opacity: 1; }
+        }
+        .sheet-slide-up {
+          animation: sheetSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+      `}</style>
+      <Navbar />
+
+      {/* Top bar: back button + template tabs */}
+      <div className="slide-up-1 w-full px-3 py-4 flex items-center gap-3 max-w-7xl mx-auto">
+        <button
+          onClick={() => router.back()}
+          className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
+        >
+          <ChevronLeft size={24} strokeWidth={2.5} />
+        </button>
+        <button
+          onClick={() => router.push('/summary')}
+          className="flex-shrink-0 text-[11px] sm:text-xs font-black text-white bg-[#4B3E7A] px-3 sm:px-4 h-12 rounded-2xl flex items-center transition-all active:scale-95"
+        >
+          สรุปผล
+        </button>
+        <div className="flex flex-1 min-w-0 gap-1 p-1 bg-white rounded-2xl shadow-sm">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => { setActiveTab(tab.id); setModalCode(null); }}
+              className={`flex-1 min-w-0 py-2 px-1 rounded-xl text-[9px] sm:text-sm font-bold leading-tight transition-all ${
+                activeTab === tab.id
+                  ? 'bg-[#4B3E7A] text-white shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* No-quiz CTA */}
+      {!hasQuizForTab && (
+        <p className="text-center text-sm text-gray-400 mb-2">
+          ยังไม่ได้ทำแบบทดสอบ {TABS.find(t => t.id === activeTab)?.label} —{' '}
+          <button
+            onClick={() => router.push(`/question/${activeTab}`)}
+            className="text-[#4B3E7A] font-bold underline"
+          >
+            ไปทำเลย
+          </button>
+        </p>
+      )}
+
+      {/* Group Sections */}
+      <div className="slide-up-2 flex flex-col gap-3 px-3 pb-6 max-w-7xl mx-auto w-full">
+        {GROUPS.map(group => (
+              <section
+                key={group.label}
+                className="relative overflow-hidden rounded-3xl mb-4"
+                style={{ backgroundColor: group.color + '1A' }}
+              >
+                {/* Watermark */}
+                <div
+                  className="absolute inset-0 flex items-center justify-center pointer-events-none select-none"
+                  aria-hidden="true"
+                >
+                  <span
+                    className="font-black leading-none tracking-tight"
+                    style={{ fontSize: 'clamp(4rem, 16vw, 14rem)', color: '#ffffff', opacity: 0.25 }}
+                  >
+                    {group.watermark}
+                  </span>
+                </div>
+
+                {/* Section Header */}
+                <div className="relative z-10 px-4 sm:px-8 md:px-12 pt-6 sm:pt-8 md:pt-12 pb-2 sm:pb-3 flex items-baseline gap-2">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black" style={{ color: group.color }}>
+                    {group.label}
+                  </h2>
+                  <span
+                    className="text-xs font-black px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: group.color + '25', color: group.color }}
+                  >
+                    {group.suffix}
+                  </span>
+                </div>
+
+                {/* Cards Grid */}
+                <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-0 px-3 sm:px-6 md:px-10 pb-6 sm:pb-8 md:pb-12">
+                  {group.codes.map(code => {
+                    const isAutoHighlight = hasQuizForTab && code === autoCode;
+                    const avatarSrc = TYPE_IMAGES[code];
+                    const info = TYPE_TABLES[activeTab][code];
+
+                    return (
+                      <div
+                        key={code}
+                        onClick={() => setModalCode(code)}
+                        className="group relative cursor-pointer flex flex-col items-center gap-1 pb-5 pt-2 transition-all rounded-2xl"
+                        style={isAutoHighlight ? {
+                          backgroundColor: '#ffffff',
+                          border: '3px solid #ffffff',
+                        } : {
+                          border: '3px solid transparent',
+                        }}
+                      >
+                        {/* Avatar */}
+                        <img
+                          src={avatarSrc}
+                          alt={code}
+                          className="w-20 h-20 sm:w-28 sm:h-28 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain mb-3 transition-transform duration-300 group-hover:scale-110"
+                        />
+
+                        {/* English name */}
+                        <span className="text-base sm:text-xl md:text-3xl font-black text-center leading-tight" style={{ color: group.color }}>
+                          {ENGLISH_NAMES[code]}
+                        </span>
+
+                        {/* Code */}
+                        <span className="text-sm sm:text-base md:text-lg font-bold text-gray-500 tracking-widest">
+                          {code}
+                        </span>
+
+                        {/* Thai title */}
+                        <span className="text-xs sm:text-base md:text-lg font-semibold text-[#4B3E7A] text-center leading-tight">
+                          {info?.title ?? ''}
+                        </span>
+
+                        {/* Badge */}
+                        {isAutoHighlight && (
+                          <span
+                            className="text-[9px] font-black px-2 py-0.5 rounded-full text-white"
+                            style={{ backgroundColor: group.color }}
+                          >
+                            ผลของฉัน
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+      </div>
+
+      {/* Detail Modal */}
+      {modalCode && modalGroup && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4"
+          onClick={() => setModalCode(null)}
+        >
+          <div
+            className="bg-white rounded-[32px] w-full max-w-lg flex flex-col sheet-slide-up"
+            style={{ maxHeight: '88dvh' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Colored header — fixed, does not scroll */}
+            <div
+              className="rounded-t-[32px] px-6 pt-5 pb-3 sm:p-8 md:p-10 flex flex-col items-center gap-2 sm:gap-3 flex-shrink-0"
+              style={{ backgroundColor: modalGroup.color + '18' }}
+            >
+              <img
+                src={TYPE_IMAGES[modalCode]}
+                alt={modalCode}
+                className="w-20 h-20 sm:w-40 sm:h-40 md:w-48 md:h-48 object-contain"
+              />
+              <span className="text-2xl sm:text-3xl md:text-4xl font-black" style={{ color: modalGroup.color }}>
+                {modalCode}
+              </span>
+              <span className="text-sm sm:text-base font-bold text-gray-400">
+                {ENGLISH_NAMES[modalCode]}
+              </span>
+              <span className="text-base sm:text-2xl font-black text-[#4B3E7A] text-center">
+                {modalInfo?.title ?? ''}
+              </span>
+            </div>
+
+            {/* Body — scrollable only if needed */}
+            <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-8 md:p-10 flex flex-col gap-4 sm:gap-5">
+              <p className="text-gray-500 text-sm sm:text-base leading-relaxed">
+                {modalInfo?.description ?? ''}
+              </p>
+
+              {modalInfo?.jobs && modalInfo.jobs.length > 0 && (
+                <div>
+                  <p className="text-xs sm:text-sm font-black text-gray-400 uppercase tracking-widest mb-2 sm:mb-3">
+                    ตำแหน่งงานที่เหมาะสม
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {modalInfo.jobs.map(job => (
+                      <span
+                        key={job}
+                        className="text-xs sm:text-sm font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full"
+                        style={{ backgroundColor: modalGroup.color + '18', color: modalGroup.color }}
+                      >
+                        {job}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={() => setModalCode(null)}
+                className="mt-1 w-full py-3 sm:py-4 rounded-2xl font-black text-white text-sm sm:text-base"
+                style={{ backgroundColor: modalGroup.color }}
+              >
+                ปิด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
-  const imageMap = new Map<string, string | null>(
-    (users as { gmail: string; avatarImage: string | null }[]).map((u) => [u.gmail, u.avatarImage])
-  );
+};
 
-  // Patch members
-  if (roomObj.members) {
-    roomObj.members = roomObj.members.map((m: { gmail: string; avatarSeed: number; avatarImage?: string | null }) => ({
-      ...m,
-      avatarSeed: seedMap.get(m.gmail) ?? m.avatarSeed,
-      avatarImage: imageMap.has(m.gmail) ? imageMap.get(m.gmail) : m.avatarImage,
-    }));
-  }
-
-  // Patch matchedGroups members
-  if (roomObj.matchedGroups) {
-    roomObj.matchedGroups = roomObj.matchedGroups.map((g: { members: { gmail: string; avatarSeed: number; avatarImage?: string | null }[] }) => ({
-      ...g,
-      members: g.members.map((m) => ({
-        ...m,
-        avatarSeed: seedMap.get(m.gmail) ?? m.avatarSeed,
-        avatarImage: imageMap.has(m.gmail) ? imageMap.get(m.gmail) : m.avatarImage,
-      })),
-    }));
-  }
-
-  // Patch host
-  if (hostUser) {
-    roomObj.hostAvatarSeed = (hostUser as { avatarSeed: number }).avatarSeed;
-    roomObj.hostAvatarImage = (hostUser as { avatarImage: string | null }).avatarImage;
-  }
-
-  return NextResponse.json({ room: roomObj });
-}
-
-// PATCH /api/rooms/:roomId → mutate room state via an explicit action, each with its own authorization rule
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
-  await connectDB();
-  const sessionUser = await getSessionUser(req);
-  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { roomId } = await params;
-  const body = await req.json();
-  const { action } = body;
-
-  const room = await Room.findOne({ roomId });
-  if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-
-  const caller = { gmail: sessionUser.gmail, name: sessionUser.name };
-
-  switch (action) {
-    case 'settings': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (room.matchDone) {
-        return NextResponse.json({ error: 'จับกลุ่มไปแล้ว ไม่สามารถแก้ไขการตั้งค่าห้องได้' }, { status: 400 });
-      }
-      if (body.title !== undefined && String(body.title).length > TITLE_MAX_LENGTH) {
-        return NextResponse.json({ error: `ชื่อห้องต้องไม่เกิน ${TITLE_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
-      }
-      if (body.description !== undefined && String(body.description).length > DESCRIPTION_MAX_LENGTH) {
-        return NextResponse.json({ error: `รายละเอียดต้องไม่เกิน ${DESCRIPTION_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
-      }
-
-      let totalMembers: number | undefined;
-      if (body.totalMembers !== undefined) {
-        totalMembers = Number(body.totalMembers);
-        if (!(totalMembers >= 1) || totalMembers > MAX_TOTAL_MEMBERS) {
-          return NextResponse.json({ error: `จำนวนคนทั้งหมดต้องอยู่ระหว่าง 1-${MAX_TOTAL_MEMBERS} คน` }, { status: 400 });
-        }
-        if (totalMembers < (room.members ?? []).length) {
-          return NextResponse.json({ error: `จำนวนคนทั้งหมดต้องไม่น้อยกว่าจำนวนคนที่เข้าร่วมแล้ว (${room.members.length} คน)` }, { status: 400 });
-        }
-      }
-
-      let groupSize: number | undefined;
-      if (body.groupSize !== undefined) {
-        groupSize = Number(body.groupSize);
-        if (!(groupSize >= 1) || groupSize > MAX_GROUP_SIZE) {
-          return NextResponse.json({ error: `จำนวนคนต่อกลุ่มต้องอยู่ระหว่าง 1-${MAX_GROUP_SIZE} คน` }, { status: 400 });
-        }
-      }
-
-      const effectiveTotal = totalMembers ?? room.totalMembers;
-      const effectiveSize = groupSize ?? room.groupSize;
-      if ((totalMembers !== undefined || groupSize !== undefined) && effectiveSize > effectiveTotal) {
-        return NextResponse.json({ error: 'จำนวนคนต่อกลุ่ม ต้องไม่มากกว่าจำนวนคนทั้งหมด' }, { status: 400 });
-      }
-
-      let deadlineValue: Date | null | undefined;
-      if (body.deadline !== undefined) {
-        if (body.deadline === null || body.deadline === '') {
-          deadlineValue = null;
-        } else if (typeof body.deadline === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(body.deadline)) {
-          deadlineValue = dateTimeStringToUtcDate(body.deadline);
-          if (deadlineValue.getTime() < Date.now()) {
-            return NextResponse.json({ error: 'วันสิ้นสุดต้องไม่ใช่เวลาที่ผ่านมาแล้ว' }, { status: 400 });
-          }
-        } else {
-          return NextResponse.json({ error: 'วันสิ้นสุดไม่ถูกต้อง' }, { status: 400 });
-        }
-      }
-
-      if (body.matchMode !== undefined && !['auto', 'selection'].includes(body.matchMode)) {
-        return NextResponse.json({ error: 'โหมดการจับคู่ไม่ถูกต้อง' }, { status: 400 });
-      }
-
-      const patch: Record<string, unknown> = {};
-      if (body.title !== undefined) patch.title = body.title;
-      if (body.description !== undefined) patch.description = body.description;
-      if (body.matchMode !== undefined) patch.matchMode = body.matchMode;
-      if (body.typeComposition !== undefined) patch.typeComposition = body.typeComposition;
-      if (totalMembers !== undefined) patch.totalMembers = totalMembers;
-      if (groupSize !== undefined) patch.groupSize = groupSize;
-      if (deadlineValue !== undefined) patch.deadline = deadlineValue;
-
-      if (Object.keys(patch).length === 0) return NextResponse.json({ error: 'No valid fields' }, { status: 400 });
-      const updated = await Room.findOneAndUpdate({ roomId }, { $set: patch }, { returnDocument: 'after' });
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'match': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
-      const { matchedGroups, matchMode } = body;
-      if (!Array.isArray(matchedGroups)) return NextResponse.json({ error: 'matchedGroups required' }, { status: 400 });
-
-      // Build a whitelist of valid members from the authoritative room.members list
-      const validMembers = new Map<string, { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string }>(
-        (room.members ?? []).map((m: { gmail: string; name: string; avatarSeed: number; avatarImage?: string | null }) => [m.gmail, m])
-      );
-
-      // Sanitize each group: only keep fields we control, reject unknown members
-      type RawMember = { gmail?: unknown; role?: unknown };
-      const sanitizedGroups = matchedGroups.map((g: { id: unknown; name: unknown; members?: RawMember[] }) => ({
-        id: Number(g.id),
-        name: String(g.name ?? '').slice(0, TEAM_NAME_MAX_LENGTH),
-        members: (Array.isArray(g.members) ? g.members as RawMember[] : [])
-          .filter((m) => typeof m.gmail === 'string' && validMembers.has(m.gmail))
-          .map((m) => ({
-            ...validMembers.get(m.gmail as string)!,
-            role: typeof m.role === 'string' ? m.role.slice(0, 50) : 'ไม่ระบุ',
-          })),
-      }));
-
-      const patch: Record<string, unknown> = { matchedGroups: sanitizedGroups, matchDone: true, matchedAt: new Date() };
-      if (matchMode) patch.matchMode = matchMode;
-
-      // Atomic: อัปเดตได้ก็ต่อเมื่อ matchDone ยังไม่ true ตอนที่เขียนจริง (ไม่ใช่แค่ตอนอ่านตอนต้นฟังก์ชัน)
-      // กัน double-click/double-mount สองคำขอชนกันแล้วเขียนทับผลจับกลุ่มที่มีอยู่แล้ว
-      const updated = await Room.findOneAndUpdate(
-        { roomId, matchDone: { $ne: true } },
-        { $set: patch },
-        { returnDocument: 'after' }
-      );
-
-      if (!updated) {
-        // มีคำขออื่นจับกลุ่มสำเร็จไปก่อนแล้ว (race) → คืนสถานะปัจจุบันแทนที่จะ error หรือเขียนทับ
-        const current = await Room.findOne({ roomId });
-        return NextResponse.json({ room: current!.toObject() });
-      }
-      return NextResponse.json({ room: updated.toObject() });
-    }
-
-    case 'endActivity': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!room.matchDone) return NextResponse.json({ error: 'ยังไม่ได้จับกลุ่ม ไม่สามารถจบกิจกรรมได้' }, { status: 400 });
-      const updated = await Room.findOneAndUpdate({ roomId }, { $set: { endedManually: true } }, { returnDocument: 'after' });
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'vote': {
-      const { groupId, targetName } = body;
-      if (typeof groupId !== 'number' || typeof targetName !== 'string' || !targetName.trim()) {
-        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      }
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!group.members.some((m) => m.name === targetName)) {
-        return NextResponse.json({ error: 'Invalid target' }, { status: 400 });
-      }
-
-      const groupKey = String(groupId);
-      const afterVote = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: { [`votes.${groupKey}.${sessionUser.name}`]: targetName } },
-        { returnDocument: 'after' }
-      );
-      if (!afterVote) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-
-      // recompute the leader for this group from the up-to-date tally
-      const votesForGroup: Record<string, string> = afterVote.votes?.[groupKey] ?? {};
-      const tally: Record<string, number> = {};
-      Object.values(votesForGroup).forEach((n) => { tally[n] = (tally[n] ?? 0) + 1; });
-      const entries = Object.entries(tally);
-      const winner = entries.length > 0 ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : targetName;
-
-      // เปลี่ยนตัวหัวหน้าทีม → ต้องให้สมาชิกยืนยันใหม่ทั้งหมด
-      const votePatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': winner };
-      if (winner !== group.leaderId) votePatch['matchedGroups.$[g].leaderConfirmedBy'] = [];
-      const final = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: votePatch },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: final!.toObject() });
-    }
-
-    case 'setLeader': {
-      const { groupId, leaderName } = body;
-      if (typeof groupId !== 'number' || typeof leaderName !== 'string' || !leaderName.trim()) {
-        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      }
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!group.members.some((m) => m.name === leaderName)) {
-        return NextResponse.json({ error: 'Invalid leader' }, { status: 400 });
-      }
-      const setLeaderPatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': leaderName };
-      if (leaderName !== group.leaderId) setLeaderPatch['matchedGroups.$[g].leaderConfirmedBy'] = [];
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: setLeaderPatch },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'confirmLeader': {
-      const { groupId } = body;
-      if (typeof groupId !== 'number') return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (!group.leaderId) return NextResponse.json({ error: 'ยังไม่มีหัวหน้าทีมให้ยืนยัน' }, { status: 400 });
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $addToSet: { 'matchedGroups.$[g].leaderConfirmedBy': sessionUser.name } },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'renameTeam': {
-      const { groupId, name } = body;
-      if (typeof groupId !== 'number' || typeof name !== 'string' || !name.trim()) {
-        return NextResponse.json({ error: 'name required' }, { status: 400 });
-      }
-      if (name.trim().length > TEAM_NAME_MAX_LENGTH) {
-        return NextResponse.json({ error: `ชื่อทีมต้องไม่เกิน ${TEAM_NAME_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
-      }
-      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
-      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $set: { 'matchedGroups.$[g].name': String(name).trim() } },
-        { arrayFilters: [{ 'g.id': groupId }], returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    case 'kickMember': {
-      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      if (room.matchDone) return NextResponse.json({ error: 'จับกลุ่มไปแล้ว ไม่สามารถเอาสมาชิกออกได้' }, { status: 400 });
-      const { memberGmail } = body;
-      if (typeof memberGmail !== 'string' || !memberGmail.trim()) {
-        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-      }
-      if (memberGmail === room.hostGmail) {
-        return NextResponse.json({ error: 'ไม่สามารถเอาผู้สร้างห้องออกจากห้องได้' }, { status: 400 });
-      }
-      const target: RoomMemberLike | undefined = (room.members ?? []).find((m: { gmail?: string }) => m.gmail === memberGmail);
-      if (!target) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
-      const updated = await Room.findOneAndUpdate(
-        { roomId },
-        { $pull: { members: { gmail: memberGmail }, readyUsers: target.name } },
-        { returnDocument: 'after' }
-      );
-      return NextResponse.json({ room: updated!.toObject() });
-    }
-
-    default:
-      return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
-  }
-}
-
-// DELETE /api/rooms/:roomId → delete room (host only, verified via session)
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ roomId: string }> }) {
-  await connectDB();
-  const sessionUser = await getSessionUser(req);
-  if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  const { roomId } = await params;
-  const room = await Room.findOne({ roomId });
-  if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
-  if (!isRoomHost({ gmail: sessionUser.gmail, name: sessionUser.name }, room)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-  await Room.deleteOne({ roomId });
-  return NextResponse.json({ ok: true });
-}
+export default MyTypePage;
