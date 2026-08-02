@@ -160,8 +160,7 @@ export default function MyRoomPage() {
                 style={{
                   display: 'inline-block',
                   fontSize: s.fontSize,
-                  opacity: s.opacity,
-                  color: theme.dark,
+                  color: `color-mix(in srgb, ${theme.dark} ${Math.round(s.opacity * 100)}%, ${theme.bg})`,
                   fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
                   fontWeight: 900,
                   fontStyle: 'italic',
@@ -296,7 +295,7 @@ export default function MyRoomPage() {
             </div>
 
             <button onClick={handleReady}
-              className={`hidden lg:block mt-auto w-full py-5 sm:py-6 md:py-8 rounded-[20px] font-black text-2xl sm:text-3xl md:text-5xl uppercase tracking-widest sm:tracking-[0.2em] text-white transition-all
+              className={`hidden lg:block w-full py-5 sm:py-6 md:py-8 rounded-[20px] font-black text-2xl sm:text-3xl md:text-5xl uppercase tracking-widest sm:tracking-[0.2em] text-white transition-all
                 ${isReady
                   ? 'bg-green-500 shadow-[0_10px_0_0_#15803d] hover:shadow-[0_5px_0_0_#15803d] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'
                   : 'bg-[#7096D1] shadow-[0_10px_0_0_#4A6FA5] hover:shadow-[0_5px_0_0_#4A6FA5] hover:translate-y-[5px] active:shadow-none active:translate-y-[10px]'

@@ -255,8 +255,7 @@ const MatchPage = () => {
                 style={{
                   display: 'inline-block',
                   fontSize: s.fontSize,
-                  opacity: s.opacity,
-                  color: theme.dark,
+                  color: `color-mix(in srgb, ${theme.dark} ${Math.round(s.opacity * 100)}%, ${theme.bg})`,
                   fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
                   fontWeight: 900,
                   fontStyle: 'italic',
@@ -412,7 +411,7 @@ const MatchPage = () => {
               </div>
             </div>
 
-            <div className="hidden lg:flex flex-1 flex-col justify-end">
+            <div className="hidden lg:flex flex-col">
               {!isFull ? (
                 <div className="bg-white rounded-[20px] overflow-hidden flex shadow-sm min-h-[120px] sm:min-h-[160px] border border-white/50">
                   <div className="flex-[3] flex flex-col items-center justify-center gap-1 px-2 sm:px-4">
