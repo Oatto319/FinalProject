@@ -183,7 +183,7 @@ export default function MyRoomPage() {
       <div className="relative z-10 flex-1 w-full lg:max-w-6xl lg:px-4 lg:mt-4 flex flex-col min-h-0">
 
         {/* Header */}
-        <div className="lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-sm gap-4 flex-shrink-0" style={{ background: theme.bg, border: `4px solid ${theme.dark}` }}>
+        <div className="lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-[0_18px_40px_rgba(0,0,0,0.45)] gap-4 flex-shrink-0" style={{ background: theme.bg, border: `4px solid ${theme.dark}` }}>
           <h1 className="text-4xl md:text-5xl font-black italic tracking-tighter uppercase" style={{ color: theme.accent }}>{room?.template ?? 'PROGRAMMING'}</h1>
           <div className="flex items-center gap-2">
             <button
@@ -223,7 +223,7 @@ export default function MyRoomPage() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden bg-[#E5E7EB] p-4 lg:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 lg:border-b-8 lg:border-gray-300 shadow-inner">
+        <div className="flex-1 overflow-hidden bg-[#E5E7EB] p-4 lg:p-10 flex flex-col lg:flex-row gap-3 lg:gap-8 lg:border-b-8 lg:border-gray-300 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
 
           {/* Left: Members */}
           <div className="order-2 lg:order-1 overflow-y-auto flex flex-col gap-3 min-h-0 flex-1">
