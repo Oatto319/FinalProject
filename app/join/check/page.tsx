@@ -32,12 +32,12 @@ const DEFAULT_THEME = { bg: '#F8A4A4', dark: '#D87878', accent: '#4B3E7A', label
 
 // ✅ ข้อความ template ลอยผ่านจอเป็นพื้นหลัง (รูปแบบเดียวกับ app/create/match/page.tsx)
 const BACKGROUND_FLOAT_TEXT = [
-  { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.14, drift: 'waveDrift1', duration: '26s', delay: '0s' },
-  { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.12, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
-  { top: '38%', left: '-10%', fontSize: 'clamp(1rem,   12vw, 4rem)',  rotate: '-8deg',  opacity: 0.16, drift: 'waveDrift3', duration: '22s', delay: '-8s' },
-  { top: '56%', left: '-15%', fontSize: 'clamp(1.5rem, 22vw, 9rem)',  rotate: '-18deg', opacity: 0.12, drift: 'waveDrift1', duration: '34s', delay: '-10s' },
-  { top: '74%', left: '-10%', fontSize: 'clamp(1.2rem, 16vw, 6rem)',  rotate: '20deg',  opacity: 0.16, drift: 'waveDrift3', duration: '25s', delay: '-6s' },
-  { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.14, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
+  { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.08, drift: 'waveDrift1', duration: '26s', delay: '0s' },
+  { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.07, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
+  { top: '38%', left: '-10%', fontSize: 'clamp(1rem,   12vw, 4rem)',  rotate: '-8deg',  opacity: 0.09, drift: 'waveDrift3', duration: '22s', delay: '-8s' },
+  { top: '56%', left: '-15%', fontSize: 'clamp(1.5rem, 22vw, 9rem)',  rotate: '-18deg', opacity: 0.07, drift: 'waveDrift1', duration: '34s', delay: '-10s' },
+  { top: '74%', left: '-10%', fontSize: 'clamp(1.2rem, 16vw, 6rem)',  rotate: '20deg',  opacity: 0.09, drift: 'waveDrift3', duration: '25s', delay: '-6s' },
+  { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.08, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
 ];
 
 export default function JoinCheckPage() {
@@ -47,6 +47,7 @@ export default function JoinCheckPage() {
   const [loading, setLoading] = useState(false);
 
   const theme = TEMPLATE_THEMES[room?.template ?? ''] ?? DEFAULT_THEME;
+  const pageBg = `color-mix(in srgb, ${theme.bg} 55%, white)`;
 
   useEffect(() => {
     const userRaw = localStorage.getItem('currentUser');
@@ -104,7 +105,7 @@ export default function JoinCheckPage() {
         }
       `}</style>
 
-      <div className="min-h-screen font-sans flex flex-col items-center relative overflow-hidden" style={{ background: theme.bg }}>
+      <div className="min-h-screen font-sans flex flex-col items-center relative overflow-hidden" style={{ background: pageBg }}>
         {/* ✅ เลเยอร์พื้นหลัง template ลอยผ่านจอ */}
         <div
           aria-hidden="true"
@@ -124,7 +125,7 @@ export default function JoinCheckPage() {
                 style={{
                   display: 'inline-block',
                   fontSize: s.fontSize,
-                  color: `color-mix(in srgb, ${theme.dark} ${Math.round(s.opacity * 100)}%, ${theme.bg})`,
+                  color: `color-mix(in srgb, ${theme.dark} ${Math.round(s.opacity * 100)}%, ${pageBg})`,
                   fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
                   fontWeight: 900,
                   fontStyle: 'italic',
@@ -181,17 +182,17 @@ export default function JoinCheckPage() {
               <ChevronLeft size={24} strokeWidth={2.5} />
             </button>
             <button onClick={handleJoin} disabled={!room || loading}
-              className="flex-1 bg-[#2D3E50] text-white py-4 px-12 rounded-2xl font-bold text-xl shadow-md flex items-center justify-center gap-3 hover:bg-[#1E293B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              className="flex-1 bg-[#2D3E50] text-white py-4 px-12 rounded-2xl font-bold text-xl flex items-center justify-center gap-3 shadow-[0_6px_0_0_#16202E] hover:shadow-[0_3px_0_0_#16202E] hover:translate-y-[3px] active:shadow-none active:translate-y-[6px] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_6px_0_0_#16202E]">
               {loading ? 'กำลังเข้าร่วม...' : 'Join'} <ArrowRightCircle size={24} />
             </button>
           </div>
         </div>
 
-        <div className="md:col-span-7 flex flex-col gap-4">
-          <div className="rounded-[20px] p-4 sm:p-6 text-center shadow-[0_18px_40px_rgba(0,0,0,0.45)]" style={{ background: theme.bg, border: `4px solid ${theme.dark}` }}>
+        <div className="md:col-span-7 bg-[#E5E7EB] rounded-[24px] overflow-hidden shadow-[0_18px_40px_rgba(0,0,0,0.45)] flex flex-col gap-4">
+          <div className="rounded-t-[24px] p-4 sm:p-6 text-center" style={{ background: theme.bg }}>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-widest uppercase" style={{ color: theme.accent }}>{room?.template ?? 'PROGRAMMING'}</h1>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 px-4 sm:px-6 pb-4 sm:pb-6">
             {(room?.members ?? []).filter((m) => m.name !== room?.hostName).length === 0 ? (
               <div className="bg-white rounded-2xl p-6 text-center text-gray-400">ยังไม่มีสมาชิกในห้อง</div>
             ) : (

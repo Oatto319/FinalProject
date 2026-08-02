@@ -74,6 +74,7 @@ const MatchPage = () => {
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
   const theme = TEMPLATE_THEMES[room?.template ?? ''] ?? DEFAULT_THEME;
+  const pageBg = `color-mix(in srgb, ${theme.bg} 55%, white)`;
 
   const openSettings = () => {
     if (!room) return;
@@ -235,7 +236,7 @@ const MatchPage = () => {
         }
       `}</style>
 
-      <div className="h-dvh font-sans flex flex-col items-center overflow-hidden relative" style={{ background: theme.bg }}>
+      <div className="h-dvh font-sans flex flex-col items-center overflow-hidden relative" style={{ background: pageBg }}>
         {/* ✅ เลเยอร์พื้นหลัง template ลอยผ่านจอ */}
         <div
           aria-hidden="true"
@@ -255,7 +256,7 @@ const MatchPage = () => {
                 style={{
                   display: 'inline-block',
                   fontSize: s.fontSize,
-                  color: `color-mix(in srgb, ${theme.dark} ${Math.round(s.opacity * 100)}%, ${theme.bg})`,
+                  color: `color-mix(in srgb, ${theme.dark} ${Math.round(s.opacity * 100)}%, ${pageBg})`,
                   fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
                   fontWeight: 900,
                   fontStyle: 'italic',
@@ -275,7 +276,7 @@ const MatchPage = () => {
           <Navbar bgColor={theme.dark} nameColor="white" />
         </div>
       <div className="relative z-10 flex-1 w-full lg:max-w-6xl lg:px-4 lg:mt-4 flex flex-col min-h-0">
-        <div className="lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-[0_18px_40px_rgba(0,0,0,0.45)] gap-4 flex-shrink-0" style={{ background: theme.bg, border: `4px solid ${theme.dark}` }}>
+        <div className="lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-[0_18px_40px_rgba(0,0,0,0.45)] gap-4 flex-shrink-0" style={{ background: theme.bg }}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}

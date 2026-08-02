@@ -344,7 +344,7 @@ const ManualPage = () => {
           <Navbar bgColor={theme.dark} nameColor="white" />
         </div>
       <div className="relative z-10 flex-1 w-full lg:max-w-6xl lg:px-4 lg:mt-4 flex flex-col min-h-0">
-        <div className="lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-[0_18px_40px_rgba(0,0,0,0.45)] gap-4 flex-shrink-0" style={{ background: theme.bg, border: `4px solid ${theme.dark}` }}>
+        <div className="lg:rounded-t-[40px] p-4 md:p-8 flex flex-wrap justify-between items-center shadow-[0_18px_40px_rgba(0,0,0,0.45)] gap-4 flex-shrink-0" style={{ background: theme.bg }}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
