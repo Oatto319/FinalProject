@@ -160,8 +160,7 @@ const App = () => {
                 style={{
                   display: 'inline-block',
                   fontSize: s.fontSize,
-                  opacity: s.opacity,
-                  color: '#F5F5F5',
+                  color: `color-mix(in srgb, #F5F5F5 ${Math.round(s.opacity * 100)}%, #7F5CFF)`,
                   fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
                   fontWeight: 900,
                   fontStyle: 'italic',

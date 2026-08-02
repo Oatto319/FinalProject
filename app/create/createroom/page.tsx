@@ -211,8 +211,7 @@ export default function CreateRoomPage() {
                 style={{
                   display: 'inline-block',
                   fontSize: s.fontSize,
-                  opacity: s.opacity,
-                  color: theme.floatColor,
+                  color: `color-mix(in srgb, ${theme.floatColor} ${Math.round(s.opacity * 100)}%, ${theme.bg})`,
                   fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
                   fontWeight: 900,
                   fontStyle: 'italic',

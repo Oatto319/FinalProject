@@ -115,9 +115,10 @@ const GroupResultPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E8E8E8] font-sans flex flex-col items-center">
-      <Navbar />
-      <div className="w-full max-w-6xl px-4 mt-4 pb-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col items-center">
+      <Navbar bgColor="#122031" nameColor="white" />
+      <div className="w-full max-w-6xl px-4 mt-4 pb-6">
+      <div className="bg-[#E5E7EB] rounded-[40px] p-4 lg:p-6 shadow-2xl grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-5 flex flex-col gap-4">
           {/* Room card — myprojects style */}
           <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
@@ -263,6 +264,7 @@ const GroupResultPage = () => {
             ))
           )}
         </div>
+      </div>
       </div>
 
       {mbtiPopup && (

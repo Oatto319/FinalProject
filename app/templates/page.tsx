@@ -12,14 +12,33 @@ const STACK_SCALE_STEP = 0.05;
 const SWIPE_THRESHOLD = 60;
 const TAP_MOVE_TOLERANCE = 6;
 
+// ✅ ธีมสีตามโหมดของหน้า templates — create ใช้สีปุ่ม Create, ปกติ (quiz) ใช้สีปุ่ม Quiz
+const PAGE_THEMES = {
+  create: { bg: '#FFDB10', dark: '#C9A800', accent: '#A88200', label: 'CREATE' },
+  quiz:   { bg: '#FFAAAA', dark: '#D87878', accent: '#D87878', label: 'QUIZ' },
+};
+
+// ✅ ข้อความลอยผ่านจอเป็นพื้นหลัง (รูปแบบเดียวกับ app/join/roomid/page.tsx)
+const BACKGROUND_FLOAT_TEXT = [
+  { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.14, drift: 'waveDrift1', duration: '26s', delay: '0s' },
+  { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.12, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
+  { top: '38%', left: '-10%', fontSize: 'clamp(1rem,   12vw, 4rem)',  rotate: '-8deg',  opacity: 0.16, drift: 'waveDrift3', duration: '22s', delay: '-8s' },
+  { top: '56%', left: '-15%', fontSize: 'clamp(1.5rem, 22vw, 9rem)',  rotate: '-18deg', opacity: 0.12, drift: 'waveDrift1', duration: '34s', delay: '-10s' },
+  { top: '74%', left: '-10%', fontSize: 'clamp(1.2rem, 16vw, 6rem)',  rotate: '20deg',  opacity: 0.16, drift: 'waveDrift3', duration: '25s', delay: '-6s' },
+  { top: '90%', left: '-15%', fontSize: 'clamp(1rem,   12vw, 4.5rem)',rotate: '-30deg', opacity: 0.14, drift: 'waveDrift2', duration: '30s', delay: '-14s' },
+];
+
 function TemplatesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isCreateMode = searchParams.get('mode') === 'create';
+  const theme = isCreateMode ? PAGE_THEMES.create : PAGE_THEMES.quiz;
   const [userTypes, setUserTypes] = useState<Record<string, unknown>>({});
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const draggingRef = useRef(false);
   const dragStartXRef = useRef(0);
   const dragXRef = useRef(0);
@@ -32,6 +51,10 @@ function TemplatesContent() {
       setUserTypes(parsed.types ?? {});
     }
   }, []);
+
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 10); return () => clearTimeout(t); }, []);
+
+  const handleBack = () => { setLeaving(true); setTimeout(() => router.push('/'), 480); };
 
   const templates = [
     {
@@ -161,13 +184,75 @@ function TemplatesContent() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-300 font-sans flex flex-col items-center">
-      <Navbar />
+    <>
+      <style>{`
+        @keyframes waveDrift1 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(120vw) translateY(-6vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+
+        @keyframes waveDrift2 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(115vw) translateY(8vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+
+        @keyframes waveDrift3 {
+          0%   { transform: translateX(-10vw) translateY(0vh); }
+          50%  { transform: translateX(125vw) translateY(-4vh); }
+          100% { transform: translateX(-10vw) translateY(0vh); }
+        }
+      `}</style>
+
+      <div
+        className="min-h-screen font-sans flex flex-col items-center relative overflow-hidden"
+        style={{ background: theme.bg }}
+      >
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
+        >
+          {BACKGROUND_FLOAT_TEXT.map((s, i) => (
+            <div
+              key={`text-${i}`}
+              style={{
+                position: 'absolute',
+                top: s.top,
+                left: s.left,
+                transform: `rotate(${s.rotate})`,
+              }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontSize: s.fontSize,
+                  color: `color-mix(in srgb, ${theme.dark} ${Math.round(s.opacity * 100)}%, ${theme.bg})`,
+                  fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.03em',
+                  whiteSpace: 'nowrap',
+                  animation: `${s.drift} ${s.duration} linear infinite`,
+                  animationDelay: s.delay,
+                }}
+              >
+                {theme.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="relative z-20 w-full flex justify-center">
+          <Navbar bgColor={theme.dark} nameColor="white" />
+        </div>
       {/* Main Content */}
-      <main className="w-full max-w-5xl mt-4 px-4 pb-12">
+      <main className="relative z-10 w-full max-w-5xl mt-4 px-4 pb-12">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
 
-        <div className="order-1 md:order-2 w-full md:flex-1 bg-white rounded-[24px] px-4 pt-3 pb-6 sm:px-8 md:px-10 sm:pb-8 md:pb-10 shadow-sm flex flex-col items-center">
+        <div className={`order-1 md:order-2 w-full md:flex-1 bg-white rounded-[24px] px-4 pt-3 pb-6 sm:px-8 md:px-10 sm:pb-8 md:pb-10 shadow-[0_18px_40px_rgba(0,0,0,0.45)] flex flex-col items-center transition-transform duration-500 ease-out ${
+          leaving || !mounted ? 'translate-y-full' : 'translate-y-0'
+        }`}>
 
           <p className="text-sm text-[#2D3142] mb-0 text-center" style={{ fontFamily: 'var(--font-geologica)' }}>
             &ldquo;Choose Templates&rdquo;
@@ -225,8 +310,9 @@ function TemplatesContent() {
             </div>
             <div className="relative flex items-center justify-center mt-4">
               <button
-                onClick={() => router.push('/')}
-                className="absolute left-6 w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 active:scale-95 transition-all">
+                onClick={handleBack}
+                className="absolute left-6 w-9 h-9 rounded-full flex items-center justify-center active:scale-95 transition-all bg-white shadow-md"
+                style={{ color: theme.accent }}>
                 <ChevronLeft size={18} strokeWidth={2.5} />
               </button>
               <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-500 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full">
@@ -247,13 +333,15 @@ function TemplatesContent() {
         </div>
 
           <button
-            onClick={() => router.push('/')}
-            className="order-2 md:order-1 flex-shrink-0 md:mt-2 w-12 h-12 bg-gray-200 rounded-full hidden md:flex items-center justify-center text-gray-500 shadow-[0_5px_0_0_#d1d5db] hover:shadow-[0_3px_0_0_#d1d5db] hover:translate-y-[2px] active:shadow-none active:translate-y-[5px] transition-all">
+            onClick={handleBack}
+            className="order-2 md:order-1 flex-shrink-0 md:mt-2 w-12 h-12 rounded-full hidden md:flex items-center justify-center transition-all active:scale-95 bg-white shadow-md hover:bg-white/90"
+            style={{ color: theme.accent }}>
             <ChevronLeft size={24} strokeWidth={2.5} />
           </button>
         </div>
       </main>
-    </div>
+      </div>
+    </>
   );
 }
 

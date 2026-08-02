@@ -21,7 +21,13 @@ const TEMPLATE_COLORS: Record<string, string> = {
   design: '#8C71EF',
 };
 
-// ✅ ข้อความ "TEAM" ลอยผ่านจอเป็นพื้นหลัง (แสดงเฉพาะโหมด Team)
+// ✅ ธีมสีตามโหมดของหน้า — Team ใช้สีปุ่ม Team, Evaluate ใช้สีปุ่ม Evaluate (อ้างอิงจาก app/page.tsx)
+const PAGE_THEMES = {
+  team:     { bg: '#7F5CFF', navbar: '#5B3FD4', floatColor: '#F5F5F5', label: 'TEAM' },
+  evaluate: { bg: '#FFAD60', navbar: '#E8854A', floatColor: '#A05A20', label: 'EVALUATE' },
+};
+
+// ✅ ข้อความลอยผ่านจอเป็นพื้นหลัง
 const BACKGROUND_FLOAT_TEXT = [
   { top: '6%',  left: '-10%', fontSize: 'clamp(1.2rem, 14vw, 5rem)',   rotate: '-24deg', opacity: 0.12, drift: 'waveDrift1', duration: '26s', delay: '0s' },
   { top: '20%', left: '-15%', fontSize: 'clamp(1.5rem, 20vw, 8rem)',  rotate: '16deg',  opacity: 0.10, drift: 'waveDrift2', duration: '32s', delay: '-4s' },
@@ -43,6 +49,7 @@ function MyProjectsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isEvaluateMode = searchParams.get('mode') === 'evaluate';
+  const theme = isEvaluateMode ? PAGE_THEMES.evaluate : PAGE_THEMES.team;
 
   const [user, setUser]             = useState<{ name: string; avatarSeed: number; role?: string; gmail?: string } | null>(null);
   const [joinedRooms, setJoinedRooms] = useState<RoomData[]>([]);
@@ -101,7 +108,7 @@ function MyProjectsContent() {
   return (
     <div
       className="h-dvh font-sans flex flex-col items-center overflow-hidden relative"
-      style={{ background: isEvaluateMode ? '#D1D5DB' : '#7F5CFF' }}
+      style={{ background: theme.bg }}
     >
       <style>{`
         @keyframes slideUpIn { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: translateY(0); } }
@@ -126,71 +133,68 @@ function MyProjectsContent() {
         }
       `}</style>
 
-      {/* ✅ เลเยอร์พื้นหลัง TEAM + crown ลอยผ่านจอ — เฉพาะโหมด Team */}
-      {!isEvaluateMode && (
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
-        >
-          {BACKGROUND_FLOAT_TEXT.map((s, i) => (
-            <div
-              key={`text-${i}`}
+      {/* ✅ เลเยอร์พื้นหลังลอยผ่านจอ — ข้อความตามธีม + crown เฉพาะโหมด Team */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none"
+      >
+        {BACKGROUND_FLOAT_TEXT.map((s, i) => (
+          <div
+            key={`text-${i}`}
+            style={{
+              position: 'absolute',
+              top: s.top,
+              left: s.left,
+              transform: `rotate(${s.rotate})`,
+            }}
+          >
+            <span
               style={{
-                position: 'absolute',
-                top: s.top,
-                left: s.left,
-                transform: `rotate(${s.rotate})`,
+                display: 'inline-block',
+                fontSize: s.fontSize,
+                color: `color-mix(in srgb, ${theme.floatColor} ${Math.round(s.opacity * 100)}%, ${theme.bg})`,
+                fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
+                fontWeight: 900,
+                fontStyle: 'italic',
+                letterSpacing: '-0.03em',
+                whiteSpace: 'nowrap',
+                animation: `${s.drift} ${s.duration} linear infinite`,
+                animationDelay: s.delay,
               }}
             >
-              <span
-                style={{
-                  display: 'inline-block',
-                  fontSize: s.fontSize,
-                  opacity: s.opacity,
-                  color: '#F5F5F5',
-                  fontFamily: 'var(--font-luckiest-guy), Arial, sans-serif',
-                  fontWeight: 900,
-                  fontStyle: 'italic',
-                  letterSpacing: '-0.03em',
-                  whiteSpace: 'nowrap',
-                  animation: `${s.drift} ${s.duration} linear infinite`,
-                  animationDelay: s.delay,
-                }}
-              >
-                TEAM
-              </span>
-            </div>
-          ))}
+              {theme.label}
+            </span>
+          </div>
+        ))}
 
-          {BACKGROUND_FLOAT_CROWN.map((c, i) => (
-            <div
-              key={`crown-${i}`}
+        {!isEvaluateMode && BACKGROUND_FLOAT_CROWN.map((c, i) => (
+          <div
+            key={`crown-${i}`}
+            style={{
+              position: 'absolute',
+              top: c.top,
+              left: c.left,
+              transform: `rotate(${c.rotate})`,
+            }}
+          >
+            <img
+              src="/img/crown.PNG"
+              alt=""
               style={{
-                position: 'absolute',
-                top: c.top,
-                left: c.left,
-                transform: `rotate(${c.rotate})`,
+                display: 'inline-block',
+                height: c.size,
+                width: 'auto',
+                opacity: c.opacity,
+                animation: `${c.drift} ${c.duration} linear infinite`,
+                animationDelay: c.delay,
               }}
-            >
-              <img
-                src="/img/crown.PNG"
-                alt=""
-                style={{
-                  display: 'inline-block',
-                  height: c.size,
-                  width: 'auto',
-                  opacity: c.opacity,
-                  animation: `${c.drift} ${c.duration} linear infinite`,
-                  animationDelay: c.delay,
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+            />
+          </div>
+        ))}
+      </div>
 
       <div className="relative z-20 w-full">
-        {isEvaluateMode ? <Navbar /> : <Navbar bgColor="#5B3FD4" nameColor="white" />}
+        <Navbar bgColor={theme.navbar} nameColor="white" />
       </div>
 
       <main className="relative z-10 flex-1 overflow-hidden w-full max-w-5xl px-4 flex flex-col sm:flex-row sm:items-start gap-3 pt-0 sm:pt-4 pb-4">
