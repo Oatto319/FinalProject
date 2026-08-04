@@ -109,7 +109,7 @@ const MyTypePage = () => {
           onClick={() => router.push('/summary')}
           className="flex-shrink-0 text-[11px] sm:text-xs font-black text-white bg-[#4B3E7A] px-3 sm:px-4 h-12 rounded-2xl flex items-center transition-all active:scale-95"
         >
-          สรุปผลโปรเจกต์
+          สรุปผล
         </button>
         <div className="flex flex-1 min-w-0 gap-1 p-1 bg-white rounded-2xl shadow-sm">
           {TABS.map(tab => (

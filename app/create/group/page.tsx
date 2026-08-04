@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Home, Copy, Users } from 'lucide-react';
+import { X, Home, Copy, Users, UserMinus, ArrowRightLeft, MessageSquareText } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
@@ -13,6 +13,9 @@ import { markMatchSeen } from '../../components/notifications';
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; }
 interface MBTIResult { code?: string; title: string; icon: string; description: string; jobs: string[]; }
+interface LeaveRequest { _id: string; groupId: number; targetGmail: string; targetName: string; reporterGmail: string; reporterName: string; }
+interface CommentEntry { overall: number; comment: string; createdAt: string }
+interface MemberComments { name: string; entries: CommentEntry[]; }
 
 
 const GROUP_COLORS = ['bg-orange-400','bg-blue-600','bg-emerald-500','bg-purple-500','bg-rose-500','bg-amber-500','bg-cyan-500','bg-indigo-500'];
@@ -29,8 +32,6 @@ const TEMPLATE_COLORS: Record<string, string> = { programming: '#FFAAAA', servic
 
 const GroupResultPage = () => {
   const router = useRouter();
-  const [showModal, setShowModal]             = useState(false);
-  const [selectedReq, setSelectedReq]         = useState<{id:number;name:string} | null>(null);
   const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostGmail?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[]; endedManually?: boolean } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
   const [isManualRoom, setIsManualRoom]        = useState(false);
@@ -38,6 +39,12 @@ const GroupResultPage = () => {
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
   const [copied, setCopied] = useState(false);
   const [endingActivity, setEndingActivity] = useState(false);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [comments, setComments] = useState<Record<string, MemberComments>>({});
+  const [openComments, setOpenComments] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{ groupId: number; gmail: string; name: string } | null>(null);
+  const [moveTarget, setMoveTarget] = useState<{ groupId: number; gmail: string; name: string } | null>(null);
+  const [managing, setManaging] = useState(false);
 
 
   useEffect(() => {
@@ -56,6 +63,7 @@ const GroupResultPage = () => {
       setIsManualRoom(manual);
       setRoom({ ...r, ...data.room });
       if (data.room.matchedGroups?.length) setGroups(data.room.matchedGroups);
+      setLeaveRequests(data.room.leaveRequests ?? []);
       if (data.room.matchDone) markMatchSeen(roomId);
 
       // manual mode ใช้ member.role โดยตรง ไม่ต้อง fetch MBTI types
@@ -66,9 +74,73 @@ const GroupResultPage = () => {
           setMemberTypeOverrides(typesData.types ?? {});
         }
       }
+
+      // ความคิดเห็นจากแบบประเมิน — แบบไม่ระบุตัวตนผู้ประเมิน (host เท่านั้นที่เห็นได้ ฝั่ง server เช็คให้แล้ว)
+      if (data.room.matchDone) {
+        const evalRes = await fetch(`/api/rooms/${roomId}/evaluations`);
+        if (evalRes.ok) {
+          const evalData = await evalRes.json();
+          setComments(evalData.members ?? {});
+        }
+      }
     };
     load();
   }, []);
+
+  const refreshFromRoom = (updatedRoom: { matchedGroups?: MatchedGroup[]; leaveRequests?: LeaveRequest[] }) => {
+    if (updatedRoom.matchedGroups) setGroups(updatedRoom.matchedGroups);
+    if (updatedRoom.leaveRequests) setLeaveRequests(updatedRoom.leaveRequests);
+  };
+
+  const handleDismissRequest = async (requestId: string) => {
+    const roomId = room?.roomId ?? room?.id;
+    if (!roomId) return;
+    const res = await fetch(`/api/rooms/${roomId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'dismissLeaveRequest', requestId }),
+    });
+    const data = await res.json();
+    if (res.ok) refreshFromRoom(data.room);
+  };
+
+  const handleConfirmRemove = async () => {
+    const roomId = room?.roomId ?? room?.id;
+    if (!removeTarget || !roomId || managing) return;
+    setManaging(true);
+    try {
+      const res = await fetch(`/api/rooms/${roomId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'removeMemberFromGroup', groupId: removeTarget.groupId, memberGmail: removeTarget.gmail }),
+      });
+      const data = await res.json();
+      if (res.ok) refreshFromRoom(data.room);
+      else alert(data.error ?? 'เอาสมาชิกออกไม่สำเร็จ');
+    } finally {
+      setManaging(false);
+      setRemoveTarget(null);
+    }
+  };
+
+  const handleMove = async (toGroupId: number) => {
+    const roomId = room?.roomId ?? room?.id;
+    if (!moveTarget || !roomId || managing) return;
+    setManaging(true);
+    try {
+      const res = await fetch(`/api/rooms/${roomId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'moveMember', gmail: moveTarget.gmail, fromGroupId: moveTarget.groupId, toGroupId }),
+      });
+      const data = await res.json();
+      if (res.ok) refreshFromRoom(data.room);
+      else alert(data.error ?? 'ย้ายสมาชิกไม่สำเร็จ');
+    } finally {
+      setManaging(false);
+      setMoveTarget(null);
+    }
+  };
 
   // Host เป็นผู้สร้างห้อง ไม่ใช่สมาชิกในกลุ่มโดยอัตโนมัติ — ต้องเช็คว่า host เข้าร่วมเป็นสมาชิกและถูกจับกลุ่มไปด้วยจริงๆ
   // ก่อนโชว์ปุ่ม "เข้าห้องทีมของฉัน" ไม่งั้น host ที่ไม่ได้อยู่ในกลุ่มไหนเลยจะกดแล้วไปหน้าที่ไม่มีทีมให้ดู
@@ -79,8 +151,6 @@ const GroupResultPage = () => {
     : groups.some((g) =>
         g.members.some((m) => (room?.hostGmail ? m.gmail === room.hostGmail : m.name === room?.hostName))
       );
-
-  const handleRequest = () => { setShowModal(false); setSelectedReq(null); };
 
   const handleCopyResults = () => {
     const text = [
@@ -105,9 +175,11 @@ const GroupResultPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'endActivity' }),
       });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setRoom((prev) => (prev ? { ...prev, endedManually: data.room?.endedManually } : prev));
+      } else {
+        alert(data.error ?? 'จบกิจกรรมไม่สำเร็จ');
       }
     } finally {
       setEndingActivity(false);
@@ -203,6 +275,38 @@ const GroupResultPage = () => {
               </div>
             </div>
           )}
+          {leaveRequests.length > 0 && !room?.endedManually && (
+            <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex flex-col gap-2.5">
+              <p className="text-xs font-black text-amber-600 uppercase tracking-widest">
+                คำร้องแจ้งสมาชิกออกจากกลุ่ม ({leaveRequests.length})
+              </p>
+              {leaveRequests.map((r) => {
+                const g = groups.find((grp) => grp.id === r.groupId);
+                return (
+                  <div key={r._id} className="bg-white rounded-xl p-3 flex items-center justify-between gap-2 flex-wrap">
+                    <p className="text-sm text-gray-700 min-w-0">
+                      <span className="font-bold">{r.reporterName}</span> แจ้งว่า{' '}
+                      <span className="font-bold text-red-500">{r.targetName}</span> ออกจาก {g?.name ?? `ทีม ${r.groupId}`}
+                    </p>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleDismissRequest(r._id)}
+                        className="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-xs font-bold hover:bg-gray-200 transition-all"
+                      >
+                        ยกเลิก
+                      </button>
+                      <button
+                        onClick={() => setRemoveTarget({ groupId: r.groupId, gmail: r.targetGmail, name: r.targetName })}
+                        className="px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-bold hover:bg-red-600 transition-all"
+                      >
+                        เอาออก
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           {groups.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-gray-400 font-medium">ไม่พบข้อมูลกลุ่ม</div>
           ) : (
@@ -223,39 +327,79 @@ const GroupResultPage = () => {
                     const typeOverride = memberTypeOverrides[member.name];
                     const assignedRole = member.role && member.role !== 'ไม่ระบุ' ? member.role : undefined;
                     const isLeader  = group.leaderId === member.name;
+                    const memberComments = member.gmail ? comments[member.gmail] : undefined;
+                    const commentCount = memberComments?.entries.filter((e) => e.comment).length ?? 0;
                     return (
-                      <div key={mIdx} className="bg-white rounded-2xl p-3 flex items-center justify-between gap-2 shadow-sm border-2 border-transparent hover:border-yellow-400 transition-all">
-                        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-                          <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 border border-gray-100">
-                            <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
+                      <div key={mIdx} className="bg-white rounded-2xl p-3 flex flex-col gap-2 shadow-sm border-2 border-transparent hover:border-yellow-400 transition-all">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                            <div className="w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-gray-100 border border-gray-100">
+                              <img src={avatarUrl} alt={member.name} className="w-full h-full object-contain" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-bold text-gray-700 text-sm leading-tight truncate">{member.name}</p>
+                              {commentCount > 0 && (
+                                <button
+                                  onClick={() => setOpenComments(openComments === member.gmail ? null : member.gmail)}
+                                  className="text-[10px] text-gray-400 hover:text-[#4B3E7A] font-bold flex items-center gap-1 mt-0.5"
+                                >
+                                  <MessageSquareText size={10} /> {commentCount} ความเห็น
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-700 text-sm leading-tight truncate">{member.name}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {isLeader && <div className="w-10 h-10 sm:w-16 sm:h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
-                          {isManualRoom ? (
-                            assignedRole && ROLE_ICONS[assignedRole] ? (
-                              <button
-                                onClick={() => setMbtiPopup({ name: member.name, type: { title: assignedRole, icon: ROLE_ICONS[assignedRole], description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {isLeader && <div className="w-10 h-10 sm:w-16 sm:h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
+                            {isManualRoom ? (
+                              assignedRole && ROLE_ICONS[assignedRole] ? (
+                                <button
+                                  onClick={() => setMbtiPopup({ name: member.name, type: { title: assignedRole, icon: ROLE_ICONS[assignedRole], description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
+                                  className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
+                                  style={{ backgroundColor: `${roleColor(ROLE_ICONS[assignedRole])}26` }}>
+                                  <span className="text-[10px] font-black text-center px-1" style={{ color: roleColor(ROLE_ICONS[assignedRole]) }}>{assignedRole.slice(0, 2)}</span>
+                                </button>
+                              ) : <div className="w-12 h-12 rounded-full bg-gray-100" />
+                            ) : typeOverride ? (
+                              <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
                                 className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
-                                style={{ backgroundColor: `${roleColor(ROLE_ICONS[assignedRole])}26` }}>
-                                <span className="text-[10px] font-black text-center px-1" style={{ color: roleColor(ROLE_ICONS[assignedRole]) }}>{assignedRole.slice(0, 2)}</span>
+                                style={{ backgroundColor: `${typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon)}26` }}>
+                                <span className="text-[10px] font-black" style={{ color: typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon) }}>
+                                  {typeOverride.code ?? typeOverride.title.slice(0, 2)}
+                                </span>
                               </button>
-                            ) : <div className="w-12 h-12 rounded-full bg-gray-100" />
-                          ) : typeOverride ? (
-                            <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
-                              className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
-                              style={{ backgroundColor: `${typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon)}26` }}>
-                              <span className="text-[10px] font-black" style={{ color: typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon) }}>
-                                {typeOverride.code ?? typeOverride.title.slice(0, 2)}
-                              </span>
-                            </button>
-                          ) : (
-                            <div className="w-12 h-12 rounded-full bg-gray-100" />
-                          )}
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gray-100" />
+                            )}
+                            {!room?.endedManually && (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  title="ย้ายไปทีมอื่น"
+                                  onClick={() => setMoveTarget({ groupId: group.id, gmail: member.gmail, name: member.name })}
+                                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-blue-50 text-gray-400 hover:text-blue-500 flex items-center justify-center transition-colors"
+                                >
+                                  <ArrowRightLeft size={13} />
+                                </button>
+                                <button
+                                  title="เอาออกจากกลุ่ม"
+                                  onClick={() => setRemoveTarget({ groupId: group.id, gmail: member.gmail, name: member.name })}
+                                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                                >
+                                  <UserMinus size={13} />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
+                        {openComments === member.gmail && memberComments && (
+                          <div className="flex flex-col gap-1.5 bg-gray-50 rounded-xl p-2.5">
+                            {memberComments.entries.filter((e) => e.comment).map((e, i) => (
+                              <p key={i} className="text-xs text-gray-600">
+                                <span className="font-bold text-gray-800">{e.overall}/5</span>
+                                <span className="text-gray-500"> — {e.comment}</span>
+                              </p>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -305,21 +449,44 @@ const GroupResultPage = () => {
         </div>
       )}
 
-      {showModal && selectedReq && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="bg-rose-500 px-6 py-4 flex items-center justify-between">
-              <h2 className="font-black text-xl text-white">คำร้องขอย้ายกลุ่ม</h2>
-              <button onClick={() => setShowModal(false)} className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-all">
-                <X size={18} />
+      {removeTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setRemoveTarget(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-lg font-black text-gray-800 mb-2">เอาออกจากกลุ่ม</p>
+            <p className="text-gray-500 text-sm mb-6">
+              เอา <span className="font-bold text-gray-700">{removeTarget.name}</span> ออกจากกลุ่มถาวร? การกระทำนี้ย้อนกลับไม่ได้
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setRemoveTarget(null)} className="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all">ยกเลิก</button>
+              <button
+                disabled={managing}
+                onClick={handleConfirmRemove}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95 disabled:opacity-60"
+              >
+                {managing ? 'กำลังบันทึก...' : 'ยืนยันเอาออก'}
               </button>
             </div>
-            <div className="p-6 flex flex-col gap-4">
-              <div className="flex gap-3">
-                <button onClick={handleRequest} className="flex-1 bg-rose-300 hover:bg-rose-400 text-white font-black py-3 rounded-2xl transition-all active:scale-95">ปฏิเสธ</button>
-                <button onClick={handleRequest} className="flex-1 bg-green-400 hover:bg-green-500 text-white font-black py-3 rounded-2xl transition-all active:scale-95">อนุมัติ</button>
-              </div>
+          </div>
+        </div>
+      )}
+
+      {moveTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setMoveTarget(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-lg font-black text-gray-800 mb-4">ย้าย {moveTarget.name} ไปทีมไหน?</p>
+            <div className="flex flex-col gap-2 max-h-64 overflow-y-auto">
+              {groups.filter((g) => g.id !== moveTarget.groupId).map((g) => (
+                <button
+                  key={g.id}
+                  disabled={managing || g.members.length >= (room?.groupSize ?? Infinity)}
+                  onClick={() => handleMove(g.id)}
+                  className="text-left px-4 py-3 rounded-xl border-2 border-gray-200 hover:border-[#7096D1] font-bold text-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  {g.name} <span className="text-xs text-gray-400 font-medium">({g.members.length}/{room?.groupSize ?? '?'} คน)</span>
+                </button>
+              ))}
             </div>
+            <button onClick={() => setMoveTarget(null)} className="mt-4 w-full py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all">ยกเลิก</button>
           </div>
         </div>
       )}

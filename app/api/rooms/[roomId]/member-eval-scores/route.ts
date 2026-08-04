@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Room, User, PeerEvaluation } from '@/lib/models';
 import { getSessionUser, isRoomHost, isRoomMember } from '@/lib/auth';
-
-const CRITERIA_KEYS = [
-  'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
-  'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
-  'teamwork',
-] as const;
-type CriteriaKey = typeof CRITERIA_KEYS[number];
+import { CRITERIA_KEYS, type CriteriaKey, trimOutliers } from '@/lib/peer-evaluation';
 
 // GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนสะสมของสมาชิกกลุ่มนั้น (เรียกตอนแนะนำหัวหน้าทีม)
 // GET /api/rooms/:roomId/member-eval-scores               → คะแนนสะสมของทุกกลุ่มที่จับไปแล้วในห้องนี้
@@ -90,8 +84,9 @@ export async function GET(
   for (const member of allMembers) {
     const resolvedGmail = resolvedGmailByMemberName.get(member.name);
     if (!resolvedGmail) continue;
-    const list = byGmail.get(resolvedGmail);
-    if (!list || list.length === 0) continue;
+    const rawList = byGmail.get(resolvedGmail);
+    if (!rawList || rawList.length === 0) continue;
+    const list = trimOutliers(rawList);
 
     const avg = (key: CriteriaKey) => list.reduce((sum, s) => sum + s[key], 0) / list.length;
     const overallAvg = CRITERIA_KEYS.reduce((sum, k) => sum + avg(k), 0) / CRITERIA_KEYS.length;
@@ -100,7 +95,7 @@ export async function GET(
     scores[member.name] = {
       overall: Math.round(overallAvg * 20),
       leadership: Math.round(leadershipAvg * 20),
-      count: list.length,
+      count: rawList.length,
     };
   }
 

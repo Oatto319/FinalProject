@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { Room, User } from '@/lib/models';
+import { Room, User, PeerEvaluation } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
 import { dateTimeStringToUtcDate } from '@/lib/date';
 
@@ -175,7 +175,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         members: (Array.isArray(g.members) ? g.members as RawMember[] : [])
           .filter((m) => typeof m.gmail === 'string' && validMembers.has(m.gmail))
           .map((m) => ({
-            ...validMembers.get(m.gmail as string)!,
+            // ต้อง .toObject() ก่อน spread — subdocument ของ mongoose มี own key เป็น $__/_doc
+            // ตอน cast update mongoose จะเห็นว่าเป็น document แล้วใช้ _doc ตรงๆ ทำให้ role ที่ต่อท้ายหายไปเงียบๆ
+            ...(validMembers.get(m.gmail as string)! as unknown as { toObject: () => Record<string, unknown> }).toObject(),
             role: typeof m.role === 'string' ? m.role.slice(0, 50) : 'ไม่ระบุ',
           })),
       }));
@@ -202,6 +204,36 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
     case 'endActivity': {
       if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       if (!room.matchDone) return NextResponse.json({ error: 'ยังไม่ได้จับกลุ่ม ไม่สามารถจบกิจกรรมได้' }, { status: 400 });
+      if (room.endedManually) return NextResponse.json({ room: room.toObject() });
+
+      // ต้องให้สมาชิกทุกคนในทุกกลุ่มประเมินเพื่อนร่วมทีมครบทุกคนก่อน ถึงจะจบกิจกรรมได้
+      // (คู่ที่ต้องประเมิน = สมาชิกที่มี gmail ทุกคู่ที่ไม่ใช่ตัวเอง ในกลุ่มเดียวกัน)
+      const groups = (room.matchedGroups ?? []) as MatchedGroupLike[];
+      const pairsNeeded: { fromGmail: string; toGmail: string }[] = [];
+      for (const g of groups) {
+        const withGmail = g.members.filter((m) => m.gmail);
+        for (const from of withGmail) {
+          for (const to of withGmail) {
+            if (from.gmail !== to.gmail) pairsNeeded.push({ fromGmail: from.gmail!, toGmail: to.gmail! });
+          }
+        }
+      }
+
+      if (pairsNeeded.length > 0) {
+        const done = await PeerEvaluation.find(
+          { roomId, fromGmail: { $in: [...new Set(pairsNeeded.map((p) => p.fromGmail))] } },
+          { fromGmail: 1, toGmail: 1, _id: 0 }
+        ).lean<{ fromGmail: string; toGmail: string }[]>();
+        const doneSet = new Set(done.map((d) => `${d.fromGmail}|${d.toGmail}`));
+        const stillMissing = pairsNeeded.some((p) => !doneSet.has(`${p.fromGmail}|${p.toGmail}`));
+        if (stillMissing) {
+          return NextResponse.json(
+            { error: 'ยังมีสมาชิกที่ทำแบบประเมินเพื่อนร่วมทีมไม่ครบ กรุณารอให้ทุกคนประเมินให้เสร็จก่อนจบกิจกรรม' },
+            { status: 400 }
+          );
+        }
+      }
+
       const updated = await Room.findOneAndUpdate({ roomId }, { $set: { endedManually: true } }, { returnDocument: 'after' });
       return NextResponse.json({ room: updated!.toObject() });
     }
@@ -231,7 +263,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       const tally: Record<string, number> = {};
       Object.values(votesForGroup).forEach((n) => { tally[n] = (tally[n] ?? 0) + 1; });
       const entries = Object.entries(tally);
-      const winner = entries.length > 0 ? entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0] : targetName;
+      if (entries.length === 0) return NextResponse.json({ room: afterVote.toObject() });
+
+      // เสมอกัน (พบบ่อยเมื่อกลุ่มเหลือ 2 คนแล้วต่างคนต่างโหวตให้กัน) → ไม่ประกาศผู้ชนะแบบสุ่ม
+      // ปล่อยให้สมาชิกโหวตต่อจนกว่าคะแนนจะไม่เท่ากัน แทนที่จะเงียบๆ เลือกคนแรกที่เจอ
+      const maxVotes = Math.max(...entries.map(([, c]) => c));
+      const topEntries = entries.filter(([, c]) => c === maxVotes);
+      if (topEntries.length > 1) {
+        return NextResponse.json({ room: afterVote.toObject(), tied: true });
+      }
+      const winner = topEntries[0][0];
 
       // เปลี่ยนตัวหัวหน้าทีม → ต้องให้สมาชิกยืนยันใหม่ทั้งหมด
       const votePatch: Record<string, unknown> = { 'matchedGroups.$[g].leaderId': winner };
@@ -317,6 +358,109 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         { returnDocument: 'after' }
       );
       return NextResponse.json({ room: updated!.toObject() });
+    }
+
+    // สมาชิกในกลุ่มแจ้งว่าเพื่อนออกจากกลุ่มไปแล้ว — แค่ "แจ้ง" ไม่ได้ลบจริง ต้อง host กดยืนยันเอาออกอีกที
+    // (กันไม่ให้เพื่อนที่ผิดใจกันรุมแจ้งไล่คนออกโดยไม่ได้ลาออกจริง)
+    case 'reportLeave': {
+      const { groupId, targetGmail } = body;
+      if (typeof groupId !== 'number' || typeof targetGmail !== 'string' || !targetGmail.trim()) {
+        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
+      const group: MatchedGroupLike | undefined = (room.matchedGroups ?? []).find((g: { id: number }) => g.id === groupId);
+      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+      if (!isGroupMember(caller, group)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      const target = group.members.find((m) => m.gmail === targetGmail);
+      if (!target) return NextResponse.json({ error: 'Invalid target' }, { status: 400 });
+
+      const already = (room.leaveRequests ?? []).some(
+        (r: { groupId: number; targetGmail: string; reporterGmail: string }) =>
+          r.groupId === groupId && r.targetGmail === targetGmail && r.reporterGmail === sessionUser.gmail
+      );
+      if (!already) {
+        room.leaveRequests.push({
+          groupId, targetGmail, targetName: target.name,
+          reporterGmail: sessionUser.gmail, reporterName: sessionUser.name,
+        });
+        await room.save();
+      }
+      return NextResponse.json({ room: room.toObject() });
+    }
+
+    case 'dismissLeaveRequest': {
+      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      const { requestId } = body;
+      if (typeof requestId !== 'string' || !requestId.trim()) {
+        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
+      room.leaveRequests = (room.leaveRequests ?? []).filter(
+        (r: { _id?: unknown }) => String(r._id) !== requestId
+      );
+      await room.save();
+      return NextResponse.json({ room: room.toObject() });
+    }
+
+    // เอาสมาชิกออกจากกลุ่มหลังจับกลุ่มไปแล้ว (host เท่านั้น) — เช่น กรณีนักเรียนลาออกกลางเทอม
+    case 'removeMemberFromGroup': {
+      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (!room.matchDone) return NextResponse.json({ error: 'ยังไม่ได้จับกลุ่ม' }, { status: 400 });
+      if (room.endedManually) return NextResponse.json({ error: 'กิจกรรมนี้จบแล้ว ไม่สามารถเอาสมาชิกออกได้' }, { status: 400 });
+      const { groupId, memberGmail } = body;
+      if (typeof groupId !== 'number' || typeof memberGmail !== 'string' || !memberGmail.trim()) {
+        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
+      const group = room.matchedGroups.find((g: { id: number }) => g.id === groupId);
+      if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+      const idx = group.members.findIndex((m: { gmail?: string }) => m.gmail === memberGmail);
+      if (idx === -1) return NextResponse.json({ error: 'Member not found' }, { status: 404 });
+
+      const [removed] = group.members.splice(idx, 1);
+      // หัวหน้าทีมที่ถูกเอาออก → เคลียร์ตำแหน่งหัวหน้า บังคับให้สมาชิกที่เหลือเลือกใหม่ (vote/setLeader ปกติ)
+      if (group.leaderId === removed.name) {
+        group.leaderId = '';
+        group.leaderConfirmedBy = [];
+      }
+      room.leaveRequests = (room.leaveRequests ?? []).filter(
+        (r: { targetGmail: string }) => r.targetGmail !== memberGmail
+      );
+      await room.save();
+      return NextResponse.json({ room: room.toObject() });
+    }
+
+    // ย้ายสมาชิกไปอีกกลุ่มหนึ่งในห้องเดียวกัน (host เท่านั้น) — เช่น กรณีเพื่อนผิดใจกันในทีม
+    case 'moveMember': {
+      if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (!room.matchDone) return NextResponse.json({ error: 'ยังไม่ได้จับกลุ่ม' }, { status: 400 });
+      if (room.endedManually) return NextResponse.json({ error: 'กิจกรรมนี้จบแล้ว ไม่สามารถย้ายสมาชิกได้' }, { status: 400 });
+      const { gmail, fromGroupId, toGroupId } = body;
+      if (typeof gmail !== 'string' || typeof fromGroupId !== 'number' || typeof toGroupId !== 'number') {
+        return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+      }
+      if (fromGroupId === toGroupId) {
+        return NextResponse.json({ error: 'ต้นทางและปลายทางต้องไม่ใช่กลุ่มเดียวกัน' }, { status: 400 });
+      }
+      const fromGroup = room.matchedGroups.find((g: { id: number }) => g.id === fromGroupId);
+      const toGroup = room.matchedGroups.find((g: { id: number }) => g.id === toGroupId);
+      if (!fromGroup || !toGroup) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+      const idx = fromGroup.members.findIndex((m: { gmail?: string }) => m.gmail === gmail);
+      if (idx === -1) return NextResponse.json({ error: 'Member not found in source group' }, { status: 404 });
+      if (toGroup.members.length >= room.groupSize) {
+        return NextResponse.json({ error: 'กลุ่มปลายทางเต็มแล้ว' }, { status: 400 });
+      }
+
+      const [moved] = fromGroup.members.splice(idx, 1);
+      // สร้าง plain object ใหม่แทนการ spread subdocument ตรงๆ — subdocument ของ mongoose มี own key เป็น
+      // $__/_doc ไม่ใช่ field จริง ถ้า push ทั้ง object เดิมไปกลุ่มใหม่ ค่าจะไม่ถูก cast ตามที่ตั้งใจ
+      toGroup.members.push({
+        name: moved.name, avatarSeed: moved.avatarSeed, avatarImage: moved.avatarImage,
+        gmail: moved.gmail, role: moved.role,
+      });
+      if (fromGroup.leaderId === moved.name) {
+        fromGroup.leaderId = '';
+        fromGroup.leaderConfirmedBy = [];
+      }
+      await room.save();
+      return NextResponse.json({ room: room.toObject() });
     }
 
     default:
