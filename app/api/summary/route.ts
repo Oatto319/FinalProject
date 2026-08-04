@@ -3,18 +3,12 @@ import { connectDB } from '@/lib/mongodb';
 import { Room, PeerEvaluation, User } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { isRoomEnded } from '@/lib/room-status';
+import { CRITERIA_KEYS, type CriteriaKey, trimOutliers } from '@/lib/peer-evaluation';
 import { programmingTypeTable } from '@/lib/mbti-programming';
 import { serviceTypeTable } from '@/lib/mbti-service';
 import { presentationTypeTable } from '@/lib/mbti-presentation';
 import { designTypeTable } from '@/lib/mbti-design';
 import type { MbtiTypeInfo } from '@/lib/mbti';
-
-const CRITERIA_KEYS = [
-  'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
-  'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
-  'teamwork',
-] as const;
-type CriteriaKey = typeof CRITERIA_KEYS[number];
 
 const CRITERIA_LABELS: Record<CriteriaKey, string> = {
   contribution: 'การมีส่วนร่วม',
@@ -58,8 +52,10 @@ interface CriteriaScoreResult { key: CriteriaKey; label: string; score: number |
 // เฉลี่ยเฉพาะค่าที่เป็นตัวเลขจริง — แบบประเมินรุ่นเก่าอาจไม่มีครบทุกเกณฑ์ ถ้าเผลอเอา undefined ไปบวกจะได้ NaN
 // แล้ว JSON.stringify จะแปลงเป็น null ทำให้หน้าเว็บโชว์คะแนนว่างทั้งที่มีผลประเมินอยู่
 function summarizeScores(scoresList: Record<CriteriaKey, number>[]): { count: number; overall: number | null; byCriteria: CriteriaScoreResult[] } {
+  // count คือจำนวนผู้ประเมินจริงทั้งหมด (ไม่ตัด) — trimOutliers มีผลแค่กับตัวเลขคะแนนที่เอาไปเฉลี่ยเท่านั้น
+  const trimmed = trimOutliers(scoresList);
   const avg = (key: CriteriaKey): number | null => {
-    const nums = scoresList.map((v) => v?.[key]).filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
+    const nums = trimmed.map((v) => v?.[key]).filter((n): n is number => typeof n === 'number' && Number.isFinite(n));
     return nums.length ? nums.reduce((s, n) => s + n, 0) / nums.length : null;
   };
 

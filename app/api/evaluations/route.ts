@@ -3,12 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import { Room, PeerEvaluation } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { getPendingEvaluations } from '@/lib/evaluation';
-
-const CRITERIA_KEYS = [
-  'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
-  'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
-  'teamwork',
-] as const;
+import { CRITERIA_KEYS } from '@/lib/peer-evaluation';
 
 const COMMENT_MAX_LEN = 1000;
 
@@ -49,6 +44,11 @@ export async function POST(req: NextRequest) {
 
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+  // ห้องที่ host กดจบกิจกรรมแล้วถือเป็นข้อมูลสุดท้าย ห้ามแก้ไขแบบประเมินย้อนหลังอีก
+  // (กัน "แก้แค้นย้อนหลัง" หลังจากทุกคนเห็นผลจับกลุ่ม/คะแนนกันไปหมดแล้ว)
+  if (room.endedManually) {
+    return NextResponse.json({ error: 'กิจกรรมนี้จบแล้ว ไม่สามารถส่ง/แก้ไขแบบประเมินได้' }, { status: 400 });
+  }
 
   const fromGmail = sessionUser.gmail.toLowerCase();
   const target = toGmail.toLowerCase();

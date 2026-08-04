@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Edit2, Home, Send, User, X } from 'lucide-react';
+import { Check, Edit2, Home, Send, User, UserMinus, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
@@ -13,6 +13,7 @@ import { markMatchSeen } from '../../components/notifications';
 interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; avatarImage?: string | null; }
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; }
+interface LeaveRequest { _id: string; groupId: number; targetGmail: string; targetName: string; reporterGmail: string; reporterName: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; totalMembers: number;
   groupSize: number; template: string; hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
@@ -31,6 +32,9 @@ export default function MyTeamPage() {
   const [memberRoles, setMemberRoles] = useState<Record<string, string>>({});
 const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
   const [roomDeleted, setRoomDeleted] = useState(false);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [reportTarget, setReportTarget] = useState<RoomMember | null>(null);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const [isManualRoom, setIsManualRoom]   = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName]     = useState('');
@@ -62,6 +66,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     setIsMatched(!!room.matchDone);
     setTeamMembers(room.members ?? []);
     setTemplate(room.template ?? 'programming');
+    setLeaveRequests(room.leaveRequests ?? []);
     if (room.matchDone) markMatchSeen(roomId);
     const isManual = room.matchMode === 'selection';
     setIsManualRoom(isManual);
@@ -220,6 +225,31 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     setMyGroup((prev) => prev ? { ...prev, leaderConfirmedBy: [...(prev.leaderConfirmedBy ?? []), user.name] } : prev);
   };
 
+  const handleReportLeave = async () => {
+    if (!reportTarget || !myGroup || !roomIdRef.current || !user || reportSubmitting) return;
+    setReportSubmitting(true);
+    try {
+      const res = await fetch(`/api/rooms/${roomIdRef.current}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reportLeave', groupId: myGroup.id, targetGmail: reportTarget.gmail }),
+      });
+      if (res.ok) {
+        setLeaveRequests((prev) => [
+          ...prev,
+          {
+            _id: `local-${reportTarget.gmail}`, groupId: myGroup.id,
+            targetGmail: reportTarget.gmail, targetName: reportTarget.name,
+            reporterGmail: user.gmail ?? '', reporterName: user.name,
+          },
+        ]);
+      }
+    } finally {
+      setReportSubmitting(false);
+      setReportTarget(null);
+    }
+  };
+
 
   const openChat = () => { setIsChatOpen(true); setTimeout(() => setIsChatVisible(true), 10); };
   const closeChat = () => { setIsChatVisible(false); setTimeout(() => setIsChatOpen(false), 300); };
@@ -359,6 +389,22 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                           ) : (
                             <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gray-100" />
                           )}
+                          {!isCurrentUser && (() => {
+                            const alreadyReported = leaveRequests.some(
+                              (r) => r.groupId === myGroup?.id && r.targetGmail === member.gmail && r.reporterGmail === user?.gmail
+                            );
+                            return alreadyReported ? (
+                              <span className="text-[8px] text-amber-500 font-bold text-center leading-tight w-8">แจ้งแล้ว รอ Host</span>
+                            ) : (
+                              <button
+                                onClick={() => setReportTarget(member)}
+                                title="แจ้งว่าออกจากกลุ่ม"
+                                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-500 flex items-center justify-center transition-colors flex-shrink-0"
+                              >
+                                <UserMinus size={14} />
+                              </button>
+                            );
+                          })()}
                         </div>
                       </div>
                     );
@@ -563,6 +609,29 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
               className="w-full bg-[#2D3E50] text-white py-3 rounded-2xl font-bold hover:bg-slate-700 transition-all active:scale-95">
               กลับหน้าหลัก
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Report Member Left Modal */}
+      {reportTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setReportTarget(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-lg font-black text-gray-800 mb-2">แจ้งว่าออกจากกลุ่ม</p>
+            <p className="text-gray-500 text-sm mb-6">
+              แจ้ง Host ว่า <span className="font-bold text-gray-700">{reportTarget.name}</span> ออกจากกลุ่มนี้แล้ว?
+              Host จะเป็นคนตัดสินใจเอาออกจากกลุ่มจริงอีกที
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setReportTarget(null)} className="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all">ยกเลิก</button>
+              <button
+                onClick={handleReportLeave}
+                disabled={reportSubmitting}
+                className="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all active:scale-95 disabled:opacity-60"
+              >
+                {reportSubmitting ? 'กำลังส่ง...' : 'ยืนยันแจ้ง'}
+              </button>
+            </div>
           </div>
         </div>
       )}

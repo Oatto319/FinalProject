@@ -37,6 +37,15 @@ const MatchedGroupSchema = new Schema({
   leaderConfirmedBy: { type: [String], default: [] },
 }, { _id: false });
 
+// คำร้องที่สมาชิกในกลุ่มแจ้งว่าเพื่อนออกจากกลุ่มไปแล้ว (หลัง match) — host เป็นคนตัดสินใจเอาออกจริงหรือยกเลิกคำร้อง
+const LeaveRequestSchema = new Schema({
+  groupId:       { type: Number, required: true },
+  targetGmail:   { type: String, required: true },
+  targetName:    { type: String, required: true },
+  reporterGmail: { type: String, required: true },
+  reporterName:  { type: String, required: true },
+}, { timestamps: true });
+
 const RoomSchema = new Schema({
   roomId:         { type: String, required: true, unique: true },
   title:          { type: String, required: true },
@@ -59,6 +68,7 @@ const RoomSchema = new Schema({
   typeComposition: { type: Schema.Types.Mixed, default: {} },
   matchedGroups:  { type: [MatchedGroupSchema], default: [] },
   votes:          { type: Schema.Types.Mixed, default: {} },
+  leaveRequests:  { type: [LeaveRequestSchema], default: [] },
 }, { timestamps: true });
 
 RoomSchema.index({ roomId: 1 });

@@ -133,6 +133,15 @@ export default function VotePage() {
           {myGroup && (
             <p className="text-white/60 font-bold mt-1">{myGroup.name}</p>
           )}
+          {(() => {
+            const tally: Record<string, number> = {};
+            Object.values(groupVotes).forEach((n) => { tally[n] = (tally[n] ?? 0) + 1; });
+            const maxVotes = Math.max(0, ...Object.values(tally));
+            const tiedCount = Object.values(tally).filter((c) => c === maxVotes && maxVotes > 0).length;
+            return tiedCount > 1 ? (
+              <p className="mt-2 text-amber-300 text-sm font-bold">คะแนนโหวตเสมอกัน — รอเพื่อนโหวตเพิ่มเพื่อตัดสิน</p>
+            ) : null;
+          })()}
         </div>
 
         <div className="flex items-start gap-3 flex-1">
