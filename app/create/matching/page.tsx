@@ -76,6 +76,10 @@ const MatchingPage = () => {
           </div>
 
           <p className="text-gray-400 text-sm font-medium tracking-widest">กำลังจัดกลุ่ม กรุณารอสักครู่</p>
+          <p className="text-gray-500 text-xs font-medium mt-3 max-w-xs text-center leading-relaxed">
+            ระบบพิจารณาผลแบบทดสอบ MBTI ของสมาชิกและคะแนนประเมินเพื่อนร่วมทีมจากโปรเจกต์ก่อนหน้า
+            เพื่อจัดกลุ่มให้มีความหลากหลายและสมดุลกัน
+          </p>
         </>
       )}
 

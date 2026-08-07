@@ -4,6 +4,8 @@ import { Room, PeerEvaluation, User } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { isRoomEnded } from '@/lib/room-status';
 import { CRITERIA_KEYS, type CriteriaKey, trimOutliers } from '@/lib/peer-evaluation';
+import { fetchMemberTypes } from '@/lib/room-member-data';
+import { categoryKeyForCode } from '@/lib/type-composition';
 import { programmingTypeTable } from '@/lib/mbti-programming';
 import { serviceTypeTable } from '@/lib/mbti-service';
 import { presentationTypeTable } from '@/lib/mbti-presentation';
@@ -44,10 +46,21 @@ interface MatchedGroupLite { id: number; name: string; leaderId?: string; member
 interface RoomLite {
   roomId: string; title: string; template?: string; hostGmail?: string;
   matchedGroups?: MatchedGroupLite[];
+  typeComposition?: Record<string, number>;
   deadline?: Date | null; matchedAt?: Date | null; endedManually?: boolean; updatedAt: Date;
 }
 
 interface CriteriaScoreResult { key: CriteriaKey; label: string; score: number | null; }
+
+// สรุปผลระดับทีมสำหรับมุมมอง host เท่านั้น — เป็น aggregate (ค่าเฉลี่ย/จำนวนนับ) ไม่มีข้อมูลรายคน
+// เพื่อไม่ให้ขัดกับ anonymity ที่ trimOutliers ตั้งใจสร้างไว้ตอนประมวลผลคะแนนประเมิน
+interface HostTeamSummary {
+  id: number;
+  name: string;
+  memberCount: number;
+  avgEvaluation: number | null;
+  typeCounts: Record<string, number>;
+}
 
 // เฉลี่ยเฉพาะค่าที่เป็นตัวเลขจริง — แบบประเมินรุ่นเก่าอาจไม่มีครบทุกเกณฑ์ ถ้าเผลอเอา undefined ไปบวกจะได้ NaN
 // แล้ว JSON.stringify จะแปลงเป็น null ทำให้หน้าเว็บโชว์คะแนนว่างทั้งที่มีผลประเมินอยู่
@@ -90,7 +103,7 @@ export async function GET(req: NextRequest) {
       matchDone: true,
       $or: [{ 'matchedGroups.members.gmail': gmail }, { hostGmail: gmail }],
     })
-      .select('roomId title template matchedGroups deadline matchedAt endedManually updatedAt hostGmail')
+      .select('roomId title template matchedGroups typeComposition deadline matchedAt endedManually updatedAt hostGmail')
       .sort({ updatedAt: -1 })
       .lean<RoomLite[]>();
 
@@ -110,11 +123,12 @@ export async function GET(req: NextRequest) {
       : [];
 
     // ห้องที่เป็นแค่เจ้าของกิจกรรม: ไม่มีผลประเมิน "ส่วนตัว" ของ host ให้ดู จึงรวมคะแนนของ "ทุกคน" ในห้องเป็นภาพรวมแทน
+    // ดึง groupId มาด้วยเพื่อสรุปผลแยกรายทีมได้ (ยังคงเป็นค่าเฉลี่ยของทีม ไม่ใช่รายคน — ไม่ขัดกับ anonymity ของ trimOutliers)
     const hostEvals = hostOnlyRooms.length
       ? await PeerEvaluation.find(
           { roomId: { $in: hostOnlyRooms.map((r) => r.roomId) } },
-          { roomId: 1, scores: 1, _id: 0 }
-        ).lean<{ roomId: string; scores: Record<CriteriaKey, number> }[]>()
+          { roomId: 1, groupId: 1, scores: 1, _id: 0 }
+        ).lean<{ roomId: string; groupId: number; scores: Record<CriteriaKey, number> }[]>()
       : [];
 
     const groupByRoom = (list: { roomId: string; scores: Record<CriteriaKey, number> }[]) => {
@@ -128,6 +142,22 @@ export async function GET(req: NextRequest) {
     };
     const memberEvalsByRoom = groupByRoom(memberEvals);
     const hostEvalsByRoom = groupByRoom(hostEvals);
+
+    const hostEvalsByRoomAndGroup = new Map<string, Record<CriteriaKey, number>[]>();
+    for (const e of hostEvals) {
+      const key = `${e.roomId}:${e.groupId}`;
+      const bucket = hostEvalsByRoomAndGroup.get(key) ?? [];
+      bucket.push(e.scores);
+      hostEvalsByRoomAndGroup.set(key, bucket);
+    }
+
+    // MBTI type ของสมาชิกทุกคนในห้องที่ host คุม — ใช้สรุปความหลากหลายรายทีม (aggregate เท่านั้น ไม่โชว์รายคน)
+    const memberTypesByRoom = new Map<string, Record<string, { code?: string }>>();
+    for (const room of hostOnlyRooms) {
+      const allMembers = (room.matchedGroups ?? []).flatMap((g) => g.members ?? []);
+      if (allMembers.length === 0) continue;
+      memberTypesByRoom.set(room.roomId, await fetchMemberTypes(room.template ?? 'programming', allMembers));
+    }
 
     // types ทั้งหมดที่ผู้ใช้เคยทำแบบทดสอบไว้ (เก็บใน User.types เป็น { [template]: { code, ... } })
     const userDoc = await User.findOne({ gmail }, { types: 1 }).lean<{ types?: Record<string, { code?: string }> }>();
@@ -144,6 +174,7 @@ export async function GET(req: NextRequest) {
         title: room.title,
         template: tableKey,
         ended: isRoomEnded(room),
+        matchedAt: room.matchedAt ? new Date(room.matchedAt).toISOString() : null,
         teamName: group?.name ?? null,
         mbti: code ? { code, title: info?.title ?? '', jobs: info?.jobs ?? [] } : null,
         isLeader: !!group && group.leaderId === sessionUser.name,
@@ -151,18 +182,39 @@ export async function GET(req: NextRequest) {
         teamCount: null as number | null,
         memberCount: null as number | null,
         evaluation: summarizeScores(memberEvalsByRoom.get(room.roomId) ?? []),
+        teams: null as HostTeamSummary[] | null,
       };
     });
 
     const hostProjects = hostOnlyRooms.map((room) => {
       const groups = room.matchedGroups ?? [];
       const tableKey = resolveTableKey(room.template ?? 'programming');
+      const typesByName = memberTypesByRoom.get(room.roomId) ?? {};
+      const targetComposition = room.typeComposition ?? {};
+
+      const teams: HostTeamSummary[] = groups.map((g) => {
+        const typeCounts: Record<string, number> = {};
+        for (const member of g.members ?? []) {
+          const code = typesByName[member.name]?.code;
+          const categoryKey = code ? categoryKeyForCode(tableKey, code) : null;
+          const key = categoryKey ?? 'ไม่ระบุ';
+          typeCounts[key] = (typeCounts[key] ?? 0) + 1;
+        }
+        return {
+          id: g.id,
+          name: g.name,
+          memberCount: (g.members ?? []).length,
+          avgEvaluation: summarizeScores(hostEvalsByRoomAndGroup.get(`${room.roomId}:${g.id}`) ?? []).overall,
+          typeCounts,
+        };
+      });
 
       return {
         roomId: room.roomId,
         title: room.title,
         template: tableKey,
         ended: isRoomEnded(room),
+        matchedAt: room.matchedAt ? new Date(room.matchedAt).toISOString() : null,
         teamName: null,
         mbti: null,
         isLeader: false,
@@ -170,6 +222,8 @@ export async function GET(req: NextRequest) {
         teamCount: groups.length,
         memberCount: groups.reduce((sum, g) => sum + (g.members ?? []).length, 0),
         evaluation: summarizeScores(hostEvalsByRoom.get(room.roomId) ?? []),
+        teams,
+        typeComposition: Object.keys(targetComposition).length ? targetComposition : null,
       };
     });
 
