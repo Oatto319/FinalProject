@@ -27,7 +27,7 @@ interface MBTIResult { code: string; title: string; icon: string; description: s
 export default function AnalyzePage() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
-  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; avatarImage?: string | null; score: number; role?: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; avatarImage?: string | null; score: number; mbtiScore: number | null; evalScore: number | null; role?: string }[]>([]);
   const [roomIdState, setRoomIdState] = useState('');
   const [myGroupId, setMyGroupId] = useState<number | null>(null);
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
@@ -99,6 +99,8 @@ export default function AnalyzePage() {
           avatarImage: m.avatarImage,
           role: m.role,
           score,
+          mbtiScore,
+          evalScore,
         };
       });
       setTeamMembers(withScores);
@@ -121,10 +123,16 @@ export default function AnalyzePage() {
     setTimeout(() => router.back(), 300);
   };
 
-  const bestFitIdx = teamMembers.reduce(
-    (best, m, idx) => (m.score > (teamMembers[best]?.score ?? 0) ? idx : best),
-    0
-  );
+  // เลือกคนคะแนนสูงสุด ถ้าคะแนนรวมเท่ากันให้ใช้คะแนน MBTI ดิบตัดสิน แล้วค่อยคะแนนประเมินดิบ
+  // (ละเอียดกว่าคะแนนรวมที่ปัดเศษแล้ว) ก่อนจะ fallback ไปคนแรกในลิสต์เป็นตัวตัดสินสุดท้ายแบบ deterministic
+  const bestFitIdx = teamMembers.reduce((best, m, idx) => {
+    const b = teamMembers[best];
+    if (!b) return idx;
+    if (m.score !== b.score) return m.score > b.score ? idx : best;
+    if ((m.mbtiScore ?? -1) !== (b.mbtiScore ?? -1)) return (m.mbtiScore ?? -1) > (b.mbtiScore ?? -1) ? idx : best;
+    if ((m.evalScore ?? -1) !== (b.evalScore ?? -1)) return (m.evalScore ?? -1) > (b.evalScore ?? -1) ? idx : best;
+    return best;
+  }, 0);
 
   const handleConfirm = async () => {
     if (isAnalyzing) return;
