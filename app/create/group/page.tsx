@@ -92,6 +92,20 @@ const GroupResultPage = () => {
     if (updatedRoom.leaveRequests) setLeaveRequests(updatedRoom.leaveRequests);
   };
 
+  // Poll ผลจับกลุ่มทุก 2 วิ เพื่อให้ host เห็นหัวหน้าทีมทันทีหลังนักเรียนเลือก/ยืนยันกัน (Vote หรือ Analyze mode)
+  // โดยไม่ต้อง refresh หน้าเอง — เบาๆ แค่ดึง room เฉยๆ ไม่ต้อง fetch member-types/evaluations ซ้ำทุกรอบ
+  useEffect(() => {
+    const roomId = room?.roomId ?? room?.id;
+    if (!roomId) return;
+    const interval = setInterval(async () => {
+      const res = await fetch(`/api/rooms/${roomId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.room) refreshFromRoom(data.room);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [room?.roomId, room?.id]);
+
   const handleDismissRequest = async (requestId: string) => {
     const roomId = room?.roomId ?? room?.id;
     if (!roomId) return;
