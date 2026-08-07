@@ -1,5 +1,5 @@
 import { User, PeerEvaluation } from '@/lib/models';
-import { CRITERIA_KEYS, type CriteriaKey, trimOutliers } from '@/lib/peer-evaluation';
+import { CRITERIA_KEYS, type CriteriaKey, trimOutliers, shrinkTowardNeutral, recencyWeight, weightedAverage } from '@/lib/peer-evaluation';
 
 export interface RoomMemberRef {
   name: string;
@@ -75,6 +75,9 @@ export interface EvalScoreData {
   overall: number;
   leadership: number;
   count: number;
+  /** ค่าเฉลี่ยรายเกณฑ์ทั้ง 11 ด้าน (0-100, ถ่วงเข้าหาคะแนนกลางแบบเดียวกับ overall/leadership) —
+   * ใช้ตอนจับกลุ่มเพื่อกระจายทักษะเฉพาะด้าน (เช่น cooperation/teamwork) แม่นกว่าดูแค่ค่าเฉลี่ยรวม */
+  criteria: Record<CriteriaKey, number>;
 }
 
 /** Batch-resolves each member's cross-room peer-eval aggregate (trimmed-outlier average), by toGmail. */
@@ -97,20 +100,22 @@ export async function fetchMemberEvalScores(
   }
 
   const gmails = [...new Set(resolvedGmailByMemberName.values())];
-  const evals: { toGmail: string; scores: Record<CriteriaKey, number> }[] = gmails.length
+  const evals: { toGmail: string; scores: Record<CriteriaKey, number>; createdAt: Date }[] = gmails.length
     ? await PeerEvaluation.find(
         { toGmail: { $in: gmails } },
-        { toGmail: 1, scores: 1, _id: 0 }
+        { toGmail: 1, scores: 1, createdAt: 1, _id: 0 }
       ).lean()
     : [];
 
-  const byGmail = new Map<string, Record<CriteriaKey, number>[]>();
+  type ScoredEval = Record<CriteriaKey, number> & { createdAt: Date };
+  const byGmail = new Map<string, ScoredEval[]>();
   for (const e of evals) {
     const list = byGmail.get(e.toGmail) ?? [];
-    list.push(e.scores);
+    list.push({ ...e.scores, createdAt: e.createdAt });
     byGmail.set(e.toGmail, list);
   }
 
+  const now = Date.now();
   const scores: Record<string, EvalScoreData> = {};
   for (const member of members) {
     const resolvedGmail = resolvedGmailByMemberName.get(member.name);
@@ -119,14 +124,28 @@ export async function fetchMemberEvalScores(
     if (!rawList || rawList.length === 0) continue;
     const list = trimOutliers(rawList);
 
-    const avg = (key: CriteriaKey) => list.reduce((sum, s) => sum + s[key], 0) / list.length;
-    const overallAvg = CRITERIA_KEYS.reduce((sum, k) => sum + avg(k), 0) / CRITERIA_KEYS.length;
-    const leadershipAvg = (avg('initiative') + avg('problemSolving') + avg('responsibility')) / 3;
+    // แบบประเมินยิ่งเก่ายิ่งมีน้ำหนักลดลง (exponential decay, half-life 90 วัน) — ผลงานล่าสุดสำคัญกว่าผลงานเก่า
+    const avg = (key: CriteriaKey) =>
+      weightedAverage(list.map((s) => ({ value: s[key], weight: recencyWeight(s.createdAt, now) })));
+    // ถ่วงเข้าหาคะแนนกลางๆ ตามจำนวนผู้ประเมินจริง (rawList.length ไม่ใช่ list.length หลัง trim) —
+    // ความเชื่อมั่นในค่าเฉลี่ยขึ้นกับจำนวนคนที่ประเมินทั้งหมด ไม่ใช่จำนวนที่เหลือหลังตัด outlier
+    const overallAvg = shrinkTowardNeutral(
+      CRITERIA_KEYS.reduce((sum, k) => sum + avg(k), 0) / CRITERIA_KEYS.length,
+      rawList.length
+    );
+    const leadershipAvg = shrinkTowardNeutral(
+      (avg('initiative') + avg('problemSolving') + avg('responsibility')) / 3,
+      rawList.length
+    );
+    const criteria = Object.fromEntries(
+      CRITERIA_KEYS.map((k) => [k, Math.round(shrinkTowardNeutral(avg(k), rawList.length) * 20)])
+    ) as Record<CriteriaKey, number>;
 
     scores[member.name] = {
       overall: Math.round(overallAvg * 20),
       leadership: Math.round(leadershipAvg * 20),
       count: rawList.length,
+      criteria,
     };
   }
 

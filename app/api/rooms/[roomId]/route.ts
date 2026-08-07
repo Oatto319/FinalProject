@@ -7,6 +7,7 @@ import { fetchMemberTypes, fetchMemberEvalScores } from '@/lib/room-member-data'
 import { axisVector } from '@/lib/mbti';
 import { categoryKeyForCode, categoryAffinities } from '@/lib/type-composition';
 import { computeGroups, type MatchInputMember } from '@/lib/matching';
+import { CRITERIA_KEYS } from '@/lib/peer-evaluation';
 
 interface RoomMemberLike { name: string; gmail?: string; }
 interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; leaderConfirmedBy?: string[]; }
@@ -183,6 +184,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       const matchInput: MatchInputMember[] = membersList.map((m) => {
         const t = typesByName[m.name];
         const typeScores = t?.typeScores ?? [];
+        const criteria = evalByName[m.name]?.criteria;
         return {
           gmail: m.gmail,
           name: m.name,
@@ -192,6 +194,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
           categoryKey: t?.code ? categoryKeyForCode(template, t.code) : null,
           categoryAffinities: typeScores.length ? categoryAffinities(template, typeScores) : {},
           evalScore: evalByName[m.name]?.overall ?? 50,
+          skillVector: CRITERIA_KEYS.map((k) => criteria?.[k] ?? 50),
         };
       });
 

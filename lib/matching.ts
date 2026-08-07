@@ -1,6 +1,9 @@
 import type { AxisVector } from './mbti';
 import { resolveTemplateTypes } from './type-composition';
 
+/** ค่าเฉลี่ยรายเกณฑ์ประเมิน 11 ด้าน (0-100 ต่อด้าน) เรียงตาม CRITERIA_KEYS */
+export type SkillVector = readonly number[];
+
 export interface MatchInputMember {
   gmail: string;
   name: string;
@@ -9,7 +12,10 @@ export interface MatchInputMember {
   axisVector: AxisVector;
   categoryKey: string | null;
   categoryAffinities: Record<string, number>;
+  /** คะแนนประเมินรวม (0-100) ใช้แค่จัดลำดับก่อนเติมกลุ่ม (spread คนคะแนนสูง/ต่ำ) ไม่ใช่ objective หลัก */
   evalScore: number;
+  /** เวกเตอร์คะแนนรายเกณฑ์ 11 ด้าน — ใช้เป็น objective จริงสำหรับ skill balance (ละเอียดกว่า evalScore เดี่ยว) */
+  skillVector: SkillVector;
 }
 
 export interface ComputeGroupsInput {
@@ -48,6 +54,40 @@ export function groupDiversity(vectors: AxisVector[]): number {
     for (let j = i + 1; j < vectors.length; j++) sum += pairDistance(vectors[i], vectors[j]);
   }
   return sum;
+}
+
+// น้ำหนักรวมของ objective function: MBTI diversity (แกนหลัก) vs skill balance (แกนรอง จากคะแนนประเมิน)
+// ใช้สัดส่วนเดียวกับที่แอปนี้ใช้ผสม MBTI กับคะแนนประเมินอยู่แล้วตอนแนะนำหัวหน้าทีม (0.7/0.3)
+const DIVERSITY_WEIGHT = 0.7;
+const SKILL_BALANCE_WEIGHT = 0.3;
+const MAX_AXIS_PAIR_DISTANCE = 8; // แต่ละแกนต่างกันได้สูงสุด 2 (-1..1) คูณ 4 แกน
+
+/** ความหลากหลายของกลุ่ม normalize เป็น 0..1 (ค่าเฉลี่ย pairwise distance ต่อคู่ เทียบระยะสูงสุดที่เป็นไปได้) */
+function normalizedGroupDiversity(vectors: AxisVector[]): number {
+  const pairCount = (vectors.length * (vectors.length - 1)) / 2;
+  if (pairCount === 0) return 0;
+  return groupDiversity(vectors) / (pairCount * MAX_AXIS_PAIR_DISTANCE);
+}
+
+/** ความสมดุลของทักษะในกลุ่ม (11 เกณฑ์) normalize เป็น 0..1 — 1 คือค่าเฉลี่ยกลุ่มตรงกับค่าเฉลี่ยทั้งห้องทุกเกณฑ์พอดี
+ * ใช้เวกเตอร์รายเกณฑ์แทนค่าเฉลี่ยรวมเดียว เพื่อไม่ให้กลุ่มไหนกองคนอ่อนด้านใดด้านหนึ่งไว้ด้วยกัน (เช่น cooperation ต่ำทั้งกลุ่ม)
+ * ทั้งที่ค่าเฉลี่ยรวมอาจดูใกล้เคียงกลุ่มอื่น */
+function skillBalance(skillVectors: SkillVector[], globalAvgVector: SkillVector): number {
+  if (skillVectors.length === 0) return 1;
+  const dims = globalAvgVector.length;
+  let sumAbsDeviation = 0;
+  for (let d = 0; d < dims; d++) {
+    const groupAvgAtDim = skillVectors.reduce((sum, v) => sum + v[d], 0) / skillVectors.length;
+    sumAbsDeviation += Math.abs(groupAvgAtDim - globalAvgVector[d]);
+  }
+  const avgDeviation = sumAbsDeviation / dims;
+  return 1 - Math.min(1, avgDeviation / 100);
+}
+
+/** Objective function หลัก: ผสม MBTI diversity กับ skill balance ตามน้ำหนักด้านบน ใช้ทั้งตอนเลือกกลุ่มให้สมาชิกใหม่
+ * และตอน local search — ให้สองขั้นตอนเพิ่มประสิทธิภาพเป้าหมายเดียวกัน ไม่ใช่แค่ diversity อย่างเดียว */
+function combinedGroupScore(vectors: AxisVector[], skillVectors: SkillVector[], globalAvgVector: SkillVector): number {
+  return DIVERSITY_WEIGHT * normalizedGroupDiversity(vectors) + SKILL_BALANCE_WEIGHT * skillBalance(skillVectors, globalAvgVector);
 }
 
 function centroidOf(members: MatchInputMember[]): AxisVector {
@@ -107,8 +147,8 @@ function farthestPointSeeds(members: MatchInputMember[], k: number): MatchInputM
   return seeds;
 }
 
-/** Auto mode, and selection mode with no typeComposition set — pure diversity-maximizing construction. */
-function assignByDiversityConstruction(members: MatchInputMember[], groups: WorkingGroup[], capacities: number[]): void {
+/** Auto mode, and selection mode with no typeComposition set — diversity + skill-balance maximizing construction. */
+function assignByDiversityConstruction(members: MatchInputMember[], groups: WorkingGroup[], capacities: number[], globalAvgSkill: SkillVector): void {
   const seeds = farthestPointSeeds(members, groups.length);
   const seedGmails = new Set(seeds.map((s) => s.gmail));
 
@@ -125,7 +165,9 @@ function assignByDiversityConstruction(members: MatchInputMember[], groups: Work
     let bestScore = -Infinity;
     groups.forEach((g, i) => {
       if (g.members.length >= capacities[i]) return;
-      const score = marginalGain(g.members.map((mm) => mm.axisVector), m.axisVector);
+      const vectorsAfter = [...g.members.map((mm) => mm.axisVector), m.axisVector];
+      const skillVectorsAfter = [...g.members.map((mm) => mm.skillVector), m.skillVector];
+      const score = combinedGroupScore(vectorsAfter, skillVectorsAfter, globalAvgSkill);
       if (score > bestScore) { bestScore = score; bestIdx = i; }
     });
     if (bestIdx === -1) {
@@ -142,7 +184,8 @@ function assignByComposition(
   groups: WorkingGroup[],
   typeComposition: Record<string, number>,
   categories: string[],
-  groupSize: number
+  groupSize: number,
+  globalAvgSkill: SkillVector
 ): void {
   let unassigned = stableSortDesc(members, (m) => m.evalScore);
   const numGroups = groups.length;
@@ -163,7 +206,9 @@ function assignByComposition(
       let bestScore = -Infinity;
       groups.forEach((g, i) => {
         if (remainingSlots[i] <= 0) return;
-        const score = marginalGain(g.members.map((mm) => mm.axisVector), m.axisVector);
+        const vectorsAfter = [...g.members.map((mm) => mm.axisVector), m.axisVector];
+        const skillVectorsAfter = [...g.members.map((mm) => mm.skillVector), m.skillVector];
+        const score = combinedGroupScore(vectorsAfter, skillVectorsAfter, globalAvgSkill);
         if (score > bestScore) { bestScore = score; bestIdx = i; }
       });
       if (bestIdx === -1) continue;
@@ -184,9 +229,10 @@ function assignByComposition(
   }
 }
 
-/** Bounded 2-opt local search: swap two members across groups whenever it improves total diversity.
- * When roleLocked, only swaps within the same role slot so typeComposition category counts never change. */
-function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean): void {
+/** Bounded 2-opt local search: swap two members across groups whenever it improves the combined
+ * diversity+skill-balance objective. When roleLocked, only swaps within the same role slot so
+ * typeComposition category counts never change. */
+function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalAvgSkill: SkillVector): void {
   const maxRounds = 50;
 
   for (let round = 0; round < maxRounds; round++) {
@@ -199,8 +245,10 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean): void {
         const groupB = groups[gj];
         const vecsA = groupA.members.map((m) => m.axisVector);
         const vecsB = groupB.members.map((m) => m.axisVector);
-        const baseA = groupDiversity(vecsA);
-        const baseB = groupDiversity(vecsB);
+        const skillsA = groupA.members.map((m) => m.skillVector);
+        const skillsB = groupB.members.map((m) => m.skillVector);
+        const baseA = combinedGroupScore(vecsA, skillsA, globalAvgSkill);
+        const baseB = combinedGroupScore(vecsB, skillsB, globalAvgSkill);
 
         for (let ai = 0; ai < groupA.members.length; ai++) {
           for (let bi = 0; bi < groupB.members.length; bi++) {
@@ -208,7 +256,11 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean): void {
 
             const vecsAAfter = vecsA.map((v, idx) => (idx === ai ? vecsB[bi] : v));
             const vecsBAfter = vecsB.map((v, idx) => (idx === bi ? vecsA[ai] : v));
-            const delta = (groupDiversity(vecsAAfter) - baseA) + (groupDiversity(vecsBAfter) - baseB);
+            const skillsAAfter = skillsA.map((v, idx) => (idx === ai ? skillsB[bi] : v));
+            const skillsBAfter = skillsB.map((v, idx) => (idx === bi ? skillsA[ai] : v));
+            const delta =
+              (combinedGroupScore(vecsAAfter, skillsAAfter, globalAvgSkill) - baseA) +
+              (combinedGroupScore(vecsBAfter, skillsBAfter, globalAvgSkill) - baseB);
 
             if (delta > bestDelta) {
               bestDelta = delta;
@@ -235,6 +287,13 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean): void {
   }
 }
 
+function averageSkillVector(vectors: SkillVector[]): SkillVector {
+  const dims = vectors[0]?.length ?? 0;
+  const sums = new Array(dims).fill(0);
+  for (const v of vectors) for (let d = 0; d < dims; d++) sums[d] += v[d];
+  return sums.map((s) => s / vectors.length);
+}
+
 export function computeGroups(input: ComputeGroupsInput): MatchedGroupResult[] {
   const { members, matchMode, typeComposition, template } = input;
   const groupSize = Math.max(1, input.groupSize || 1);
@@ -242,16 +301,17 @@ export function computeGroups(input: ComputeGroupsInput): MatchedGroupResult[] {
 
   const groups: WorkingGroup[] = Array.from({ length: numGroups }, (_, i) => ({ id: i + 1, members: [], roles: [] }));
 
+  const globalAvgSkill = averageSkillVector(members.map((m) => m.skillVector));
   const hasComposition = matchMode === 'selection' && Object.values(typeComposition).some((v) => v > 0);
 
   if (hasComposition) {
     const categories = resolveTemplateTypes(template).map((t) => t.key);
-    assignByComposition(members, groups, typeComposition, categories, groupSize);
-    localSearchImprove(groups, true);
+    assignByComposition(members, groups, typeComposition, categories, groupSize, globalAvgSkill);
+    localSearchImprove(groups, true, globalAvgSkill);
   } else {
     const capacities = balancedCapacities(members.length, numGroups);
-    assignByDiversityConstruction(members, groups, capacities);
-    localSearchImprove(groups, false);
+    assignByDiversityConstruction(members, groups, capacities, globalAvgSkill);
+    localSearchImprove(groups, false, globalAvgSkill);
   }
 
   return groups.map((g, i) => ({
