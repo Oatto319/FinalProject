@@ -426,15 +426,15 @@ const ManualPage = () => {
                         {isSelf && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                       </div>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${(member.role ?? 'user') === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>{member.role ?? 'user'}</span>
-                      {user?.name === room?.hostName && memberTypes[member.name] && (
+                      {user?.name === room?.hostName && memberTypes[member.gmail ?? member.name] && (
                         <div className="flex items-center gap-1 mt-1">
                           <span
                             className="text-[10px] font-black px-1.5 py-0.5 rounded"
-                            style={{ color: typeColor(memberTypes[member.name].code), backgroundColor: `${typeColor(memberTypes[member.name].code)}1A` }}
+                            style={{ color: typeColor(memberTypes[member.gmail ?? member.name].code), backgroundColor: `${typeColor(memberTypes[member.gmail ?? member.name].code)}1A` }}
                           >
-                            {memberTypes[member.name].code}
+                            {memberTypes[member.gmail ?? member.name].code}
                           </span>
-                          <span className="text-[10px] font-bold" style={{ color: theme.accent }}>{memberTypes[member.name].title}</span>
+                          <span className="text-[10px] font-bold" style={{ color: theme.accent }}>{memberTypes[member.gmail ?? member.name].title}</span>
                         </div>
                       )}
                     </div>

@@ -170,7 +170,7 @@ export default function VotePage() {
                       {members.map((member) => {
                         const isMe = member.name === user?.name;
                         const avatarUrl = resolveAvatar(member);
-                        const mbtiType = memberTypes[member.name];
+                        const mbtiType = memberTypes[member.gmail ?? member.name];
                         const voteCount = tally[member.name] ?? 0;
                         const isLeading = voteCount > 0 && voteCount === maxVotes;
                         const myVote = groupVotes[user?.name ?? ''];

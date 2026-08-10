@@ -92,6 +92,20 @@ const GroupResultPage = () => {
     if (updatedRoom.leaveRequests) setLeaveRequests(updatedRoom.leaveRequests);
   };
 
+  // Poll ผลจับกลุ่มทุก 2 วิ เพื่อให้ host เห็นหัวหน้าทีมทันทีหลังนักเรียนเลือก/ยืนยันกัน (Vote หรือ Analyze mode)
+  // โดยไม่ต้อง refresh หน้าเอง — เบาๆ แค่ดึง room เฉยๆ ไม่ต้อง fetch member-types/evaluations ซ้ำทุกรอบ
+  useEffect(() => {
+    const roomId = room?.roomId ?? room?.id;
+    if (!roomId) return;
+    const interval = setInterval(async () => {
+      const res = await fetch(`/api/rooms/${roomId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.room) refreshFromRoom(data.room);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [room?.roomId, room?.id]);
+
   const handleDismissRequest = async (requestId: string) => {
     const roomId = room?.roomId ?? room?.id;
     if (!roomId) return;
@@ -324,7 +338,7 @@ const GroupResultPage = () => {
                 <div className="bg-[#E8E8E8] border-2 border-[#E8E8E8] rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = resolveAvatar(member);
-                    const typeOverride = memberTypeOverrides[member.name];
+                    const typeOverride = memberTypeOverrides[member.gmail ?? member.name];
                     const assignedRole = member.role && member.role !== 'ไม่ระบุ' ? member.role : undefined;
                     const isLeader  = group.leaderId === member.name;
                     const memberComments = member.gmail ? comments[member.gmail] : undefined;

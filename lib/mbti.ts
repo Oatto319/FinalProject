@@ -71,6 +71,14 @@ export function letterAffinity(typeScores: { title: string; score: number }[], l
   return bar.title[0] === letter ? bar.score : 100 - bar.score;
 }
 
+/** Signed per-axis lean [-1..1] for E, S, T, J, derived from persisted typeScores via letterAffinity. */
+export type AxisVector = readonly [number, number, number, number];
+
+export function axisVector(typeScores: { title: string; score: number }[]): AxisVector {
+  const norm = (letter: Letter) => (letterAffinity(typeScores, letter) - 50) / 50;
+  return [norm('E'), norm('S'), norm('T'), norm('J')];
+}
+
 /**
  * Heuristic leadership-fit score (0-100) computed from a member's actual quiz axis bars —
  * favors Extravert/Thinking/Judging leanings, the classic "natural leader" combination (ENTJ/ESTJ).

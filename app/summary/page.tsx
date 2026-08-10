@@ -7,11 +7,19 @@ import Navbar from '../navbar/page';
 import { typeColor } from '@/lib/mbti';
 
 interface CriteriaScore { key: string; label: string; score: number | null; }
+interface HostTeamSummary {
+  id: number;
+  name: string;
+  memberCount: number;
+  avgEvaluation: number | null;
+  typeCounts: Record<string, number>;
+}
 interface ProjectSummary {
   roomId: string;
   title: string;
   template: string;
   ended: boolean;
+  matchedAt: string | null;
   teamName: string | null;
   mbti: { code: string; title: string; jobs: string[] } | null;
   isLeader: boolean;
@@ -19,6 +27,8 @@ interface ProjectSummary {
   teamCount: number | null;
   memberCount: number | null;
   evaluation: { count: number; overall: number | null; byCriteria: CriteriaScore[] };
+  teams: HostTeamSummary[] | null;
+  typeComposition?: Record<string, number> | null;
 }
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -27,6 +37,39 @@ const TEMPLATE_LABELS: Record<string, string> = {
   presentation: 'Presentation',
   design: 'Design',
 };
+
+// การ์ดแนวโน้มคะแนนประเมินข้ามโปรเจกต์ (เรียงตามเวลาจริง ไม่ใช่ลำดับที่แสดงในลิสต์ด้านล่างซึ่งเอาห้องที่จบแล้วขึ้นก่อน)
+function EvalTrendCard({ points }: { points: { title: string; overall: number }[] }) {
+  if (points.length < 2) return null;
+  const w = 100;
+  const h = 32;
+  const stepX = w / (points.length - 1);
+  const toY = (v: number) => h - (v / 5) * h;
+  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * stepX} ${toY(p.overall)}`).join(' ');
+  const latest = points[points.length - 1].overall;
+  const delta = Math.round((latest - points[points.length - 2].overall) * 10) / 10;
+
+  return (
+    <div className="bg-white rounded-3xl p-5 shadow-sm">
+      <div className="flex items-baseline justify-between mb-3">
+        <p className="text-xs text-gray-400 font-bold">แนวโน้มคะแนนประเมิน ({points.length} โปรเจกต์)</p>
+        <p className={`text-xs font-black ${delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+          {delta > 0 ? '▲' : delta < 0 ? '▼' : '='} {Math.abs(delta)} จากโปรเจกต์ก่อนหน้า
+        </p>
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-10" preserveAspectRatio="none">
+        <path d={path} fill="none" stroke="#34D399" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+        {points.map((p, i) => (
+          <circle key={i} cx={i * stepX} cy={toY(p.overall)} r="1.5" fill="#34D399" />
+        ))}
+      </svg>
+      <div className="flex justify-between mt-1">
+        <span className="text-[10px] text-gray-300 truncate max-w-[45%]">{points[0].title}</span>
+        <span className="text-[10px] text-gray-700 font-bold truncate max-w-[45%] text-right">{points[points.length - 1].title} · {latest}/5</span>
+      </div>
+    </div>
+  );
+}
 
 export default function SummaryPage() {
   const router = useRouter();
@@ -85,6 +128,15 @@ export default function SummaryPage() {
           </div>
         )}
 
+        {projects && (
+          <EvalTrendCard
+            points={projects
+              .filter((p) => !p.isHostView && p.evaluation.overall !== null && p.matchedAt !== null)
+              .sort((a, b) => new Date(a.matchedAt as string).getTime() - new Date(b.matchedAt as string).getTime())
+              .map((p) => ({ title: p.title, overall: p.evaluation.overall as number }))}
+          />
+        )}
+
         {projects?.map((p) => (
           <div key={p.roomId} className="bg-white rounded-3xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
@@ -127,14 +179,42 @@ export default function SummaryPage() {
             </div>
 
             {p.isHostView ? (
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
-                  <Layers size={12} /> {p.teamCount ?? 0} ทีม
-                </span>
-                <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
-                  <Users size={12} /> {p.memberCount ?? 0} คน
-                </span>
-              </div>
+              <>
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                    <Layers size={12} /> {p.teamCount ?? 0} ทีม
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                    <Users size={12} /> {p.memberCount ?? 0} คน
+                  </span>
+                </div>
+
+                {/* สรุปรายทีม — เฉพาะค่าเฉลี่ย/จำนวนนับ ไม่มีคะแนนรายคน เพื่อไม่ให้ขัดกับความไม่เปิดเผยตัวตนของแบบประเมิน */}
+                {p.teams && p.teams.length > 0 && (
+                  <div className="flex flex-col gap-2 mb-4">
+                    {p.teams.map((team) => (
+                      <div key={team.id} className="bg-gray-50 rounded-2xl p-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-gray-700 truncate">{team.name}</span>
+                          <span className="text-[11px] text-gray-400 flex-shrink-0">
+                            {team.avgEvaluation !== null ? `เฉลี่ย ${team.avgEvaluation}/5` : 'ยังไม่มีประเมิน'}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(team.typeCounts).map(([key, count]) => {
+                            const target = p.typeComposition?.[key];
+                            return (
+                              <span key={key} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                                {key} {count}{target ? `/${target}` : ''}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             ) : (
               p.mbti && p.mbti.jobs.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-4">

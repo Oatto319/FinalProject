@@ -3,6 +3,11 @@ import { connectDB } from '@/lib/mongodb';
 import { Room, User, PeerEvaluation } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
 import { dateTimeStringToUtcDate } from '@/lib/date';
+import { fetchMemberTypes, fetchMemberEvalScores, memberKey } from '@/lib/room-member-data';
+import { axisVector } from '@/lib/mbti';
+import { categoryKeyForCode, categoryAffinities } from '@/lib/type-composition';
+import { computeGroups, type MatchInputMember } from '@/lib/matching';
+import { CRITERIA_KEYS } from '@/lib/peer-evaluation';
 
 interface RoomMemberLike { name: string; gmail?: string; }
 interface MatchedGroupLike { id: number; name: string; members: RoomMemberLike[]; leaderId?: string; leaderConfirmedBy?: string[]; }
@@ -142,6 +147,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         return NextResponse.json({ error: 'โหมดการจับคู่ไม่ถูกต้อง' }, { status: 400 });
       }
 
+      if (body.typeComposition !== undefined) {
+        if (typeof body.typeComposition !== 'object' || body.typeComposition === null || Array.isArray(body.typeComposition)) {
+          return NextResponse.json({ error: 'Type composition ไม่ถูกต้อง' }, { status: 400 });
+        }
+        const counts = Object.values(body.typeComposition as Record<string, unknown>);
+        if (!counts.every((v) => typeof v === 'number' && Number.isInteger(v) && v >= 0)) {
+          return NextResponse.json({ error: 'จำนวนคนต่อ type ต้องเป็นจำนวนเต็มไม่ติดลบ' }, { status: 400 });
+        }
+        const sum = (counts as number[]).reduce((s, v) => s + v, 0);
+        if (sum > effectiveSize) {
+          return NextResponse.json({ error: 'ผลรวมจำนวนคนต่อ type ต้องไม่มากกว่าจำนวนคนต่อกลุ่ม' }, { status: 400 });
+        }
+      }
+
       const patch: Record<string, unknown> = {};
       if (body.title !== undefined) patch.title = body.title;
       if (body.description !== undefined) patch.description = body.description;
@@ -159,37 +178,54 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
     case 'match': {
       if (!isRoomHost(caller, room)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-      const { matchedGroups, matchMode } = body;
-      if (!Array.isArray(matchedGroups)) return NextResponse.json({ error: 'matchedGroups required' }, { status: 400 });
+      // Fast-path เฉยๆ ไม่ใช่ correctness guard ตัวจริง (ตัวจริงคือ findOneAndUpdate ด้านล่าง) —
+      // แค่กันไม่ต้องคำนวณซ้ำโดยไม่จำเป็นตอนถูกเรียกซ้ำหลังจับกลุ่มเสร็จแล้ว
+      if (room.matchDone) return NextResponse.json({ room: room.toObject() });
 
-      // Build a whitelist of valid members from the authoritative room.members list
-      const validMembers = new Map<string, { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string }>(
-        (room.members ?? []).map((m: { gmail: string; name: string; avatarSeed: number; avatarImage?: string | null }) => [m.gmail, m])
-      );
+      const roomObj = room.toObject();
+      const membersList = (roomObj.members ?? []) as { name: string; gmail: string; avatarSeed: number; avatarImage?: string | null }[];
+      if (membersList.length === 0) return NextResponse.json({ error: 'ห้องยังไม่มีสมาชิก' }, { status: 400 });
 
-      // Sanitize each group: only keep fields we control, reject unknown members
-      type RawMember = { gmail?: unknown; role?: unknown };
-      const sanitizedGroups = matchedGroups.map((g: { id: unknown; name: unknown; members?: RawMember[] }) => ({
-        id: Number(g.id),
-        name: String(g.name ?? '').slice(0, TEAM_NAME_MAX_LENGTH),
-        members: (Array.isArray(g.members) ? g.members as RawMember[] : [])
-          .filter((m) => typeof m.gmail === 'string' && validMembers.has(m.gmail))
-          .map((m) => ({
-            // ต้อง .toObject() ก่อน spread — subdocument ของ mongoose มี own key เป็น $__/_doc
-            // ตอน cast update mongoose จะเห็นว่าเป็น document แล้วใช้ _doc ตรงๆ ทำให้ role ที่ต่อท้ายหายไปเงียบๆ
-            ...(validMembers.get(m.gmail as string)! as unknown as { toObject: () => Record<string, unknown> }).toObject(),
-            role: typeof m.role === 'string' ? m.role.slice(0, 50) : 'ไม่ระบุ',
-          })),
-      }));
+      const template = (roomObj.template ?? 'programming').toLowerCase();
+      const matchMode: 'auto' | 'selection' = roomObj.matchMode === 'selection' ? 'selection' : 'auto';
+      const typeComposition = (roomObj.typeComposition ?? {}) as Record<string, number>;
 
-      const patch: Record<string, unknown> = { matchedGroups: sanitizedGroups, matchDone: true, matchedAt: new Date() };
-      if (matchMode) patch.matchMode = matchMode;
+      const [typesByName, evalByName] = await Promise.all([
+        fetchMemberTypes(template, membersList),
+        fetchMemberEvalScores(membersList),
+      ]);
+
+      const matchInput: MatchInputMember[] = membersList.map((m) => {
+        const key = memberKey(m);
+        const t = typesByName[key];
+        const typeScores = t?.typeScores ?? [];
+        const criteria = evalByName[key]?.criteria;
+        return {
+          gmail: m.gmail,
+          name: m.name,
+          avatarSeed: m.avatarSeed,
+          avatarImage: m.avatarImage,
+          axisVector: axisVector(typeScores),
+          categoryKey: t?.code ? categoryKeyForCode(template, t.code) : null,
+          categoryAffinities: typeScores.length ? categoryAffinities(template, typeScores) : {},
+          evalScore: evalByName[key]?.overall ?? 50,
+          skillVector: CRITERIA_KEYS.map((k) => criteria?.[k] ?? 50),
+        };
+      });
+
+      const matchedGroups = computeGroups({
+        members: matchInput,
+        groupSize: roomObj.groupSize ?? 4,
+        matchMode,
+        typeComposition,
+        template,
+      });
 
       // Atomic: อัปเดตได้ก็ต่อเมื่อ matchDone ยังไม่ true ตอนที่เขียนจริง (ไม่ใช่แค่ตอนอ่านตอนต้นฟังก์ชัน)
       // กัน double-click/double-mount สองคำขอชนกันแล้วเขียนทับผลจับกลุ่มที่มีอยู่แล้ว
       const updated = await Room.findOneAndUpdate(
         { roomId, matchDone: { $ne: true } },
-        { $set: patch },
+        { $set: { matchedGroups, matchDone: true, matchedAt: new Date() } },
         { returnDocument: 'after' }
       );
 
