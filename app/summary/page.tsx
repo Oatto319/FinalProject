@@ -208,8 +208,8 @@ export default function SummaryPage() {
             </div>
 
             {p.isHostView ? (
-              <div className="lg:flex lg:items-start lg:gap-3">
-                <div className="flex-1 min-w-0 lg:max-w-[calc(100%-12rem)]">
+              <div className="lg:flex lg:items-center lg:gap-3">
+                <div className="flex-1 min-w-0 lg:max-w-[calc(100%-14.25rem)]">
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
                       <Layers size={12} /> {p.teamCount ?? 0} ทีม
@@ -258,11 +258,11 @@ export default function SummaryPage() {
                 </div>
 
                 {p.evaluation.count > 0 && (
-                  <div className="hidden lg:flex flex-col gap-1.5 w-44 flex-shrink-0">
+                  <div className="hidden lg:flex flex-col gap-2 w-44 flex-shrink-0 mr-10">
                     <div className="flex items-center justify-end gap-1.5">
-                      <span className="text-xs text-gray-400">คะแนนประเมินเฉลี่ยของทั้งห้อง</span>
-                      <span className="flex items-center gap-1 text-lg font-black text-gray-800">
-                        <Star size={16} className="text-amber-400 fill-amber-400" />
+                      <span className="text-sm text-gray-400">คะแนนประเมินเฉลี่ยของทั้งห้อง</span>
+                      <span className="flex items-center gap-1 text-xl font-black text-gray-800">
+                        <Star size={18} className="text-amber-400 fill-amber-400" />
                         {(p.evaluation.overall ?? 0).toFixed(1)}
                       </span>
                     </div>
@@ -270,10 +270,10 @@ export default function SummaryPage() {
                       .filter((c) => c.score !== null)
                       .slice(0, 4)
                       .map((c) => (
-                        <div key={c.key} className="flex items-center justify-between gap-2 text-[11px] text-gray-400">
+                        <div key={c.key} className="flex items-center justify-between gap-2 text-xs text-gray-400">
                           <span>{c.label}</span>
                           <div className="flex items-center gap-1">
-                            <StarRating score={c.score ?? 0} size={11} />
+                            <StarRating score={c.score ?? 0} size={13} />
                             <span className="text-gray-500 font-bold">{(c.score ?? 0).toFixed(1)}</span>
                           </div>
                         </div>
