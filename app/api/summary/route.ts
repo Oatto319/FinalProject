@@ -41,7 +41,7 @@ function resolveTableKey(template: string): keyof typeof TYPE_TABLES {
   return 'programming';
 }
 
-interface RoomMemberLite { name: string; gmail?: string; }
+interface RoomMemberLite { name: string; gmail?: string; avatarSeed?: number; avatarImage?: string | null; }
 interface MatchedGroupLite { id: number; name: string; leaderId?: string; members: RoomMemberLite[]; }
 interface RoomLite {
   roomId: string; title: string; template?: string; hostGmail?: string;
@@ -60,6 +60,7 @@ interface HostTeamSummary {
   memberCount: number;
   avgEvaluation: number | null;
   typeCounts: Record<string, number>;
+  members: { name: string; avatarSeed: number; avatarImage: string | null }[];
 }
 
 // เฉลี่ยเฉพาะค่าที่เป็นตัวเลขจริง — แบบประเมินรุ่นเก่าอาจไม่มีครบทุกเกณฑ์ ถ้าเผลอเอา undefined ไปบวกจะได้ NaN
@@ -206,6 +207,11 @@ export async function GET(req: NextRequest) {
           memberCount: (g.members ?? []).length,
           avgEvaluation: summarizeScores(hostEvalsByRoomAndGroup.get(`${room.roomId}:${g.id}`) ?? []).overall,
           typeCounts,
+          members: (g.members ?? []).map((m) => ({
+            name: m.name,
+            avatarSeed: m.avatarSeed ?? 1,
+            avatarImage: m.avatarImage ?? null,
+          })),
         };
       });
 
