@@ -182,7 +182,7 @@ export default function SummaryPage() {
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 mb-2 lg:mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
               {p.isHostView ? (
                 <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">
                   <ShieldCheck size={12} /> คุณเป็นเจ้าของกิจกรรม
@@ -208,9 +208,9 @@ export default function SummaryPage() {
             </div>
 
             {p.isHostView ? (
-              <>
-                <div className="flex flex-wrap lg:flex-nowrap items-start justify-between gap-3 mb-4">
-                  <div className="flex flex-wrap gap-1.5">
+              <div className="lg:flex lg:items-start lg:gap-3">
+                <div className="flex-1 min-w-0 lg:max-w-[calc(100%-12rem)]">
+                  <div className="flex flex-wrap gap-1.5 mb-4">
                     <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
                       <Layers size={12} /> {p.teamCount ?? 0} ทีม
                     </span>
@@ -219,68 +219,68 @@ export default function SummaryPage() {
                     </span>
                   </div>
 
-                  {p.evaluation.count > 0 && (
-                    <div className="hidden lg:flex flex-col gap-1.5 w-64 flex-shrink-0">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <span className="text-xs text-gray-400">คะแนนประเมินเฉลี่ยของทั้งห้อง</span>
-                        <span className="flex items-center gap-1 text-lg font-black text-gray-800">
-                          <Star size={16} className="text-amber-400 fill-amber-400" />
-                          {(p.evaluation.overall ?? 0).toFixed(1)}
-                        </span>
-                      </div>
-                      {p.evaluation.byCriteria
-                        .filter((c) => c.score !== null)
-                        .slice(0, 4)
-                        .map((c) => (
-                          <div key={c.key} className="flex items-center justify-between gap-2 text-[11px] text-gray-400">
-                            <span>{c.label}</span>
-                            <div className="flex items-center gap-1">
-                              <StarRating score={c.score ?? 0} size={11} />
-                              <span className="text-gray-500 font-bold">{(c.score ?? 0).toFixed(1)}</span>
-                            </div>
+                  {/* สรุปรายทีม — เฉพาะค่าเฉลี่ย/จำนวนนับ ไม่มีคะแนนรายคน เพื่อไม่ให้ขัดกับความไม่เปิดเผยตัวตนของแบบประเมิน */}
+                  {p.teams && p.teams.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
+                      {p.teams.map((team) => (
+                        <div key={team.id} className="bg-gray-50 rounded-2xl p-4 h-[220px] overflow-hidden flex flex-col justify-between">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-xs font-bold text-gray-700 truncate">{team.name}</span>
+                            <span className="text-[11px] text-gray-400 flex-shrink-0">
+                              {team.avgEvaluation !== null ? `เฉลี่ย ${team.avgEvaluation.toFixed(1)}/5` : 'ยังไม่มีประเมิน'}
+                            </span>
                           </div>
-                        ))}
+
+                          {team.members.length > 0 && (
+                            <div className="flex flex-wrap -space-x-2 sm:-space-x-3 lg:-space-x-4 mb-2">
+                              {team.members.map((m) => (
+                                <div key={m.name} title={m.name} className="w-9 h-9 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0">
+                                  <img src={resolveAvatar(m)} alt={m.name} className="w-full h-full object-contain" />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap gap-1">
+                            {Object.entries(team.typeCounts).map(([key, count]) => {
+                              const target = p.typeComposition?.[key];
+                              return (
+                                <span key={key} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                                  {key} {count}{target ? `/${target}` : ''}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
 
-                {/* สรุปรายทีม — เฉพาะค่าเฉลี่ย/จำนวนนับ ไม่มีคะแนนรายคน เพื่อไม่ให้ขัดกับความไม่เปิดเผยตัวตนของแบบประเมิน */}
-                {p.teams && p.teams.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
-                    {p.teams.map((team) => (
-                      <div key={team.id} className="bg-gray-50 rounded-2xl p-4 min-h-[220px] flex flex-col justify-between">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs font-bold text-gray-700 truncate">{team.name}</span>
-                          <span className="text-[11px] text-gray-400 flex-shrink-0">
-                            {team.avgEvaluation !== null ? `เฉลี่ย ${team.avgEvaluation}/5` : 'ยังไม่มีประเมิน'}
-                          </span>
-                        </div>
-
-                        {team.members.length > 0 && (
-                          <div className="flex flex-wrap -space-x-2 sm:-space-x-3 lg:-space-x-4 mb-2">
-                            {team.members.map((m) => (
-                              <div key={m.name} title={m.name} className="w-9 h-9 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0">
-                                <img src={resolveAvatar(m)} alt={m.name} className="w-full h-full object-contain" />
-                              </div>
-                            ))}
+                {p.evaluation.count > 0 && (
+                  <div className="hidden lg:flex flex-col gap-1.5 w-44 flex-shrink-0">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <span className="text-xs text-gray-400">คะแนนประเมินเฉลี่ยของทั้งห้อง</span>
+                      <span className="flex items-center gap-1 text-lg font-black text-gray-800">
+                        <Star size={16} className="text-amber-400 fill-amber-400" />
+                        {(p.evaluation.overall ?? 0).toFixed(1)}
+                      </span>
+                    </div>
+                    {p.evaluation.byCriteria
+                      .filter((c) => c.score !== null)
+                      .slice(0, 4)
+                      .map((c) => (
+                        <div key={c.key} className="flex items-center justify-between gap-2 text-[11px] text-gray-400">
+                          <span>{c.label}</span>
+                          <div className="flex items-center gap-1">
+                            <StarRating score={c.score ?? 0} size={11} />
+                            <span className="text-gray-500 font-bold">{(c.score ?? 0).toFixed(1)}</span>
                           </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-1">
-                          {Object.entries(team.typeCounts).map(([key, count]) => {
-                            const target = p.typeComposition?.[key];
-                            return (
-                              <span key={key} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
-                                {key} {count}{target ? `/${target}` : ''}
-                              </span>
-                            );
-                          })}
                         </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
-              </>
+              </div>
             ) : (
               p.mbti && p.mbti.jobs.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-4">
@@ -310,7 +310,7 @@ export default function SummaryPage() {
                       {p.isHostView ? 'คะแนนประเมินเฉลี่ยของทั้งห้อง' : 'คะแนนประเมินจากเพื่อนร่วมทีม'}
                     </p>
                     <p className="text-xl font-black text-gray-800">
-                      {p.evaluation.overall}
+                      {(p.evaluation.overall ?? 0).toFixed(1)}
                       <span className="text-xs font-bold text-gray-300"> / 5</span>
                     </p>
                   </div>
@@ -322,7 +322,7 @@ export default function SummaryPage() {
                         <div key={c.key}>
                           <div className="flex justify-between text-[11px] text-gray-400 mb-1">
                             <span>{c.label}</span>
-                            <span>{c.score}</span>
+                            <span>{(c.score ?? 0).toFixed(1)}</span>
                           </div>
                           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div
