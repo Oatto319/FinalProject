@@ -84,9 +84,10 @@ export default function AnalyzePage() {
       // กับผลการประเมินเพื่อนร่วมทีมในอดีต (ความคิดริเริ่ม/การแก้ไขปัญหา/ความรับผิดชอบ)
       // สมาชิกที่ยังไม่ทำแบบทดสอบและไม่เคยถูกประเมินจะได้คะแนนกลางๆ (50) ไปก่อน
       const withScores = members.map((m: RoomMember) => {
-        const typeScores = memberTypesRef.current[m.gmail]?.typeScores;
+        const key = m.gmail ?? m.name;
+        const typeScores = memberTypesRef.current[key]?.typeScores;
         const mbtiScore = typeScores?.length ? leadershipScore(typeScores) : null;
-        const evalEntry = evalScoresRef.current[m.gmail];
+        const evalEntry = evalScoresRef.current[key];
         const evalScore = evalEntry?.count ? evalEntry.leadership : null;
         let score: number;
         if (mbtiScore !== null && evalScore !== null) score = Math.round(mbtiScore * 0.7 + evalScore * 0.3);
@@ -193,14 +194,14 @@ export default function AnalyzePage() {
                       </div>
                     )}
                     {/* MBTI badge — top-right corner (desktop) */}
-                    {!isBest && memberTypes[member.gmail] && (
+                    {!isBest && memberTypes[member.gmail ?? member.name] && (
                       <div
-                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.gmail] })}
+                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.gmail ?? member.name] })}
                         className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer hidden sm:flex items-center justify-center"
-                        style={{ backgroundColor: `${typeColor(memberTypes[member.gmail].code)}26` }}
+                        style={{ backgroundColor: `${typeColor(memberTypes[member.gmail ?? member.name].code)}26` }}
                       >
-                        <span className="text-[8px] font-black" style={{ color: typeColor(memberTypes[member.gmail].code) }}>
-                          {memberTypes[member.gmail].code}
+                        <span className="text-[8px] font-black" style={{ color: typeColor(memberTypes[member.gmail ?? member.name].code) }}>
+                          {memberTypes[member.gmail ?? member.name].code}
                         </span>
                       </div>
                     )}
@@ -241,14 +242,14 @@ export default function AnalyzePage() {
                     </div>
 
                     {/* MBTI badge — right side, circular, same size as avatar (mobile only) */}
-                    {!isBest && memberTypes[member.gmail] && (
+                    {!isBest && memberTypes[member.gmail ?? member.name] && (
                       <div
-                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.gmail] })}
+                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.gmail ?? member.name] })}
                         className="w-16 h-16 flex-shrink-0 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex sm:hidden items-center justify-center"
-                        style={{ backgroundColor: `${typeColor(memberTypes[member.gmail].code)}26` }}
+                        style={{ backgroundColor: `${typeColor(memberTypes[member.gmail ?? member.name].code)}26` }}
                       >
-                        <span className="text-[11px] font-black" style={{ color: typeColor(memberTypes[member.gmail].code) }}>
-                          {memberTypes[member.gmail].code}
+                        <span className="text-[11px] font-black" style={{ color: typeColor(memberTypes[member.gmail ?? member.name].code) }}>
+                          {memberTypes[member.gmail ?? member.name].code}
                         </span>
                       </div>
                     )}

@@ -316,7 +316,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     const avatarUrl = resolveAvatar(member);
                     const showRole = member.role && member.role !== 'ไม่ระบุ';
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
-                    const mbtiType = memberTypes[member.gmail];
+                    const mbtiType = memberTypes[member.gmail ?? member.name];
                     return (
                       <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm">
                         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
