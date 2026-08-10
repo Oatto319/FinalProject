@@ -96,6 +96,17 @@ export default function SummaryPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cardVisible, setCardVisible] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setCardVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const handleBack = () => {
+    setCardVisible(false);
+    setTimeout(() => router.back(), 300);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -122,38 +133,41 @@ export default function SummaryPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#E5E7EB] font-sans flex flex-col">
-      <Navbar />
+    <div className="min-h-screen bg-[#1D324B] font-sans flex flex-col">
+      <div className="sticky top-0 z-20">
+        <Navbar bgColor="#122031" nameColor="white" />
+      </div>
 
+      <div className={`flex flex-col flex-1 transition-transform duration-300 ease-out ${cardVisible ? 'translate-y-0' : 'translate-y-full'}`}>
       <div className="w-full px-3 py-4 flex items-center gap-3 max-w-7xl mx-auto">
         <button
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="lg:hidden flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
-        <h1 className="text-lg font-black text-gray-800">สรุปผล</h1>
+        <h1 className="text-lg font-black text-white">สรุปผล</h1>
       </div>
 
       <div className="flex-1 px-3 pb-10 max-w-7xl mx-auto w-full flex items-start gap-3">
         <button
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="hidden lg:flex flex-shrink-0 w-12 h-12 bg-white rounded-full items-center justify-center text-gray-700 transition-all active:scale-95"
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
         </button>
 
         <div className="flex-1 min-w-0 flex flex-col gap-4">
-        {error && <p className="text-center text-sm text-gray-400 mt-10">{error}</p>}
+        {error && <p className="text-center text-sm text-white/60 mt-10">{error}</p>}
 
         {!error && projects === null && (
-          <p className="text-center text-sm text-gray-400 mt-10">กำลังโหลด...</p>
+          <p className="text-center text-sm text-white/60 mt-10">กำลังโหลด...</p>
         )}
 
         {!error && projects !== null && projects.length === 0 && (
           <div className="text-center mt-10">
-            <p className="text-sm text-gray-400">ยังไม่มีโปรเจกต์ที่จับกลุ่มแล้ว</p>
-            <p className="text-xs text-gray-300 mt-1">พอห้องแรกของคุณจับกลุ่มเสร็จ สรุปผลจะขึ้นที่นี่</p>
+            <p className="text-sm text-white/60">ยังไม่มีโปรเจกต์ที่จับกลุ่มแล้ว</p>
+            <p className="text-xs text-white/40 mt-1">พอห้องแรกของคุณจับกลุ่มเสร็จ สรุปผลจะขึ้นที่นี่</p>
           </div>
         )}
 
@@ -305,30 +319,25 @@ export default function SummaryPage() {
                 </p>
               ) : (
                 <>
-                  <div className={`flex items-baseline justify-between mb-3 ${p.isHostView ? 'lg:hidden' : ''}`}>
+                  <div className={`flex items-center justify-between mb-3 ${p.isHostView ? 'lg:hidden' : ''}`}>
                     <p className="text-xs text-gray-400">
                       {p.isHostView ? 'คะแนนประเมินเฉลี่ยของทั้งห้อง' : 'คะแนนประเมินจากเพื่อนร่วมทีม'}
                     </p>
-                    <p className="text-xl font-black text-gray-800">
+                    <span className="flex items-center gap-1 text-xl font-black text-gray-800">
+                      <Star size={18} className="text-amber-400 fill-amber-400" />
                       {(p.evaluation.overall ?? 0).toFixed(1)}
-                      <span className="text-xs font-bold text-gray-300"> / 5</span>
-                    </p>
+                    </span>
                   </div>
                   <div className={`flex flex-col gap-2 ${p.isHostView ? 'lg:hidden' : ''}`}>
                     {p.evaluation.byCriteria
                       .filter((c) => c.score !== null)
                       .slice(0, 4)
                       .map((c) => (
-                        <div key={c.key}>
-                          <div className="flex justify-between text-[11px] text-gray-400 mb-1">
-                            <span>{c.label}</span>
-                            <span>{(c.score ?? 0).toFixed(1)}</span>
-                          </div>
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-emerald-400 rounded-full"
-                              style={{ width: `${((c.score ?? 0) / 5) * 100}%` }}
-                            />
+                        <div key={c.key} className="flex items-center justify-between gap-2 text-xs text-gray-400">
+                          <span>{c.label}</span>
+                          <div className="flex items-center gap-1">
+                            <StarRating score={c.score ?? 0} size={13} />
+                            <span className="text-gray-500 font-bold">{(c.score ?? 0).toFixed(1)}</span>
                           </div>
                         </div>
                       ))}
@@ -339,6 +348,7 @@ export default function SummaryPage() {
           </div>
         ))}
         </div>
+      </div>
       </div>
     </div>
   );
