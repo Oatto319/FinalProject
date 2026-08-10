@@ -4,7 +4,7 @@ import { Room, PeerEvaluation, User } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { isRoomEnded } from '@/lib/room-status';
 import { CRITERIA_KEYS, type CriteriaKey, trimOutliers } from '@/lib/peer-evaluation';
-import { fetchMemberTypes } from '@/lib/room-member-data';
+import { fetchMemberTypes, memberKey } from '@/lib/room-member-data';
 import { categoryKeyForCode } from '@/lib/type-composition';
 import { programmingTypeTable } from '@/lib/mbti-programming';
 import { serviceTypeTable } from '@/lib/mbti-service';
@@ -195,7 +195,7 @@ export async function GET(req: NextRequest) {
       const teams: HostTeamSummary[] = groups.map((g) => {
         const typeCounts: Record<string, number> = {};
         for (const member of g.members ?? []) {
-          const code = typesByName[member.name]?.code;
+          const code = typesByName[memberKey(member)]?.code;
           const categoryKey = code ? categoryKeyForCode(tableKey, code) : null;
           const key = categoryKey ?? 'ไม่ระบุ';
           typeCounts[key] = (typeCounts[key] ?? 0) + 1;

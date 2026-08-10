@@ -6,6 +6,12 @@ export interface RoomMemberRef {
   gmail?: string;
 }
 
+/** Key used for per-member result maps — gmail is the only field unique per user (User.name has no
+ *  unique constraint), so two members sharing a display name must not collide in the output. */
+export function memberKey(member: RoomMemberRef): string {
+  return member.gmail ? member.gmail.toLowerCase() : member.name;
+}
+
 const LABEL_TO_ID: Record<string, string> = {
   'programming': 'programming',
   'service': 'service',
@@ -57,7 +63,7 @@ export async function fetchMemberTypes(
 
     if (typeResult && (typeResult as { icon?: string }).icon) {
       const t = typeResult as { code: string; title: string; icon: string; description?: string; jobs?: string[]; typeScores?: { title: string; icon: string; score: number }[] };
-      types[member.name] = {
+      types[memberKey(member)] = {
         code: t.code,
         title: t.title,
         icon: t.icon,
@@ -93,13 +99,10 @@ export async function fetchMemberEvalScores(
     : [];
   const gmailByName = new Map(usersByName.map((u) => [u.name, u.gmail.toLowerCase()]));
 
-  const resolvedGmailByMemberName = new Map<string, string>();
-  for (const member of members) {
-    const resolved = member.gmail?.toLowerCase() ?? gmailByName.get(member.name);
-    if (resolved) resolvedGmailByMemberName.set(member.name, resolved);
-  }
+  // Resolved per member (not keyed by name) — two members sharing a display name must resolve independently.
+  const resolvedGmails = members.map((member) => member.gmail?.toLowerCase() ?? gmailByName.get(member.name));
 
-  const gmails = [...new Set(resolvedGmailByMemberName.values())];
+  const gmails = [...new Set(resolvedGmails.filter((g): g is string => !!g))];
   const evals: { toGmail: string; scores: Record<CriteriaKey, number>; createdAt: Date }[] = gmails.length
     ? await PeerEvaluation.find(
         { toGmail: { $in: gmails } },
@@ -117,8 +120,9 @@ export async function fetchMemberEvalScores(
 
   const now = Date.now();
   const scores: Record<string, EvalScoreData> = {};
-  for (const member of members) {
-    const resolvedGmail = resolvedGmailByMemberName.get(member.name);
+  for (let i = 0; i < members.length; i++) {
+    const member = members[i];
+    const resolvedGmail = resolvedGmails[i];
     if (!resolvedGmail) continue;
     const rawList = byGmail.get(resolvedGmail);
     if (!rawList || rawList.length === 0) continue;
@@ -141,7 +145,7 @@ export async function fetchMemberEvalScores(
       CRITERIA_KEYS.map((k) => [k, Math.round(shrinkTowardNeutral(avg(k), rawList.length) * 20)])
     ) as Record<CriteriaKey, number>;
 
-    scores[member.name] = {
+    scores[memberKey(member)] = {
       overall: Math.round(overallAvg * 20),
       leadership: Math.round(leadershipAvg * 20),
       count: rawList.length,

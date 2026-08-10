@@ -27,7 +27,7 @@ interface MBTIResult { code: string; title: string; icon: string; description: s
 export default function AnalyzePage() {
   const router = useRouter();
   const [isAnalyzing, setIsAnalyzing] = useState(true);
-  const [teamMembers, setTeamMembers] = useState<{ name: string; avatarSeed: number; avatarImage?: string | null; score: number; mbtiScore: number | null; evalScore: number | null; role?: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ name: string; gmail: string; avatarSeed: number; avatarImage?: string | null; score: number; mbtiScore: number | null; evalScore: number | null; role?: string }[]>([]);
   const [roomIdState, setRoomIdState] = useState('');
   const [myGroupId, setMyGroupId] = useState<number | null>(null);
   const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
@@ -84,9 +84,9 @@ export default function AnalyzePage() {
       // กับผลการประเมินเพื่อนร่วมทีมในอดีต (ความคิดริเริ่ม/การแก้ไขปัญหา/ความรับผิดชอบ)
       // สมาชิกที่ยังไม่ทำแบบทดสอบและไม่เคยถูกประเมินจะได้คะแนนกลางๆ (50) ไปก่อน
       const withScores = members.map((m: RoomMember) => {
-        const typeScores = memberTypesRef.current[m.name]?.typeScores;
+        const typeScores = memberTypesRef.current[m.gmail]?.typeScores;
         const mbtiScore = typeScores?.length ? leadershipScore(typeScores) : null;
-        const evalEntry = evalScoresRef.current[m.name];
+        const evalEntry = evalScoresRef.current[m.gmail];
         const evalScore = evalEntry?.count ? evalEntry.leadership : null;
         let score: number;
         if (mbtiScore !== null && evalScore !== null) score = Math.round(mbtiScore * 0.7 + evalScore * 0.3);
@@ -95,6 +95,7 @@ export default function AnalyzePage() {
         else score = 50;
         return {
           name: m.name,
+          gmail: m.gmail,
           avatarSeed: m.avatarSeed,
           avatarImage: m.avatarImage,
           role: m.role,
@@ -192,14 +193,14 @@ export default function AnalyzePage() {
                       </div>
                     )}
                     {/* MBTI badge — top-right corner (desktop) */}
-                    {!isBest && memberTypes[member.name] && (
+                    {!isBest && memberTypes[member.gmail] && (
                       <div
-                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.name] })}
+                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.gmail] })}
                         className="absolute top-3 right-3 w-10 h-10 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer hidden sm:flex items-center justify-center"
-                        style={{ backgroundColor: `${typeColor(memberTypes[member.name].code)}26` }}
+                        style={{ backgroundColor: `${typeColor(memberTypes[member.gmail].code)}26` }}
                       >
-                        <span className="text-[8px] font-black" style={{ color: typeColor(memberTypes[member.name].code) }}>
-                          {memberTypes[member.name].code}
+                        <span className="text-[8px] font-black" style={{ color: typeColor(memberTypes[member.gmail].code) }}>
+                          {memberTypes[member.gmail].code}
                         </span>
                       </div>
                     )}
@@ -240,14 +241,14 @@ export default function AnalyzePage() {
                     </div>
 
                     {/* MBTI badge — right side, circular, same size as avatar (mobile only) */}
-                    {!isBest && memberTypes[member.name] && (
+                    {!isBest && memberTypes[member.gmail] && (
                       <div
-                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.name] })}
+                        onClick={() => setMbtiPopup({ name: member.name, type: memberTypes[member.gmail] })}
                         className="w-16 h-16 flex-shrink-0 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex sm:hidden items-center justify-center"
-                        style={{ backgroundColor: `${typeColor(memberTypes[member.name].code)}26` }}
+                        style={{ backgroundColor: `${typeColor(memberTypes[member.gmail].code)}26` }}
                       >
-                        <span className="text-[11px] font-black" style={{ color: typeColor(memberTypes[member.name].code) }}>
-                          {memberTypes[member.name].code}
+                        <span className="text-[11px] font-black" style={{ color: typeColor(memberTypes[member.gmail].code) }}>
+                          {memberTypes[member.gmail].code}
                         </span>
                       </div>
                     )}

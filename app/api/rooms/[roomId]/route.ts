@@ -3,7 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import { Room, User, PeerEvaluation } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
 import { dateTimeStringToUtcDate } from '@/lib/date';
-import { fetchMemberTypes, fetchMemberEvalScores } from '@/lib/room-member-data';
+import { fetchMemberTypes, fetchMemberEvalScores, memberKey } from '@/lib/room-member-data';
 import { axisVector } from '@/lib/mbti';
 import { categoryKeyForCode, categoryAffinities } from '@/lib/type-composition';
 import { computeGroups, type MatchInputMember } from '@/lib/matching';
@@ -147,6 +147,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         return NextResponse.json({ error: 'โหมดการจับคู่ไม่ถูกต้อง' }, { status: 400 });
       }
 
+      if (body.typeComposition !== undefined) {
+        if (typeof body.typeComposition !== 'object' || body.typeComposition === null || Array.isArray(body.typeComposition)) {
+          return NextResponse.json({ error: 'Type composition ไม่ถูกต้อง' }, { status: 400 });
+        }
+        const counts = Object.values(body.typeComposition as Record<string, unknown>);
+        if (!counts.every((v) => typeof v === 'number' && Number.isInteger(v) && v >= 0)) {
+          return NextResponse.json({ error: 'จำนวนคนต่อ type ต้องเป็นจำนวนเต็มไม่ติดลบ' }, { status: 400 });
+        }
+        const sum = (counts as number[]).reduce((s, v) => s + v, 0);
+        if (sum > effectiveSize) {
+          return NextResponse.json({ error: 'ผลรวมจำนวนคนต่อ type ต้องไม่มากกว่าจำนวนคนต่อกลุ่ม' }, { status: 400 });
+        }
+      }
+
       const patch: Record<string, unknown> = {};
       if (body.title !== undefined) patch.title = body.title;
       if (body.description !== undefined) patch.description = body.description;
@@ -182,9 +196,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       ]);
 
       const matchInput: MatchInputMember[] = membersList.map((m) => {
-        const t = typesByName[m.name];
+        const key = memberKey(m);
+        const t = typesByName[key];
         const typeScores = t?.typeScores ?? [];
-        const criteria = evalByName[m.name]?.criteria;
+        const criteria = evalByName[key]?.criteria;
         return {
           gmail: m.gmail,
           name: m.name,
@@ -193,7 +208,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
           axisVector: axisVector(typeScores),
           categoryKey: t?.code ? categoryKeyForCode(template, t.code) : null,
           categoryAffinities: typeScores.length ? categoryAffinities(template, typeScores) : {},
-          evalScore: evalByName[m.name]?.overall ?? 50,
+          evalScore: evalByName[key]?.overall ?? 50,
           skillVector: CRITERIA_KEYS.map((k) => criteria?.[k] ?? 50),
         };
       });

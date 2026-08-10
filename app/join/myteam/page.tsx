@@ -92,7 +92,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
           const types: Record<string, MBTIResult> = typesRes.ok ? (await typesRes.json()).types ?? {} : {};
 
           // fallback: ถ้า currentUser ยังไม่มี type ให้ดู localStorage
-          if (currentUserLocal?.name && !types[currentUserLocal.name]) {
+          if (currentUserLocal?.gmail && !types[currentUserLocal.gmail]) {
             const rawTemplate = (room.template ?? '').toLowerCase();
             const LABEL_TO_ID_LOCAL: Record<string, string> = {
               'programming': 'programming', 'service': 'service',
@@ -105,7 +105,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
               ?? Object.values(localTypes).find((t: unknown) => (t as { icon?: string })?.icon);
             if (localType) {
               const t = localType as { code: string; title: string; icon: string; description?: string; jobs?: string[] };
-              types[currentUserLocal.name] = { code: t.code, title: t.title, icon: t.icon, description: t.description ?? '', jobs: t.jobs ?? [] };
+              types[currentUserLocal.gmail] = { code: t.code, title: t.title, icon: t.icon, description: t.description ?? '', jobs: t.jobs ?? [] };
             }
           }
 
@@ -198,7 +198,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     await fetch(`/api/rooms/${roomIdRef.current}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: optimistic.text, time, avatarSeed: user.avatarSeed, avatarImage: user.avatarImage, groupId: groupIdRef.current ?? 0 }),
+      body: JSON.stringify({ text: optimistic.text, groupId: groupIdRef.current ?? 0 }),
     });
   };
 
@@ -316,7 +316,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     const avatarUrl = resolveAvatar(member);
                     const showRole = member.role && member.role !== 'ไม่ระบุ';
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
-                    const mbtiType = memberTypes[member.name];
+                    const mbtiType = memberTypes[member.gmail];
                     return (
                       <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm">
                         <div className="flex items-center gap-2 sm:gap-4 min-w-0">

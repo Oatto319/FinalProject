@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/mongodb';
 import { Room, PeerEvaluation } from '@/lib/models';
 import { getSessionUser } from '@/lib/auth';
 import { getPendingEvaluations } from '@/lib/evaluation';
+import { isRoomEnded } from '@/lib/room-status';
 import { CRITERIA_KEYS } from '@/lib/peer-evaluation';
 
 const COMMENT_MAX_LEN = 1000;
@@ -44,6 +45,11 @@ export async function POST(req: NextRequest) {
 
   const room = await Room.findOne({ roomId });
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+  // แบบประเมินเปิดหลังห้องจบเท่านั้น (matchDone + endedManually/เลยกำหนดส่ง/เลย 7 วัน) — กันแก้ทีมกลางคันแล้ว
+  // แบบประเมินอ้างอิง groupId ที่ผูกไว้ ณ ตอนส่งไม่ตรงกับทีมจริงหลัง host ปรับทีมทีหลัง
+  if (!isRoomEnded(room)) {
+    return NextResponse.json({ error: 'ห้องนี้ยังไม่จบกิจกรรม ยังไม่สามารถส่งแบบประเมินได้' }, { status: 400 });
+  }
   // ห้องที่ host กดจบกิจกรรมแล้วถือเป็นข้อมูลสุดท้าย ห้ามแก้ไขแบบประเมินย้อนหลังอีก
   // (กัน "แก้แค้นย้อนหลัง" หลังจากทุกคนเห็นผลจับกลุ่ม/คะแนนกันไปหมดแล้ว)
   if (room.endedManually) {

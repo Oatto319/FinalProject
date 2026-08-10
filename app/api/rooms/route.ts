@@ -44,6 +44,9 @@ export async function POST(req: NextRequest) {
   if (!(Number(groupSize) >= 1) || Number(groupSize) > MAX_GROUP_SIZE) {
     return NextResponse.json({ error: `จำนวนคนต่อกลุ่มต้องอยู่ระหว่าง 1-${MAX_GROUP_SIZE} คน` }, { status: 400 });
   }
+  if (Number(groupSize) > Number(totalMembers)) {
+    return NextResponse.json({ error: 'จำนวนคนต่อกลุ่ม ต้องไม่มากกว่าจำนวนคนทั้งหมด' }, { status: 400 });
+  }
   let deadlineDate: Date | null = null;
   if (deadline) {
     if (typeof deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(deadline)) {

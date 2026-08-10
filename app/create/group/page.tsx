@@ -338,7 +338,7 @@ const GroupResultPage = () => {
                 <div className="bg-[#E8E8E8] border-2 border-[#E8E8E8] rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = resolveAvatar(member);
-                    const typeOverride = memberTypeOverrides[member.name];
+                    const typeOverride = memberTypeOverrides[member.gmail];
                     const assignedRole = member.role && member.role !== 'ไม่ระบุ' ? member.role : undefined;
                     const isLeader  = group.leaderId === member.name;
                     const memberComments = member.gmail ? comments[member.gmail] : undefined;

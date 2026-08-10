@@ -69,19 +69,22 @@ function normalizedGroupDiversity(vectors: AxisVector[]): number {
   return groupDiversity(vectors) / (pairCount * MAX_AXIS_PAIR_DISTANCE);
 }
 
+/** ความสมดุลของทักษะ (0..1) จากเวกเตอร์ค่าเฉลี่ยกลุ่มที่คำนวณไว้แล้ว — แยกจาก skillBalance() เพื่อให้ localSearchImprove
+ * อัปเดตค่าเฉลี่ยกลุ่มแบบ incremental (บวก/ลบสมาชิกที่สลับ) แทนการ reduce เวกเตอร์ทั้งกลุ่มใหม่ทุกครั้ง (ดู diversityRawDelta ด้านล่าง) */
+function skillBalanceFromAvg(groupAvgVector: SkillVector, globalAvgVector: SkillVector): number {
+  const dims = globalAvgVector.length;
+  let sumAbsDeviation = 0;
+  for (let d = 0; d < dims; d++) sumAbsDeviation += Math.abs(groupAvgVector[d] - globalAvgVector[d]);
+  const avgDeviation = sumAbsDeviation / dims;
+  return 1 - Math.min(1, avgDeviation / 100);
+}
+
 /** ความสมดุลของทักษะในกลุ่ม (11 เกณฑ์) normalize เป็น 0..1 — 1 คือค่าเฉลี่ยกลุ่มตรงกับค่าเฉลี่ยทั้งห้องทุกเกณฑ์พอดี
  * ใช้เวกเตอร์รายเกณฑ์แทนค่าเฉลี่ยรวมเดียว เพื่อไม่ให้กลุ่มไหนกองคนอ่อนด้านใดด้านหนึ่งไว้ด้วยกัน (เช่น cooperation ต่ำทั้งกลุ่ม)
  * ทั้งที่ค่าเฉลี่ยรวมอาจดูใกล้เคียงกลุ่มอื่น */
 function skillBalance(skillVectors: SkillVector[], globalAvgVector: SkillVector): number {
   if (skillVectors.length === 0) return 1;
-  const dims = globalAvgVector.length;
-  let sumAbsDeviation = 0;
-  for (let d = 0; d < dims; d++) {
-    const groupAvgAtDim = skillVectors.reduce((sum, v) => sum + v[d], 0) / skillVectors.length;
-    sumAbsDeviation += Math.abs(groupAvgAtDim - globalAvgVector[d]);
-  }
-  const avgDeviation = sumAbsDeviation / dims;
-  return 1 - Math.min(1, avgDeviation / 100);
+  return skillBalanceFromAvg(averageSkillVector(skillVectors), globalAvgVector);
 }
 
 /** Objective function หลัก: ผสม MBTI diversity กับ skill balance ตามน้ำหนักด้านบน ใช้ทั้งตอนเลือกกลุ่มให้สมาชิกใหม่
@@ -229,11 +232,32 @@ function assignByComposition(
   }
 }
 
+/** sum of pairDistance(vec, others[k]) for every k except excludeIdx — the O(n) building block
+ * that lets a single-member swap's diversity impact be measured without re-summing all pairs in the group. */
+function sumDistanceToOthers(vec: AxisVector, others: AxisVector[], excludeIdx: number): number {
+  let sum = 0;
+  for (let k = 0; k < others.length; k++) {
+    if (k !== excludeIdx) sum += pairDistance(vec, others[k]);
+  }
+  return sum;
+}
+
 /** Bounded 2-opt local search: swap two members across groups whenever it improves the combined
  * diversity+skill-balance objective. When roleLocked, only swaps within the same role slot so
- * typeComposition category counts never change. */
+ * typeComposition category counts never change.
+ *
+ * Evaluating every candidate swap by rebuilding both groups' vectors and recomputing combinedGroupScore
+ * from scratch is O(n) per candidate for the diversity sum alone (pairwise) times O(n) candidates per
+ * group-pair times O(n) again inside groupDiversity's own double loop — O(n^4) per group-pair per round,
+ * which times out on large rooms (e.g. 300 members / 50 per group). Swapping a single member only changes
+ * the pairs touching that member, so each candidate's delta can be measured in O(n) (diversity) + O(dims)
+ * (skill balance, via the incrementally-updated group average) instead of recomputing the whole O(n^2) sum —
+ * turning the group-pair sweep from O(n^4) into O(n^3) while producing the exact same deltas (up to
+ * floating-point rounding) as the brute-force version above.
+ */
 function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalAvgSkill: SkillVector): void {
   const maxRounds = 50;
+  const dims = globalAvgSkill.length;
 
   for (let round = 0; round < maxRounds; round++) {
     let bestDelta = 0;
@@ -247,20 +271,45 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalA
         const vecsB = groupB.members.map((m) => m.axisVector);
         const skillsA = groupA.members.map((m) => m.skillVector);
         const skillsB = groupB.members.map((m) => m.skillVector);
-        const baseA = combinedGroupScore(vecsA, skillsA, globalAvgSkill);
-        const baseB = combinedGroupScore(vecsB, skillsB, globalAvgSkill);
+        const nA = vecsA.length;
+        const nB = vecsB.length;
+        const pairCountA = (nA * (nA - 1)) / 2;
+        const pairCountB = (nB * (nB - 1)) / 2;
+        const avgSkillA = averageSkillVector(skillsA);
+        const avgSkillB = averageSkillVector(skillsB);
+        const skillBalanceBaseA = skillBalanceFromAvg(avgSkillA, globalAvgSkill);
+        const skillBalanceBaseB = skillBalanceFromAvg(avgSkillB, globalAvgSkill);
 
-        for (let ai = 0; ai < groupA.members.length; ai++) {
-          for (let bi = 0; bi < groupB.members.length; bi++) {
+        // Precomputed once per (ai) / (bi) — reused across every candidate on the other side, since it
+        // only depends on the member being replaced, not on what it's being replaced with.
+        const oldSumA = vecsA.map((v, idx) => (nA > 1 ? sumDistanceToOthers(v, vecsA, idx) : 0));
+        const oldSumB = vecsB.map((v, idx) => (nB > 1 ? sumDistanceToOthers(v, vecsB, idx) : 0));
+
+        for (let ai = 0; ai < nA; ai++) {
+          for (let bi = 0; bi < nB; bi++) {
             if (roleLocked && groupA.roles[ai] !== groupB.roles[bi]) continue;
 
-            const vecsAAfter = vecsA.map((v, idx) => (idx === ai ? vecsB[bi] : v));
-            const vecsBAfter = vecsB.map((v, idx) => (idx === bi ? vecsA[ai] : v));
-            const skillsAAfter = skillsA.map((v, idx) => (idx === ai ? skillsB[bi] : v));
-            const skillsBAfter = skillsB.map((v, idx) => (idx === bi ? skillsA[ai] : v));
+            const diversityRawDeltaA = nA > 1 ? sumDistanceToOthers(vecsB[bi], vecsA, ai) - oldSumA[ai] : 0;
+            const diversityRawDeltaB = nB > 1 ? sumDistanceToOthers(vecsA[ai], vecsB, bi) - oldSumB[bi] : 0;
+            const normalizedDeltaA = pairCountA > 0 ? diversityRawDeltaA / (pairCountA * MAX_AXIS_PAIR_DISTANCE) : 0;
+            const normalizedDeltaB = pairCountB > 0 ? diversityRawDeltaB / (pairCountB * MAX_AXIS_PAIR_DISTANCE) : 0;
+
+            let skillDeltaA = 0;
+            let skillDeltaB = 0;
+            if (nA > 0 && nB > 0) {
+              const newAvgA: number[] = new Array(dims);
+              const newAvgB: number[] = new Array(dims);
+              for (let d = 0; d < dims; d++) {
+                newAvgA[d] = avgSkillA[d] + (skillsB[bi][d] - skillsA[ai][d]) / nA;
+                newAvgB[d] = avgSkillB[d] + (skillsA[ai][d] - skillsB[bi][d]) / nB;
+              }
+              skillDeltaA = skillBalanceFromAvg(newAvgA, globalAvgSkill) - skillBalanceBaseA;
+              skillDeltaB = skillBalanceFromAvg(newAvgB, globalAvgSkill) - skillBalanceBaseB;
+            }
+
             const delta =
-              (combinedGroupScore(vecsAAfter, skillsAAfter, globalAvgSkill) - baseA) +
-              (combinedGroupScore(vecsBAfter, skillsBAfter, globalAvgSkill) - baseB);
+              DIVERSITY_WEIGHT * (normalizedDeltaA + normalizedDeltaB) +
+              SKILL_BALANCE_WEIGHT * (skillDeltaA + skillDeltaB);
 
             if (delta > bestDelta) {
               bestDelta = delta;
