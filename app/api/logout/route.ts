@@ -8,7 +8,7 @@ import { User } from '@/lib/models';
 export async function POST(req: NextRequest) {
   await connectDB();
   const user = await getSessionUser(req);
-  if (user) await User.updateOne({ _id: user._id }, { $set: { sessionToken: null } });
+  if (user) await User.updateOne({ _id: user._id }, { $inc: { tokenVersion: 1 } });
 
   const res = NextResponse.json({ ok: true });
   // ต้องส่ง attributes (โดยเฉพาะ secure) ให้ตรงกับตอนตั้ง cookie ไม่งั้นเบราว์เซอร์จะไม่ลบ cookie ที่เป็น Secure ให้

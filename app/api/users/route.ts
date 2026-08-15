@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/mongodb';
 import { User, Room } from '@/lib/models';
-import { createSessionToken, hashToken, getSessionUser, SESSION_COOKIE } from '@/lib/auth';
+import { getSessionUser, SESSION_COOKIE } from '@/lib/auth';
+import { signSessionJWT } from '@/lib/jwt';
 import { sessionCookieOptions } from '@/lib/session-cookie';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { isValidPassword, PASSWORD_HINT } from '@/lib/validation';
@@ -12,6 +13,7 @@ function safeUser(u: Record<string, unknown>) {
   const obj = { ...u };
   delete obj.password;
   delete obj.sessionToken;
+  delete obj.tokenVersion;
   return obj;
 }
 
@@ -88,8 +90,7 @@ export async function POST(req: NextRequest) {
 
     if (!passwordOk) return NextResponse.json({ user: null });
 
-    const token = createSessionToken();
-    await User.updateOne({ _id: user._id }, { $set: { sessionToken: hashToken(token) } });
+    const token = await signSessionJWT({ sub: user.gmail, tv: user.tokenVersion ?? 0 });
 
     const res = NextResponse.json({ user: safeUser(user.toObject()) });
     setSessionCookie(res, token);
@@ -108,11 +109,11 @@ export async function POST(req: NextRequest) {
   if (existing) return NextResponse.json({ error: 'Gmail นี้ถูกใช้งานแล้ว' }, { status: 409 });
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const token = createSessionToken();
   const user = await User.create({
     name, gender, gmail: gmail.toLowerCase(), password: hashedPassword,
-    avatarSeed: avatarSeed ?? 1, avatarImage: avatarImage ?? null, role: 'user', sessionToken: hashToken(token),
+    avatarSeed: avatarSeed ?? 1, avatarImage: avatarImage ?? null, role: 'user',
   });
+  const token = await signSessionJWT({ sub: user.gmail, tv: user.tokenVersion ?? 0 });
 
   const res = NextResponse.json({ user: safeUser(user.toObject()) }, { status: 201 });
   setSessionCookie(res, token);
