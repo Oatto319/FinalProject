@@ -1,26 +1,26 @@
-import { randomBytes, createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 import { connectDB } from './mongodb';
 import { User } from './models';
 import { SESSION_COOKIE } from './session-cookie';
+import { verifySessionJWT } from './jwt';
 
 export { SESSION_COOKIE };
-
-export function createSessionToken(): string {
-  return randomBytes(32).toString('hex');
-}
-
-function hashToken(token: string): string {
-  return createHash('sha256').update(token).digest('hex');
-}
-
-export { hashToken };
 
 export async function getSessionUser(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   if (!token) return null;
+
+  const payload = await verifySessionJWT(token);
+  if (!payload) return null;
+
   await connectDB();
-  return User.findOne({ sessionToken: hashToken(token) });
+  const user = await User.findOne({ gmail: payload.sub });
+  if (!user) return null;
+
+  // tokenVersion ไม่ตรง = token ถูก revoke ไปแล้ว (logout เพิ่มค่านี้ใน DB)
+  if ((user.tokenVersion ?? 0) !== payload.tv) return null;
+
+  return user;
 }
 
 export function isRoomHost(

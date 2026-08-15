@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Home, Copy, Users, UserMinus, ArrowRightLeft, MessageSquareText } from 'lucide-react';
+import { X, Home, Copy, Users, UserMinus, ArrowRightLeft, MessageSquareText, Flag, CheckCircle2, AlertTriangle } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor, roleColor } from '@/lib/mbti';
@@ -39,6 +39,8 @@ const GroupResultPage = () => {
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
   const [copied, setCopied] = useState(false);
   const [endingActivity, setEndingActivity] = useState(false);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [endActivityResult, setEndActivityResult] = useState<{ type: 'success' } | { type: 'error'; message: string } | null>(null);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [comments, setComments] = useState<Record<string, MemberComments>>({});
   const [openComments, setOpenComments] = useState<string | null>(null);
@@ -178,10 +180,10 @@ const GroupResultPage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleEndActivity = async () => {
+  const confirmEndActivity = async () => {
     const roomId = room?.roomId ?? room?.id;
     if (!roomId || endingActivity) return;
-    if (!confirm('จบกิจกรรมนี้เลยหรือไม่? สมาชิกทุกคนในห้องจะต้องทำแบบประเมินเพื่อนร่วมทีมก่อนสร้าง/เข้าร่วมห้องใหม่')) return;
+    setShowEndConfirm(false);
     setEndingActivity(true);
     try {
       const res = await fetch(`/api/rooms/${roomId}`, {
@@ -192,8 +194,9 @@ const GroupResultPage = () => {
       const data = await res.json();
       if (res.ok) {
         setRoom((prev) => (prev ? { ...prev, endedManually: data.room?.endedManually } : prev));
+        setEndActivityResult({ type: 'success' });
       } else {
-        alert(data.error ?? 'จบกิจกรรมไม่สำเร็จ');
+        setEndActivityResult({ type: 'error', message: data.error ?? 'จบกิจกรรมไม่สำเร็จ' });
       }
     } finally {
       setEndingActivity(false);
@@ -257,7 +260,7 @@ const GroupResultPage = () => {
                   <p className="mt-2 w-full text-center text-xs font-bold text-orange-500">กิจกรรมนี้จบแล้ว</p>
                 ) : (
                   <button
-                    onClick={handleEndActivity}
+                    onClick={() => setShowEndConfirm(true)}
                     disabled={endingActivity}
                     className="mt-2 w-full py-2.5 rounded-xl bg-orange-100 hover:bg-orange-200 text-orange-600 font-bold text-sm transition-all active:scale-95 disabled:opacity-60"
                   >
@@ -501,6 +504,63 @@ const GroupResultPage = () => {
               ))}
             </div>
             <button onClick={() => setMoveTarget(null)} className="mt-4 w-full py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all">ยกเลิก</button>
+          </div>
+        </div>
+      )}
+
+      {showEndConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4" onClick={() => setShowEndConfirm(false)}>
+          <div className="bg-white rounded-[24px] p-6 w-full max-w-sm shadow-2xl flex flex-col items-center text-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center text-orange-500">
+              <Flag size={28} />
+            </div>
+            <p className="text-lg font-black text-gray-800">จบกิจกรรมนี้เลยหรือไม่?</p>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              สมาชิกทุกคนในห้องจะต้องทำแบบประเมินเพื่อนร่วมทีมก่อนสร้างหรือเข้าร่วมห้องใหม่ การกระทำนี้ย้อนกลับไม่ได้
+            </p>
+            <div className="flex gap-3 w-full mt-2">
+              <button
+                onClick={() => setShowEndConfirm(false)}
+                className="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all"
+              >
+                ยกเลิก
+              </button>
+              <button
+                disabled={endingActivity}
+                onClick={confirmEndActivity}
+                className="flex-1 py-3 rounded-2xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all active:scale-95 disabled:opacity-60"
+              >
+                {endingActivity ? 'กำลังบันทึก...' : 'ยืนยันจบกิจกรรม'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {endActivityResult && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4" onClick={() => setEndActivityResult(null)}>
+          <div className="bg-white rounded-[24px] p-6 w-full max-w-sm shadow-2xl flex flex-col items-center text-center gap-3" onClick={(e) => e.stopPropagation()}>
+            <div
+              className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                endActivityResult.type === 'success' ? 'bg-emerald-100 text-emerald-500' : 'bg-red-100 text-red-500'
+              }`}
+            >
+              {endActivityResult.type === 'success' ? <CheckCircle2 size={28} /> : <AlertTriangle size={28} />}
+            </div>
+            <p className="text-lg font-black text-gray-800">
+              {endActivityResult.type === 'success' ? 'จบกิจกรรมเรียบร้อยแล้ว' : 'จบกิจกรรมไม่สำเร็จ'}
+            </p>
+            <p className="text-gray-500 text-sm leading-relaxed">
+              {endActivityResult.type === 'success'
+                ? 'สมาชิกในห้องสามารถเริ่มทำแบบประเมินเพื่อนร่วมทีมได้แล้ว'
+                : endActivityResult.message}
+            </p>
+            <button
+              onClick={() => setEndActivityResult(null)}
+              className="w-full py-3 rounded-2xl bg-[#4B3E7A] hover:bg-[#3d3268] text-white font-bold transition-all active:scale-95 mt-2"
+            >
+              ตกลง
+            </button>
           </div>
         </div>
       )}

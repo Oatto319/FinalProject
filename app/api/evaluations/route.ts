@@ -47,13 +47,9 @@ export async function POST(req: NextRequest) {
   if (!room) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
   // แบบประเมินเปิดหลังห้องจบเท่านั้น (matchDone + endedManually/เลยกำหนดส่ง/เลย 7 วัน) — กันแก้ทีมกลางคันแล้ว
   // แบบประเมินอ้างอิง groupId ที่ผูกไว้ ณ ตอนส่งไม่ตรงกับทีมจริงหลัง host ปรับทีมทีหลัง
+  // (endedManually เป็นหนึ่งในเงื่อนไขที่ทำให้ isRoomEnded เป็นจริง คือตัว "เปิด" ไม่ใช่ตัว "ปิด" การประเมิน)
   if (!isRoomEnded(room)) {
     return NextResponse.json({ error: 'ห้องนี้ยังไม่จบกิจกรรม ยังไม่สามารถส่งแบบประเมินได้' }, { status: 400 });
-  }
-  // ห้องที่ host กดจบกิจกรรมแล้วถือเป็นข้อมูลสุดท้าย ห้ามแก้ไขแบบประเมินย้อนหลังอีก
-  // (กัน "แก้แค้นย้อนหลัง" หลังจากทุกคนเห็นผลจับกลุ่ม/คะแนนกันไปหมดแล้ว)
-  if (room.endedManually) {
-    return NextResponse.json({ error: 'กิจกรรมนี้จบแล้ว ไม่สามารถส่ง/แก้ไขแบบประเมินได้' }, { status: 400 });
   }
 
   const fromGmail = sessionUser.gmail.toLowerCase();

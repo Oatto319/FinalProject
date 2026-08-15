@@ -14,6 +14,7 @@ const UserSchema = new Schema({
   role:       { type: String, default: 'user' },
   types:      { type: Schema.Types.Mixed, default: {} },
   sessionToken: { type: String, default: null, index: true },
+  tokenVersion: { type: Number, default: 0 },
 }, { timestamps: true });
 
 UserSchema.index({ name: 1 });
