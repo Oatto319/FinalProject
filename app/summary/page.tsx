@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronDown, Crown, Users, Layers, ShieldCheck } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Crown, Users, Layers, ShieldCheck, Star } from 'lucide-react';
 import Navbar from '../navbar/page';
 import { typeColor } from '@/lib/mbti';
 import { resolveAvatar } from '@/lib/avatar';

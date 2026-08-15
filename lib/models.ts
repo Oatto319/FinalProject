@@ -72,7 +72,6 @@ const RoomSchema = new Schema({
   leaveRequests:  { type: [LeaveRequestSchema], default: [] },
 }, { timestamps: true });
 
-RoomSchema.index({ roomId: 1 });
 RoomSchema.index({ hostName: 1 });
 RoomSchema.index({ 'members.gmail': 1 });
 RoomSchema.index({ 'members.name': 1 });
