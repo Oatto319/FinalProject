@@ -16,6 +16,7 @@ interface HostTeamSummary {
   avgEvaluation: number | null;
   typeCounts: Record<string, number>;
   members: { name: string; avatarSeed: number; avatarImage: string | null }[];
+  leaderName: string | null;
 }
 interface ProjectSummary {
   roomId: string;
@@ -88,7 +89,7 @@ function EvalScoreBlock({ label, evaluation, align }: { label: string; evaluatio
         <p className={`text-gray-400 ${align === 'end' ? 'text-sm' : 'text-xs'}`}>{label}</p>
         <span className="flex items-center gap-1 text-xl font-black text-gray-800">
           <Star size={18} className="text-amber-400 fill-amber-400" />
-          {(evaluation.overall ?? 0).toFixed(1)}
+          {evaluation.overall !== null ? evaluation.overall.toFixed(1) : '–'}
         </span>
       </div>
       <div className="flex flex-col gap-2">
@@ -261,11 +262,24 @@ export default function SummaryPage() {
 
                           {team.members.length > 0 && (
                             <div className="flex flex-wrap -space-x-2 sm:-space-x-3 lg:-space-x-4 mb-2">
-                              {team.members.map((m) => (
-                                <div key={m.name} title={m.name} className="w-9 h-9 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0">
-                                  <img src={resolveAvatar(m)} alt={m.name} className="w-full h-full object-contain" />
-                                </div>
-                              ))}
+                              {team.members.map((m) => {
+                                const isTeamLeader = team.leaderName === m.name;
+                                return (
+                                  <div
+                                    key={m.name}
+                                    title={isTeamLeader ? `${m.name} (หัวหน้าทีม)` : m.name}
+                                    className="relative w-9 h-9 sm:w-12 sm:h-12 lg:w-16 lg:h-16 rounded-full overflow-hidden border-2 border-white bg-gray-100 flex-shrink-0"
+                                  >
+                                    <img src={resolveAvatar(m)} alt={m.name} className="w-full h-full object-contain" />
+                                    {isTeamLeader && (
+                                      <Crown
+                                        size={13}
+                                        className="absolute -top-1 -right-1 text-amber-500 fill-amber-400 drop-shadow"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
 

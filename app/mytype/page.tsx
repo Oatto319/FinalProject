@@ -95,7 +95,7 @@ const MyTypePage = () => {
           animation: sheetSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
       `}</style>
-      <Navbar />
+      <Navbar showSummaryButton />
 
       {/* Top bar: back button + template tabs */}
       <div className="slide-up-1 w-full px-3 py-4 flex items-center gap-3 max-w-7xl mx-auto">
