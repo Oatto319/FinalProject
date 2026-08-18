@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(xargs grep *)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(cat /tmp/dev.log 2>&1 | tail -n 60)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"summary page: %{http_code}\\\\n\" http://localhost:3000/summary)",
+      "Bash(curl -s -w \"\\\\napi/summary: %{http_code}\\\\n\" http://localhost:3000/api/summary)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(ls \"C:\\\\Users\\\\wimol\\\\.claude\\\\projects\\\\d--myapp-FinalProject\\\\memory\\\\\" 2>/dev/null)",
+      "Read(//c/Users/wimol/.claude/projects/d--myapp-FinalProject/memory\" 2>/dev/**)",
+      "Bash(ls 'C:\\\\Users\\\\wimol\\\\.claude\\\\projects\\\\d--myapp-FinalProject\\\\memory\\\\' 2>&1)",
+      "Read(//c/Users/wimol/.claude/projects/d--myapp-FinalProject/memory/**)",
+      "Bash(ls -la \"/c/Users/wimol/.claude/projects/d--myapp-FinalProject/memory/\" 2>&1)",
+      "Read(//c/Users/wimol/.claude/projects/d--myapp-FinalProject/memory//**)"
     ]
   }
 }

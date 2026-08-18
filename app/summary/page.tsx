@@ -19,7 +19,9 @@ interface HostTeamSummary {
   avgEvaluation: number | null;
   typeCounts: Record<string, number>;
   members: { name: string; avatarSeed: number; avatarImage: string | null }[];
+  leaderName: string | null;
 }
+interface EvalCompletion { done: number; total: number; rate: number | null; }
 interface ProjectSummary {
   roomId: string;
   title: string;
@@ -33,8 +35,20 @@ interface ProjectSummary {
   teamCount: number | null;
   memberCount: number | null;
   evaluation: { count: number; overall: number | null; byCriteria: CriteriaScore[] };
+  evalCompletion?: EvalCompletion | null;
   teams: HostTeamSummary[] | null;
   typeComposition?: Record<string, number> | null;
+}
+// ภาพรวมข้ามทุกห้องที่ผู้ใช้เคยสร้าง (ไม่ว่าจะจับกลุ่มแล้วหรือยัง) — คนละก้อนกับ ScoreMeter ที่เป็นคะแนนที่ตัวเอง "ได้รับ" ตอนเป็นสมาชิกทีม
+interface HostOverview {
+  totalRooms: number;
+  ended: number;
+  active: number;
+  notMatched: number;
+  totalStudents: number;
+  totalTeams: number;
+  avgEvaluation: number | null;
+  evalRate: number | null;
 }
 
 const TEMPLATE_LABELS: Record<string, string> = {
@@ -112,6 +126,70 @@ function ScoreMeter({
         <div className="bg-gray-50 rounded-2xl py-2.5">
           <p className="text-lg font-black text-amber-600">{stats.inProgress}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">กำลังทำ</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ภาพรวมของ "ห้องที่คุณสร้าง" ทั้งหมด — คนละก้อนกับ ScoreMeter ด้านบนที่เป็นคะแนนที่ตัวเอง "ได้รับ" ตอนเป็นสมาชิกทีม
+// แสดงเฉพาะเมื่อผู้ใช้เคยสร้างห้องอย่างน้อย 1 ห้อง (ไม่ว่า account role จะเป็น host หรือ user ก็ตาม —
+// การเป็น "เจ้าของห้อง" ในระบบนี้ผูกกับ hostGmail ไม่ใช่ account role)
+function HostOverviewCard({ overview }: { overview: HostOverview }) {
+  const evalGood = overview.evalRate !== null && overview.evalRate >= 70;
+
+  return (
+    <div className="bg-white rounded-3xl p-5 shadow-sm flex flex-col gap-4">
+      <div>
+        <p className="text-sm font-black text-gray-800">ภาพรวมห้องที่คุณสร้าง</p>
+        <p className="text-xs text-gray-400 mt-0.5">รวมทุกห้องที่เคยเป็นเจ้าของกิจกรรม</p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-gray-50 rounded-2xl py-2.5">
+          <p className="text-lg font-black text-[#4B3E7A]">{overview.totalRooms}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">ห้องทั้งหมด</p>
+        </div>
+        <div className="bg-gray-50 rounded-2xl py-2.5">
+          <p className="text-lg font-black text-emerald-600">{overview.ended}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">จบแล้ว</p>
+        </div>
+        <div className="bg-gray-50 rounded-2xl py-2.5">
+          <p className="text-lg font-black text-amber-600">{overview.active}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">กำลังดำเนินการ</p>
+        </div>
+        <div className="bg-gray-50 rounded-2xl py-2.5">
+          <p className="text-lg font-black text-gray-400">{overview.notMatched}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">ยังไม่ match</p>
+        </div>
+        <div className="bg-gray-50 rounded-2xl py-2.5">
+          <p className="text-lg font-black text-[#4B3E7A]">{overview.totalStudents}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">นักเรียนรวม</p>
+        </div>
+        <div className="bg-gray-50 rounded-2xl py-2.5">
+          <p className="text-lg font-black text-[#4B3E7A]">{overview.totalTeams}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">ทีมรวม</p>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-3 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] text-gray-400">คะแนนเฉลี่ยรวมทุกห้อง</p>
+          <p className="text-xl font-black text-gray-800 mt-0.5">
+            {overview.avgEvaluation ?? '–'}<span className="text-xs font-bold text-gray-300"> / 5</span>
+          </p>
+        </div>
+        <div className="flex-1 max-w-[140px]">
+          <p className="text-[11px] text-gray-400 text-right">อัตราการทำแบบประเมิน</p>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1.5">
+            <div
+              className={`h-full rounded-full ${evalGood ? 'bg-emerald-400' : 'bg-amber-400'}`}
+              style={{ width: `${overview.evalRate ?? 0}%` }}
+            />
+          </div>
+          <p className="text-[11px] text-gray-500 text-right mt-1 font-bold">
+            {overview.evalRate !== null ? `${overview.evalRate}%` : 'ยังไม่มีข้อมูล'}
+          </p>
         </div>
       </div>
     </div>
@@ -211,6 +289,15 @@ function RoomCard({ p }: { p: ProjectSummary }) {
             </p>
           </div>
         )}
+        {/* อัตราการทำแบบประเมิน — บอกว่าคะแนนด้านบนอ้างอิงจากข้อมูลครบแค่ไหน ก่อนเชื่อคะแนนเฉลี่ยไปเต็มร้อย */}
+        {p.isHostView && p.evalCompletion && p.evalCompletion.total > 0 && (
+          <div className="flex items-center justify-between mt-2.5">
+            <span className="text-[11px] text-gray-400">อัตราการทำแบบประเมิน</span>
+            <span className="text-[11px] font-bold text-gray-500">
+              {p.evalCompletion.done}/{p.evalCompletion.total} คู่ ({p.evalCompletion.rate}%)
+            </span>
+          </div>
+        )}
       </div>
 
       {hasExpandableContent && (
@@ -246,6 +333,27 @@ function RoomCard({ p }: { p: ProjectSummary }) {
                         <span className="text-[11px] text-gray-400 flex-shrink-0">
                           {team.avgEvaluation !== null ? `เฉลี่ย ${team.avgEvaluation}/5` : 'ยังไม่มีประเมิน'}
                         </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {team.members.map((member) => {
+                          const isLeader = team.leaderName === member.name;
+                          return (
+                            <span
+                              key={member.name}
+                              className={`flex items-center gap-1.5 text-[11px] font-bold pl-1 pr-2.5 py-1 rounded-full ${
+                                isLeader ? 'bg-amber-50 text-amber-700' : 'bg-white text-gray-600'
+                              }`}
+                            >
+                              <img
+                                src={resolveAvatar(member)}
+                                alt=""
+                                className="w-4 h-4 rounded-full object-contain bg-orange-50 flex-shrink-0"
+                              />
+                              {member.name}
+                              {isLeader && <Crown size={11} className="flex-shrink-0" />}
+                            </span>
+                          );
+                        })}
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(team.typeCounts).map(([key, count]) => {
@@ -305,6 +413,7 @@ export default function SummaryPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [overall, setOverall] = useState<OverallScore | null>(null);
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
+  const [hostOverview, setHostOverview] = useState<HostOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -326,6 +435,7 @@ export default function SummaryPage() {
         setProfile(data?.profile ?? null);
         setOverall(data?.overall ?? null);
         setProjects(data?.projects ?? []);
+        setHostOverview(data?.hostOverview ?? null);
       })
       .catch(() => {
         if (!cancelled) setError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง');
@@ -379,6 +489,8 @@ export default function SummaryPage() {
                   stats={{ total: projects.length, ended: endedCount, inProgress: inProgressCount }}
                 />
               )}
+
+              {hostOverview && <HostOverviewCard overview={hostOverview} />}
             </div>
 
             {/* คอลัมน์ขวา (PC) / ต่อจากด้านบน (มือถือ): รายห้อง */}

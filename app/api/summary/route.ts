@@ -49,8 +49,18 @@ interface RoomLite {
   typeComposition?: Record<string, number>;
   deadline?: Date | null; matchedAt?: Date | null; endedManually?: boolean; updatedAt: Date;
 }
+interface HostRoomLite {
+  roomId: string; matchDone: boolean; endedManually?: boolean;
+  deadline?: Date | null; matchedAt?: Date | null; updatedAt: Date;
+  members?: unknown[]; matchedGroups?: MatchedGroupLite[];
+}
 
 interface CriteriaScoreResult { key: CriteriaKey; label: string; score: number | null; }
+
+// จำนวนคู่ "ประเมิน" ที่ควรเกิดขึ้นในกลุ่ม — สมาชิกทุกคนประเมินเพื่อนร่วมทีมทุกคน (ไม่รวมตัวเอง)
+function expectedEvalPairs(size: number): number {
+  return size * (size - 1);
+}
 
 // สรุปผลระดับทีมสำหรับมุมมอง host เท่านั้น — เป็น aggregate (ค่าเฉลี่ย/จำนวนนับ) ไม่มีข้อมูลรายคน
 // เพื่อไม่ให้ขัดกับ anonymity ที่ trimOutliers ตั้งใจสร้างไว้ตอนประมวลผลคะแนนประเมิน
@@ -61,6 +71,21 @@ interface HostTeamSummary {
   avgEvaluation: number | null;
   typeCounts: Record<string, number>;
   members: { name: string; avatarSeed: number; avatarImage: string | null }[];
+  leaderName: string | null;
+}
+
+interface EvalCompletion { done: number; total: number; rate: number | null; }
+
+// ภาพรวมข้ามทุกห้องที่ผู้ใช้เคยสร้าง (ไม่ว่าจะจับกลุ่มแล้วหรือยัง) — คนละชุดกับ "overall" ของสมาชิกทีมด้านบน
+interface HostOverview {
+  totalRooms: number;
+  ended: number;
+  active: number;
+  notMatched: number;
+  totalStudents: number;
+  totalTeams: number;
+  avgEvaluation: number | null;
+  evalRate: number | null;
 }
 
 // เฉลี่ยเฉพาะค่าที่เป็นตัวเลขจริง — แบบประเมินรุ่นเก่าอาจไม่มีครบทุกเกณฑ์ ถ้าเผลอเอา undefined ไปบวกจะได้ NaN
@@ -106,6 +131,45 @@ export async function GET(req: NextRequest) {
       role: sessionUser.role,
     };
 
+    // ภาพรวมของ "ห้องที่ตัวเองสร้าง" ทั้งหมด รวมห้องที่ยังไม่ได้ match ด้วย — คนละ scope กับ query ด้านล่าง
+    // ที่จำกัดแค่ห้องที่จับกลุ่มแล้ว จึงต้องแยก query เพื่อไม่ให้ห้องที่ยังรอ match หายไปจากภาพรวม
+    const allHostRooms = await Room.find({ hostGmail: gmail })
+      .select('roomId matchDone endedManually deadline matchedAt updatedAt members matchedGroups')
+      .lean<HostRoomLite[]>();
+
+    let hostOverview: HostOverview | null = null;
+    if (allHostRooms.length > 0) {
+      let ended = 0, active = 0, notMatched = 0, totalStudents = 0, totalTeams = 0, expectedEvals = 0;
+      const matchedRoomIds: string[] = [];
+      for (const r of allHostRooms) {
+        totalStudents += (r.members ?? []).length;
+        if (!r.matchDone) { notMatched++; continue; }
+        matchedRoomIds.push(r.roomId);
+        const groups = r.matchedGroups ?? [];
+        totalTeams += groups.length;
+        for (const g of groups) expectedEvals += expectedEvalPairs((g.members ?? []).length);
+        if (isRoomEnded(r)) ended++; else active++;
+      }
+
+      const overviewEvals = matchedRoomIds.length
+        ? await PeerEvaluation.find(
+            { roomId: { $in: matchedRoomIds } },
+            { scores: 1, _id: 0 }
+          ).lean<{ scores: Record<CriteriaKey, number> }[]>()
+        : [];
+
+      hostOverview = {
+        totalRooms: allHostRooms.length,
+        ended,
+        active,
+        notMatched,
+        totalStudents,
+        totalTeams,
+        avgEvaluation: summarizeScores(overviewEvals.map((e) => e.scores)).overall,
+        evalRate: expectedEvals > 0 ? Math.round((overviewEvals.length / expectedEvals) * 100) : null,
+      };
+    }
+
     const rooms = await Room.find({
       matchDone: true,
       $or: [{ 'matchedGroups.members.gmail': gmail }, { hostGmail: gmail }],
@@ -114,7 +178,7 @@ export async function GET(req: NextRequest) {
       .sort({ updatedAt: -1 })
       .lean<RoomLite[]>();
 
-    if (rooms.length === 0) return NextResponse.json({ profile, overall: summarizeScores([]), projects: [] });
+    if (rooms.length === 0) return NextResponse.json({ profile, overall: summarizeScores([]), projects: [], hostOverview });
 
     const isMember = (room: RoomLite) =>
       (room.matchedGroups ?? []).some((g) => (g.members ?? []).some((m) => m.gmail === gmail));
@@ -222,8 +286,19 @@ export async function GET(req: NextRequest) {
             avatarSeed: m.avatarSeed ?? 1,
             avatarImage: m.avatarImage ?? null,
           })),
+          leaderName: g.leaderId ?? null,
         };
       });
+
+      // อัตราการทำแบบประเมินของห้อง: จำนวนแบบประเมินที่ส่งจริง เทียบกับจำนวนคู่ที่ "ควร" เกิดขึ้น
+      // (ทุกคนในทีมประเมินเพื่อนร่วมทีมทุกคน ไม่รวมตัวเอง)
+      const roomExpectedEvals = groups.reduce((sum, g) => sum + expectedEvalPairs((g.members ?? []).length), 0);
+      const roomDoneEvals = (hostEvalsByRoom.get(room.roomId) ?? []).length;
+      const evalCompletion: EvalCompletion = {
+        done: roomDoneEvals,
+        total: roomExpectedEvals,
+        rate: roomExpectedEvals > 0 ? Math.round((roomDoneEvals / roomExpectedEvals) * 100) : null,
+      };
 
       return {
         roomId: room.roomId,
@@ -238,6 +313,7 @@ export async function GET(req: NextRequest) {
         teamCount: groups.length,
         memberCount: groups.reduce((sum, g) => sum + (g.members ?? []).length, 0),
         evaluation: summarizeScores(hostEvalsByRoom.get(room.roomId) ?? []),
+        evalCompletion,
         teams,
         typeComposition: Object.keys(targetComposition).length ? targetComposition : null,
       };
@@ -251,7 +327,7 @@ export async function GET(req: NextRequest) {
         (order.get(a.roomId) ?? 0) - (order.get(b.roomId) ?? 0)
     );
 
-    return NextResponse.json({ profile, overall, projects });
+    return NextResponse.json({ profile, overall, projects, hostOverview });
   } catch (err) {
     console.error('GET /api/summary failed:', err);
     return NextResponse.json({ projects: [], error: 'โหลดสรุปผลไม่สำเร็จ' }, { status: 500 });
