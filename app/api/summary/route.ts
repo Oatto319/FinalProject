@@ -193,6 +193,21 @@ export async function GET(req: NextRequest) {
         ).lean<{ roomId: string; scores: Record<CriteriaKey, number> }[]>()
       : [];
 
+    // คะแนนประเมินของ "ทีมตัวเอง" แบบ aggregate (ไม่ใช่คะแนนที่ตัวเองได้รับอย่างเดียว) — ใช้โชว์ในกล่องทีมสไตล์เดียวกับที่ host เห็น
+    const memberTeamEvals = memberRooms.length
+      ? await PeerEvaluation.find(
+          { roomId: { $in: memberRooms.map((r) => r.roomId) } },
+          { roomId: 1, groupId: 1, scores: 1, _id: 0 }
+        ).lean<{ roomId: string; groupId: number; scores: Record<CriteriaKey, number> }[]>()
+      : [];
+    const memberTeamEvalsByRoomAndGroup = new Map<string, Record<CriteriaKey, number>[]>();
+    for (const e of memberTeamEvals) {
+      const key = `${e.roomId}:${e.groupId}`;
+      const bucket = memberTeamEvalsByRoomAndGroup.get(key) ?? [];
+      bucket.push(e.scores);
+      memberTeamEvalsByRoomAndGroup.set(key, bucket);
+    }
+
     // ห้องที่เป็นแค่เจ้าของกิจกรรม: ไม่มีผลประเมิน "ส่วนตัว" ของ host ให้ดู จึงรวมคะแนนของ "ทุกคน" ในห้องเป็นภาพรวมแทน
     // ดึง groupId มาด้วยเพื่อสรุปผลแยกรายทีมได้ (ยังคงเป็นค่าเฉลี่ยของทีม ไม่ใช่รายคน — ไม่ขัดกับ anonymity ของ trimOutliers)
     const hostEvals = hostOnlyRooms.length
@@ -226,9 +241,10 @@ export async function GET(req: NextRequest) {
       hostEvalsByRoomAndGroup.set(key, bucket);
     }
 
-    // MBTI type ของสมาชิกทุกคนในห้องที่ host คุม — ใช้สรุปความหลากหลายรายทีม (aggregate เท่านั้น ไม่โชว์รายคน)
+    // MBTI type ของสมาชิกทุกคนในห้อง — ใช้สรุปความหลากหลายรายทีมทั้งมุมมอง host (ทุกทีม) และมุมมองสมาชิก (แค่ทีมตัวเอง)
+    // ครอบคลุมทุกห้องที่ match แล้ว (ไม่ใช่แค่ hostOnlyRooms) เพราะตอนนี้กล่องทีมของสมาชิกก็ต้องใช้ typeCounts เหมือนกัน
     const memberTypesByRoom = new Map<string, Record<string, { code?: string }>>();
-    for (const room of hostOnlyRooms) {
+    for (const room of rooms) {
       const allMembers = (room.matchedGroups ?? []).flatMap((g) => g.members ?? []);
       if (allMembers.length === 0) continue;
       memberTypesByRoom.set(room.roomId, await fetchMemberTypes(room.template ?? 'programming', allMembers));
@@ -243,6 +259,33 @@ export async function GET(req: NextRequest) {
       const tableKey = resolveTableKey(room.template ?? 'programming');
       const code = types[tableKey]?.code ?? null;
       const info = code ? TYPE_TABLES[tableKey][code] : null;
+      const targetComposition = room.typeComposition ?? {};
+
+      // กล่องทีมสไตล์เดียวกับที่ host เห็น แต่มีแค่ทีมตัวเอง 1 กล่อง — ให้ UX ตรงกัน ต่างแค่จำนวนทีมที่โชว์
+      let ownTeam: HostTeamSummary | null = null;
+      if (group) {
+        const typesByName = memberTypesByRoom.get(room.roomId) ?? {};
+        const typeCounts: Record<string, number> = {};
+        for (const member of group.members ?? []) {
+          const memberCode = typesByName[memberKey(member)]?.code;
+          const categoryKey = memberCode ? categoryKeyForCode(tableKey, memberCode) : null;
+          const key = categoryKey ?? 'ไม่ระบุ';
+          typeCounts[key] = (typeCounts[key] ?? 0) + 1;
+        }
+        ownTeam = {
+          id: group.id,
+          name: group.name,
+          memberCount: (group.members ?? []).length,
+          avgEvaluation: summarizeScores(memberTeamEvalsByRoomAndGroup.get(`${room.roomId}:${group.id}`) ?? []).overall,
+          typeCounts,
+          members: (group.members ?? []).map((m) => ({
+            name: m.name,
+            avatarSeed: m.avatarSeed ?? 1,
+            avatarImage: m.avatarImage ?? null,
+          })),
+          leaderName: group.leaderId ?? null,
+        };
+      }
 
       return {
         roomId: room.roomId,
@@ -254,10 +297,11 @@ export async function GET(req: NextRequest) {
         mbti: code ? { code, title: info?.title ?? '', jobs: info?.jobs ?? [] } : null,
         isLeader: !!group && group.leaderId === sessionUser.name,
         isHostView: false,
-        teamCount: null as number | null,
-        memberCount: null as number | null,
+        teamCount: ownTeam ? 1 : null,
+        memberCount: ownTeam?.memberCount ?? null,
         evaluation: summarizeScores(memberEvalsByRoom.get(room.roomId) ?? []),
-        teams: null as HostTeamSummary[] | null,
+        teams: ownTeam ? [ownTeam] : null,
+        typeComposition: Object.keys(targetComposition).length ? targetComposition : null,
       };
     });
 

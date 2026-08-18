@@ -8,6 +8,7 @@ import { typeColor } from '@/lib/mbti';
 import { resolveAvatar } from '@/lib/avatar';
 
 interface CriteriaScore { key: string; label: string; score: number | null; }
+interface OverallScore { count: number; overall: number | null; byCriteria: CriteriaScore[]; }
 interface HostTeamSummary {
   id: number;
   name: string;
@@ -40,39 +41,6 @@ const TEMPLATE_LABELS: Record<string, string> = {
   design: 'Design',
 };
 
-// การ์ดแนวโน้มคะแนนประเมินข้ามโปรเจกต์ (เรียงตามเวลาจริง ไม่ใช่ลำดับที่แสดงในลิสต์ด้านล่างซึ่งเอาห้องที่จบแล้วขึ้นก่อน)
-function EvalTrendCard({ points }: { points: { title: string; overall: number }[] }) {
-  if (points.length < 2) return null;
-  const w = 100;
-  const h = 32;
-  const stepX = w / (points.length - 1);
-  const toY = (v: number) => h - (v / 5) * h;
-  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${i * stepX} ${toY(p.overall)}`).join(' ');
-  const latest = points[points.length - 1].overall;
-  const delta = Math.round((latest - points[points.length - 2].overall) * 10) / 10;
-
-  return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm">
-      <div className="flex items-baseline justify-between mb-3">
-        <p className="text-xs text-gray-400 font-bold">แนวโน้มคะแนนประเมิน ({points.length} โปรเจกต์)</p>
-        <p className={`text-xs font-black ${delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-red-400' : 'text-gray-400'}`}>
-          {delta > 0 ? '▲' : delta < 0 ? '▼' : '='} {Math.abs(delta)} จากโปรเจกต์ก่อนหน้า
-        </p>
-      </div>
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-10" preserveAspectRatio="none">
-        <path d={path} fill="none" stroke="#34D399" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-        {points.map((p, i) => (
-          <circle key={i} cx={i * stepX} cy={toY(p.overall)} r="1.5" fill="#34D399" />
-        ))}
-      </svg>
-      <div className="flex justify-between mt-1">
-        <span className="text-[10px] text-gray-300 truncate max-w-[45%]">{points[0].title}</span>
-        <span className="text-[10px] text-gray-700 font-bold truncate max-w-[45%] text-right">{points[points.length - 1].title} · {latest}/5</span>
-      </div>
-    </div>
-  );
-}
-
 // แถบดาว 5 ดวง — เติมสีตามสัดส่วนคะแนนจริง (เช่น 4.6/5 ดาวดวงที่ 5 จะเติมสีแค่ 60%) ไม่ปัดเป็นเต็ม/ว่างเท่านั้น
 function StarRating({ score, size = 11 }: { score: number; size?: number }) {
   return (
@@ -92,9 +60,59 @@ function StarRating({ score, size = 11 }: { score: number; size?: number }) {
   );
 }
 
+// การ์ดเดี่ยว โชว์คะแนนเฉลี่ยรวมของตัวเอง ข้ามทุกโปรเจกต์ที่เคยเป็นสมาชิกทีม (ไม่รวมห้องที่เป็น host)
+// วางเหนือลิสต์โปรเจกต์ เพื่อให้เห็นภาพรวมตัวเองก่อนไล่ดูรายห้อง
+function OverallScoreCard({ overall }: { overall: OverallScore }) {
+  return (
+    <div className="bg-white rounded-3xl p-5 shadow-sm flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-xs text-gray-400 font-bold">คะแนนเฉลี่ยรวมของคุณ</p>
+        <p className="text-[11px] text-gray-300 mt-0.5">
+          {overall.count > 0 ? `อ้างอิงจากเพื่อนร่วมทีมประเมิน ${overall.count} ครั้ง ทุกโปรเจกต์` : 'ยังไม่มีเพื่อนร่วมทีมประเมินคุณ'}
+        </p>
+      </div>
+      <span className="flex items-center gap-1.5 text-3xl font-black text-gray-800 flex-shrink-0">
+        <Star size={26} className="text-amber-400 fill-amber-400" />
+        {overall.overall !== null ? overall.overall.toFixed(1) : '–'}
+      </span>
+    </div>
+  );
+}
+
+// บล็อกคะแนน+เกณฑ์ย่อยที่ใช้ร่วมกันทั้งฝั่ง host (คะแนนเฉลี่ยของทั้งห้อง) และฝั่งสมาชิกทีม (คะแนนที่ได้รับ)
+// เพื่อให้สอง view นี้มี UX เดียวกันทั้งเลย์เอาต์และตำแหน่งที่แสดง (sidebar บนจอใหญ่ / บล็อกล่างบนมือถือ)
+function EvalScoreBlock({ label, evaluation, align }: { label: string; evaluation: ProjectSummary['evaluation']; align: 'between' | 'end' }) {
+  return (
+    <>
+      <div className={`flex items-center gap-1.5 mb-3 lg:mb-0 ${align === 'end' ? 'justify-end' : 'justify-between'}`}>
+        <p className={`text-gray-400 ${align === 'end' ? 'text-sm' : 'text-xs'}`}>{label}</p>
+        <span className="flex items-center gap-1 text-xl font-black text-gray-800">
+          <Star size={18} className="text-amber-400 fill-amber-400" />
+          {(evaluation.overall ?? 0).toFixed(1)}
+        </span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {evaluation.byCriteria
+          .filter((c) => c.score !== null)
+          .slice(0, 4)
+          .map((c) => (
+            <div key={c.key} className="flex items-center justify-between gap-2 text-xs text-gray-400">
+              <span>{c.label}</span>
+              <div className="flex items-center gap-1">
+                <StarRating score={c.score ?? 0} size={13} />
+                <span className="text-gray-500 font-bold">{(c.score ?? 0).toFixed(1)}</span>
+              </div>
+            </div>
+          ))}
+      </div>
+    </>
+  );
+}
+
 export default function SummaryPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
+  const [overall, setOverall] = useState<OverallScore | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cardVisible, setCardVisible] = useState(false);
 
@@ -125,6 +143,7 @@ export default function SummaryPage() {
           return;
         }
         setProjects(data?.projects ?? []);
+        setOverall(data?.overall ?? null);
       })
       .catch(() => {
         if (!cancelled) setError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ลองใหม่อีกครั้ง');
@@ -171,14 +190,7 @@ export default function SummaryPage() {
           </div>
         )}
 
-        {projects && (
-          <EvalTrendCard
-            points={projects
-              .filter((p) => !p.isHostView && p.evaluation.overall !== null && p.matchedAt !== null)
-              .sort((a, b) => new Date(a.matchedAt as string).getTime() - new Date(b.matchedAt as string).getTime())
-              .map((p) => ({ title: p.title, overall: p.evaluation.overall as number }))}
-          />
-        )}
+        {overall && <OverallScoreCard overall={overall} />}
 
         {projects?.map((p) => (
           <div key={p.roomId} className="bg-white rounded-3xl p-5 shadow-sm">
@@ -221,20 +233,22 @@ export default function SummaryPage() {
               )}
             </div>
 
-            {p.isHostView ? (
-              <div className="lg:flex lg:items-center lg:gap-3">
-                <div className="flex-1 min-w-0 lg:max-w-[calc(100%-14.25rem)]">
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
-                      <Layers size={12} /> {p.teamCount ?? 0} ทีม
-                    </span>
-                    <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
-                      <Users size={12} /> {p.memberCount ?? 0} คน
-                    </span>
-                  </div>
+            {/* เลย์เอาต์เดียวกันทั้ง host และสมาชิกทีม: เนื้อหาหลัก + sidebar คะแนนบนจอใหญ่ (w-44)
+                ทั้งสอง view ใช้กล่องทีมชุดเดียวกัน (p.teams) ต่างกันแค่จำนวนกล่อง — host เห็นทุกทีมในห้อง สมาชิกเห็นแค่ทีมตัวเอง */}
+            <div className="lg:flex lg:items-center lg:gap-3">
+              <div className="flex-1 min-w-0 lg:max-w-[calc(100%-14.25rem)]">
+                {p.teams && p.teams.length > 0 && (
+                  <>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                        <Layers size={12} /> {p.teamCount ?? p.teams.length} ทีม
+                      </span>
+                      <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
+                        <Users size={12} /> {p.memberCount ?? 0} คน
+                      </span>
+                    </div>
 
-                  {/* สรุปรายทีม — เฉพาะค่าเฉลี่ย/จำนวนนับ ไม่มีคะแนนรายคน เพื่อไม่ให้ขัดกับความไม่เปิดเผยตัวตนของแบบประเมิน */}
-                  {p.teams && p.teams.length > 0 && (
+                    {/* สรุปรายทีม — เฉพาะค่าเฉลี่ย/จำนวนนับ ไม่มีคะแนนรายคน เพื่อไม่ให้ขัดกับความไม่เปิดเผยตัวตนของแบบประเมิน */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
                       {p.teams.map((team) => (
                         <div key={team.id} className="bg-gray-50 rounded-2xl p-4 h-[220px] overflow-hidden flex flex-col justify-between">
@@ -268,44 +282,20 @@ export default function SummaryPage() {
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
-
-                {p.evaluation.count > 0 && (
-                  <div className="hidden lg:flex flex-col gap-2 w-44 flex-shrink-0 mr-10">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <span className="text-sm text-gray-400">คะแนนประเมินเฉลี่ยของทั้งห้อง</span>
-                      <span className="flex items-center gap-1 text-xl font-black text-gray-800">
-                        <Star size={18} className="text-amber-400 fill-amber-400" />
-                        {(p.evaluation.overall ?? 0).toFixed(1)}
-                      </span>
-                    </div>
-                    {p.evaluation.byCriteria
-                      .filter((c) => c.score !== null)
-                      .slice(0, 4)
-                      .map((c) => (
-                        <div key={c.key} className="flex items-center justify-between gap-2 text-xs text-gray-400">
-                          <span>{c.label}</span>
-                          <div className="flex items-center gap-1">
-                            <StarRating score={c.score ?? 0} size={13} />
-                            <span className="text-gray-500 font-bold">{(c.score ?? 0).toFixed(1)}</span>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
+                  </>
                 )}
               </div>
-            ) : (
-              p.mbti && p.mbti.jobs.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {p.mbti.jobs.slice(0, 4).map((job) => (
-                    <span key={job} className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#4B3E7A]/8 text-[#4B3E7A]">
-                      {job}
-                    </span>
-                  ))}
+
+              {p.evaluation.count > 0 && (
+                <div className="hidden lg:flex flex-col gap-2 w-44 flex-shrink-0 mr-10">
+                  <EvalScoreBlock
+                    label={p.isHostView ? 'คะแนนประเมินเฉลี่ยของทั้งห้อง' : 'คะแนนประเมินจากเพื่อนร่วมทีม'}
+                    evaluation={p.evaluation}
+                    align="end"
+                  />
                 </div>
-              )
-            )}
+              )}
+            </div>
 
             <div className="border-t border-gray-100 pt-4">
               {p.evaluation.count === 0 ? (
@@ -318,31 +308,13 @@ export default function SummaryPage() {
                       : 'เพื่อนร่วมทีมยังไม่ได้ประเมินคุณ'}
                 </p>
               ) : (
-                <>
-                  <div className={`flex items-center justify-between mb-3 ${p.isHostView ? 'lg:hidden' : ''}`}>
-                    <p className="text-xs text-gray-400">
-                      {p.isHostView ? 'คะแนนประเมินเฉลี่ยของทั้งห้อง' : 'คะแนนประเมินจากเพื่อนร่วมทีม'}
-                    </p>
-                    <span className="flex items-center gap-1 text-xl font-black text-gray-800">
-                      <Star size={18} className="text-amber-400 fill-amber-400" />
-                      {(p.evaluation.overall ?? 0).toFixed(1)}
-                    </span>
-                  </div>
-                  <div className={`flex flex-col gap-2 ${p.isHostView ? 'lg:hidden' : ''}`}>
-                    {p.evaluation.byCriteria
-                      .filter((c) => c.score !== null)
-                      .slice(0, 4)
-                      .map((c) => (
-                        <div key={c.key} className="flex items-center justify-between gap-2 text-xs text-gray-400">
-                          <span>{c.label}</span>
-                          <div className="flex items-center gap-1">
-                            <StarRating score={c.score ?? 0} size={13} />
-                            <span className="text-gray-500 font-bold">{(c.score ?? 0).toFixed(1)}</span>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </>
+                <div className="lg:hidden">
+                  <EvalScoreBlock
+                    label={p.isHostView ? 'คะแนนประเมินเฉลี่ยของทั้งห้อง' : 'คะแนนประเมินจากเพื่อนร่วมทีม'}
+                    evaluation={p.evaluation}
+                    align="between"
+                  />
+                </div>
               )}
             </div>
           </div>
