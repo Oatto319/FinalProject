@@ -24,12 +24,18 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'login', gmail: gmail.trim(), password }),
       });
-      const data = await res.json();
-      if (!data.user) { setError('Gmail หรือรหัสผ่านไม่ถูกต้อง'); return; }
+      const data = await res.json().catch(() => null);
+      // แยกกรณี server ปฏิเสธ request (rate limit / error) ออกจากกรณี "gmail หรือรหัสผ่านผิดจริง"
+      // เดิมสองกรณีนี้ขึ้นข้อความเดียวกันหมด ทำให้เข้าใจผิดว่ารหัสผ่านผิดทั้งที่จริงๆ โดน rate limit
+      if (!res.ok) {
+        setError(data?.error ?? `เข้าสู่ระบบไม่สำเร็จ (${res.status}) กรุณาลองใหม่`);
+        return;
+      }
+      if (!data?.user) { setError('Gmail หรือรหัสผ่านไม่ถูกต้อง'); return; }
       localStorage.setItem('currentUser', JSON.stringify(data.user));
       router.push('/');
     } catch {
-      setError('เกิดข้อผิดพลาด กรุณาลองใหม่');
+      setError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่');
     } finally {
       setLoading(false);
     }
