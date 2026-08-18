@@ -31,9 +31,10 @@ interface NavbarProps {
   subtitle?: string;
   bgColor?: string;
   nameColor?: string;
+  showSummaryButton?: boolean;
 }
 
-export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
+export default function Navbar({ subtitle, bgColor, nameColor, showSummaryButton }: NavbarProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [notifications, setNotifications] = useState<ApiNotification[]>([]);
@@ -140,6 +141,19 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
           </div>
         </button>
 
+        {/* Right side: Summary button + Notification button */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Summary button */}
+          {showSummaryButton && (
+            <button
+              onClick={() => router.push('/summary')}
+              title="สรุปผล"
+              className="flex-shrink-0 mr-2 bg-[#4B3E7A] w-14 h-10 sm:w-16 sm:h-12 rounded-lg flex items-center justify-center shadow-[0_3px_0_0_#332950] hover:shadow-[0_1px_0_0_#332950] hover:translate-y-[2px] active:shadow-none active:translate-y-[3px] transition-all"
+            >
+              <img src="/img/analyze.PNG" alt="สรุปผล" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
+            </button>
+          )}
+
         {/* Notification button + dropdown */}
         <div className="relative flex-shrink-0" ref={wrapperRef}>
           <button
@@ -242,6 +256,7 @@ export default function Navbar({ subtitle, bgColor, nameColor }: NavbarProps) {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </header>
