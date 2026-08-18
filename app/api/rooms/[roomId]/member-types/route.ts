@@ -1,16 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { Room, User } from '@/lib/models';
+import { Room } from '@/lib/models';
 import { getSessionUser, isRoomHost, isRoomMember } from '@/lib/auth';
-
-const LABEL_TO_ID: Record<string, string> = {
-  'programming': 'programming',
-  'service': 'service',
-  'customer / service': 'service',
-  'presentation': 'presentation',
-  'design': 'design',
-  'design / creative': 'design',
-};
+import { fetchMemberTypes } from '@/lib/room-member-data';
 
 // GET /api/rooms/:roomId/member-types?groupId=1    → types เฉพาะกลุ่มนั้น
 // GET /api/rooms/:roomId/member-types              → types ทุกคนในห้อง (post-match)
@@ -36,9 +28,6 @@ export async function GET(
     return NextResponse.json({ types: {} }, { status: 403 });
   }
 
-  const rawTemplate = (room.template ?? 'programming').toLowerCase();
-  const templateKey = LABEL_TO_ID[rawTemplate] ?? rawTemplate;
-
   let allMembers: { name: string; gmail?: string; role?: string }[];
 
   if (source === 'members') {
@@ -54,39 +43,7 @@ export async function GET(
     allMembers = allGroups.flatMap((g) => g.members);
   }
 
-  const types: Record<string, { code: string; title: string; icon: string; description: string; jobs: string[]; typeScores: { title: string; icon: string; score: number }[] }> = {};
-
-  // Batch fetch — 1-2 queries แทน N queries
-  const gmails  = allMembers.filter((m) => m.gmail).map((m) => m.gmail!.toLowerCase());
-  const names   = allMembers.filter((m) => !m.gmail).map((m) => m.name);
-
-  const [usersByGmail, usersByName] = await Promise.all([
-    gmails.length ? User.find({ gmail: { $in: gmails } }) : Promise.resolve([]),
-    names.length  ? User.find({ name:  { $in: names  } }) : Promise.resolve([]),
-  ]);
-
-  const gmailMap = new Map(usersByGmail.map((u: { gmail: string; toObject: () => Record<string, unknown> }) => [u.gmail, u.toObject()]));
-  const nameMap  = new Map(usersByName.map((u:  { name:  string; toObject: () => Record<string, unknown> }) => [u.name,  u.toObject()]));
-
-  for (const member of allMembers) {
-    const userData = member.gmail ? gmailMap.get(member.gmail.toLowerCase()) : nameMap.get(member.name);
-    if (!userData) continue;
-
-    const userTypes = (userData.types as Record<string, unknown>) ?? {};
-    const typeResult = userTypes[templateKey];
-
-    if (typeResult && (typeResult as { icon?: string }).icon) {
-      const t = typeResult as { code: string; title: string; icon: string; description?: string; jobs?: string[]; typeScores?: { title: string; icon: string; score: number }[] };
-      types[member.name] = {
-        code: t.code,
-        title: t.title,
-        icon: t.icon,
-        description: t.description ?? '',
-        jobs: t.jobs ?? [],
-        typeScores: t.typeScores ?? [],
-      };
-    }
-  }
+  const types = await fetchMemberTypes(room.template ?? 'programming', allMembers);
 
   return NextResponse.json({ types });
 }

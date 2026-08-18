@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import { Message, Room } from '@/lib/models';
 import { getSessionUser, isGroupMember } from '@/lib/auth';
+import { nowTimeStringBangkok } from '@/lib/date';
 
 interface MatchedGroupLike { id: number; members: { name: string; gmail?: string }[]; }
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   if (!sessionUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { roomId } = await params;
-  const { groupId, text, time, avatarSeed, avatarImage } = await req.json();
+  const { groupId, text } = await req.json();
 
   if (!text || groupId === undefined) {
     return NextResponse.json({ error: 'text, groupId required' }, { status: 400 });
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ roo
   const safeText = text.slice(0, MAX_MSG_LENGTH);
   const msg = await Message.create({
     roomId, groupId, sender: sessionUser.name, text: safeText,
-    time: time ?? new Date().toISOString(), avatarSeed: avatarSeed ?? sessionUser.avatarSeed ?? 0,
-    avatarImage: avatarImage ?? sessionUser.avatarImage ?? null,
+    time: nowTimeStringBangkok(), avatarSeed: sessionUser.avatarSeed ?? 0,
+    avatarImage: sessionUser.avatarImage ?? null,
   });
   return NextResponse.json({ message: msg.toObject() }, { status: 201 });
 }

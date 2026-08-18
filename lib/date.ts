@@ -23,3 +23,12 @@ export function dateStringToUtcDate(dateStr: string): Date {
 export function dateTimeStringToUtcDate(dateTimeStr: string): Date {
   return new Date(`${dateTimeStr}:00+07:00`);
 }
+
+const bangkokTimeFormatter = new Intl.DateTimeFormat('en-GB', {
+  timeZone: APP_TIMEZONE, hour: '2-digit', minute: '2-digit', hour12: false,
+});
+
+/** เวลาปัจจุบันตามเขตเวลาไทย ในรูปแบบ HH:mm — ใช้แทนเวลาที่ client ส่งมาเอง (ปลอมแปลงได้) สำหรับข้อความแชท */
+export function nowTimeStringBangkok(): string {
+  return bangkokTimeFormatter.format(new Date());
+}

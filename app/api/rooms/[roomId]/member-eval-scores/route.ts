@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
-import { Room, User, PeerEvaluation } from '@/lib/models';
+import { Room } from '@/lib/models';
 import { getSessionUser, isRoomHost, isRoomMember } from '@/lib/auth';
-
-const CRITERIA_KEYS = [
-  'contribution', 'responsibility', 'communication', 'problemSolving', 'cooperation',
-  'creativity', 'initiative', 'timeManagement', 'adaptability', 'qualityOfWork',
-  'teamwork',
-] as const;
-type CriteriaKey = typeof CRITERIA_KEYS[number];
+import { fetchMemberEvalScores } from '@/lib/room-member-data';
 
 // GET /api/rooms/:roomId/member-eval-scores?groupId=1    → คะแนนสะสมของสมาชิกกลุ่มนั้น (เรียกตอนแนะนำหัวหน้าทีม)
 // GET /api/rooms/:roomId/member-eval-scores               → คะแนนสะสมของทุกกลุ่มที่จับไปแล้วในห้องนี้
@@ -52,57 +46,7 @@ export async function GET(
     allMembers = allGroups.flatMap((g) => g.members);
   }
 
-  // สมาชิกเก่าที่ไม่มี gmail เก็บไว้ใน room (ข้อมูลก่อนหน้านี้) — หา gmail จริงจาก User ด้วยชื่อแทน
-  // ให้สอดคล้องกับ fallback แบบเดียวกับ /member-types
-  const namesWithoutGmail = allMembers.filter((m) => !m.gmail).map((m) => m.name);
-  const usersByName: { name: string; gmail: string }[] = namesWithoutGmail.length
-    ? await User.find(
-        { name: { $in: namesWithoutGmail } },
-        { name: 1, gmail: 1, _id: 0 }
-      ).lean()
-    : [];
-  const gmailByName = new Map(usersByName.map((u) => [u.name, u.gmail.toLowerCase()]));
-
-  const resolvedGmailByMemberName = new Map<string, string>();
-  for (const member of allMembers) {
-    const resolved = member.gmail?.toLowerCase() ?? gmailByName.get(member.name);
-    if (resolved) resolvedGmailByMemberName.set(member.name, resolved);
-  }
-
-  const gmails = [...new Set(resolvedGmailByMemberName.values())];
-  // ไม่กรองด้วย roomId — ดึงทุกแบบประเมินที่แต่ละคนเคยได้รับจากทุกห้อง/ทุกโปรเจกต์ที่เคยทำมา
-  // (ห้องปัจจุบันจะไม่มีข้อมูลของตัวเองปนอยู่แล้ว เพราะแบบประเมินของห้องนี้ยังไม่เปิดจนกว่าห้องจะจบ)
-  const evals: { toGmail: string; scores: Record<CriteriaKey, number> }[] = gmails.length
-    ? await PeerEvaluation.find(
-        { toGmail: { $in: gmails } },
-        { toGmail: 1, scores: 1, _id: 0 }
-      ).lean()
-    : [];
-
-  const byGmail = new Map<string, Record<CriteriaKey, number>[]>();
-  for (const e of evals) {
-    const list = byGmail.get(e.toGmail) ?? [];
-    list.push(e.scores);
-    byGmail.set(e.toGmail, list);
-  }
-
-  const scores: Record<string, { overall: number; leadership: number; count: number }> = {};
-  for (const member of allMembers) {
-    const resolvedGmail = resolvedGmailByMemberName.get(member.name);
-    if (!resolvedGmail) continue;
-    const list = byGmail.get(resolvedGmail);
-    if (!list || list.length === 0) continue;
-
-    const avg = (key: CriteriaKey) => list.reduce((sum, s) => sum + s[key], 0) / list.length;
-    const overallAvg = CRITERIA_KEYS.reduce((sum, k) => sum + avg(k), 0) / CRITERIA_KEYS.length;
-    const leadershipAvg = (avg('initiative') + avg('problemSolving') + avg('responsibility')) / 3;
-
-    scores[member.name] = {
-      overall: Math.round(overallAvg * 20),
-      leadership: Math.round(leadershipAvg * 20),
-      count: list.length,
-    };
-  }
+  const scores = await fetchMemberEvalScores(allMembers);
 
   return NextResponse.json({ scores });
 }

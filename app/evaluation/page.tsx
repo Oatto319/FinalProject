@@ -378,7 +378,7 @@ export default function EvaluationPage() {
               : `0 ${6 + clampedI * 5}px ${14 + clampedI * 8}px rgba(0,0,0,${0.16 + clampedI * 0.09})`;
 
             const person = item.teammate;
-            const mbtiType = isFront ? extra?.types[person.name]?.code : undefined;
+            const mbtiType = isFront ? extra?.types[person.gmail]?.code : undefined;
             const isLeader = isFront && extra?.leaderId === person.name;
 
             return (
