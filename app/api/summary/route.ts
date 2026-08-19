@@ -49,18 +49,7 @@ interface RoomLite {
   typeComposition?: Record<string, number>;
   deadline?: Date | null; matchedAt?: Date | null; endedManually?: boolean; updatedAt: Date;
 }
-interface HostRoomLite {
-  roomId: string; matchDone: boolean; endedManually?: boolean;
-  deadline?: Date | null; matchedAt?: Date | null; updatedAt: Date;
-  members?: unknown[]; matchedGroups?: MatchedGroupLite[];
-}
-
 interface CriteriaScoreResult { key: CriteriaKey; label: string; score: number | null; }
-
-// จำนวนคู่ "ประเมิน" ที่ควรเกิดขึ้นในกลุ่ม — สมาชิกทุกคนประเมินเพื่อนร่วมทีมทุกคน (ไม่รวมตัวเอง)
-function expectedEvalPairs(size: number): number {
-  return size * (size - 1);
-}
 
 // สรุปผลระดับทีมสำหรับมุมมอง host เท่านั้น — เป็น aggregate (ค่าเฉลี่ย/จำนวนนับ) ไม่มีข้อมูลรายคน
 // เพื่อไม่ให้ขัดกับ anonymity ที่ trimOutliers ตั้งใจสร้างไว้ตอนประมวลผลคะแนนประเมิน
@@ -72,20 +61,6 @@ interface HostTeamSummary {
   typeCounts: Record<string, number>;
   members: { name: string; avatarSeed: number; avatarImage: string | null }[];
   leaderName: string | null;
-}
-
-interface EvalCompletion { done: number; total: number; rate: number | null; }
-
-// ภาพรวมข้ามทุกห้องที่ผู้ใช้เคยสร้าง (ไม่ว่าจะจับกลุ่มแล้วหรือยัง) — คนละชุดกับ "overall" ของสมาชิกทีมด้านบน
-interface HostOverview {
-  totalRooms: number;
-  ended: number;
-  active: number;
-  notMatched: number;
-  totalStudents: number;
-  totalTeams: number;
-  avgEvaluation: number | null;
-  evalRate: number | null;
 }
 
 // เฉลี่ยเฉพาะค่าที่เป็นตัวเลขจริง — แบบประเมินรุ่นเก่าอาจไม่มีครบทุกเกณฑ์ ถ้าเผลอเอา undefined ไปบวกจะได้ NaN
@@ -111,6 +86,36 @@ function summarizeScores(scoresList: Record<CriteriaKey, number>[]): { count: nu
   return { count: scoresList.length, overall, byCriteria };
 }
 
+// สรุปข้อมูลทีมแบบเดียวกันทั้งมุมมอง host (ทุกทีมในห้อง) และมุมมองสมาชิก (แค่ทีมตัวเอง) — เดิมสอง map()
+// ด้านล่างคัดลอกลอจิกนี้แยกกันสองที่ จึงยุบมาเป็นฟังก์ชันเดียวเพื่อไม่ให้ไหลตกหล่นถ้าแก้ที่เดียวแล้วลืมอีกที่
+function buildTeamSummary(
+  group: MatchedGroupLite,
+  tableKey: keyof typeof TYPE_TABLES,
+  typesByName: Record<string, { code?: string }>,
+  evalScoresForGroup: Record<CriteriaKey, number>[]
+): HostTeamSummary {
+  const typeCounts: Record<string, number> = {};
+  for (const member of group.members ?? []) {
+    const code = typesByName[memberKey(member)]?.code;
+    const categoryKey = code ? categoryKeyForCode(tableKey, code) : null;
+    const key = categoryKey ?? 'ไม่ระบุ';
+    typeCounts[key] = (typeCounts[key] ?? 0) + 1;
+  }
+  return {
+    id: group.id,
+    name: group.name,
+    memberCount: (group.members ?? []).length,
+    avgEvaluation: summarizeScores(evalScoresForGroup).overall,
+    typeCounts,
+    members: (group.members ?? []).map((m) => ({
+      name: m.name,
+      avatarSeed: m.avatarSeed ?? 1,
+      avatarImage: m.avatarImage ?? null,
+    })),
+    leaderName: group.leaderId ?? null,
+  };
+}
+
 // GET /api/summary → สรุปผลของทุกโปรเจกต์ที่ผู้ใช้จับกลุ่มไปแล้ว (MBTI, จุดเด่น, หัวหน้าทีม, คะแนนประเมินที่ได้รับ)
 // ครอบคลุมทั้ง (1) ผู้ใช้ที่เป็นสมาชิกทีมในห้องนั้น และ (2) host ที่คุมห้องแต่ไม่ได้ร่วมทีมเอง
 // (host ไม่ถูกใส่เข้า room.members ตอนสร้างห้อง จึงต้องดึงด้วย hostGmail แยกต่างหาก มิเช่นนั้นห้องที่ host จบไปแล้วจะไม่ขึ้นในสรุปผลเลย)
@@ -124,51 +129,6 @@ export async function GET(req: NextRequest) {
     if (!sessionUser) return NextResponse.json({ projects: [], error: 'Unauthorized' }, { status: 401 });
 
     const gmail = sessionUser.gmail.toLowerCase();
-    const profile = {
-      name: sessionUser.name,
-      avatarSeed: sessionUser.avatarSeed,
-      avatarImage: sessionUser.avatarImage,
-      role: sessionUser.role,
-    };
-
-    // ภาพรวมของ "ห้องที่ตัวเองสร้าง" ทั้งหมด รวมห้องที่ยังไม่ได้ match ด้วย — คนละ scope กับ query ด้านล่าง
-    // ที่จำกัดแค่ห้องที่จับกลุ่มแล้ว จึงต้องแยก query เพื่อไม่ให้ห้องที่ยังรอ match หายไปจากภาพรวม
-    const allHostRooms = await Room.find({ hostGmail: gmail })
-      .select('roomId matchDone endedManually deadline matchedAt updatedAt members matchedGroups')
-      .lean<HostRoomLite[]>();
-
-    let hostOverview: HostOverview | null = null;
-    if (allHostRooms.length > 0) {
-      let ended = 0, active = 0, notMatched = 0, totalStudents = 0, totalTeams = 0, expectedEvals = 0;
-      const matchedRoomIds: string[] = [];
-      for (const r of allHostRooms) {
-        totalStudents += (r.members ?? []).length;
-        if (!r.matchDone) { notMatched++; continue; }
-        matchedRoomIds.push(r.roomId);
-        const groups = r.matchedGroups ?? [];
-        totalTeams += groups.length;
-        for (const g of groups) expectedEvals += expectedEvalPairs((g.members ?? []).length);
-        if (isRoomEnded(r)) ended++; else active++;
-      }
-
-      const overviewEvals = matchedRoomIds.length
-        ? await PeerEvaluation.find(
-            { roomId: { $in: matchedRoomIds } },
-            { scores: 1, _id: 0 }
-          ).lean<{ scores: Record<CriteriaKey, number> }[]>()
-        : [];
-
-      hostOverview = {
-        totalRooms: allHostRooms.length,
-        ended,
-        active,
-        notMatched,
-        totalStudents,
-        totalTeams,
-        avgEvaluation: summarizeScores(overviewEvals.map((e) => e.scores)).overall,
-        evalRate: expectedEvals > 0 ? Math.round((overviewEvals.length / expectedEvals) * 100) : null,
-      };
-    }
 
     const rooms = await Room.find({
       matchDone: true,
@@ -178,7 +138,7 @@ export async function GET(req: NextRequest) {
       .sort({ updatedAt: -1 })
       .lean<RoomLite[]>();
 
-    if (rooms.length === 0) return NextResponse.json({ profile, overall: summarizeScores([]), projects: [], hostOverview });
+    if (rooms.length === 0) return NextResponse.json({ overall: summarizeScores([]), projects: [] });
 
     const isMember = (room: RoomLite) =>
       (room.matchedGroups ?? []).some((g) => (g.members ?? []).some((m) => m.gmail === gmail));
@@ -192,6 +152,27 @@ export async function GET(req: NextRequest) {
           { roomId: 1, scores: 1, _id: 0 }
         ).lean<{ roomId: string; scores: Record<CriteriaKey, number> }[]>()
       : [];
+
+    // คะแนนประเมินของ "ทีมตัวเอง" แบบ aggregate (ไม่ใช่คะแนนที่ตัวเองได้รับอย่างเดียว) — ใช้โชว์ในกล่องทีมสไตล์เดียวกับที่ host เห็น
+    // กรองเฉพาะกลุ่มที่ตัวเองอยู่ (ไม่ใช่ทั้งห้อง) — ห้องที่มีหลายทีมจะได้ไม่ต้องดึงคะแนนของทีมอื่นที่ไม่เกี่ยวมาด้วย
+    const memberGroupIdByRoom = new Map<string, number>();
+    for (const room of memberRooms) {
+      const g = (room.matchedGroups ?? []).find((g) => (g.members ?? []).some((m) => m.gmail === gmail));
+      if (g) memberGroupIdByRoom.set(room.roomId, g.id);
+    }
+    const memberTeamEvals = memberGroupIdByRoom.size
+      ? await PeerEvaluation.find(
+          { $or: [...memberGroupIdByRoom.entries()].map(([roomId, groupId]) => ({ roomId, groupId })) },
+          { roomId: 1, groupId: 1, scores: 1, _id: 0 }
+        ).lean<{ roomId: string; groupId: number; scores: Record<CriteriaKey, number> }[]>()
+      : [];
+    const memberTeamEvalsByRoomAndGroup = new Map<string, Record<CriteriaKey, number>[]>();
+    for (const e of memberTeamEvals) {
+      const key = `${e.roomId}:${e.groupId}`;
+      const bucket = memberTeamEvalsByRoomAndGroup.get(key) ?? [];
+      bucket.push(e.scores);
+      memberTeamEvalsByRoomAndGroup.set(key, bucket);
+    }
 
     // ห้องที่เป็นแค่เจ้าของกิจกรรม: ไม่มีผลประเมิน "ส่วนตัว" ของ host ให้ดู จึงรวมคะแนนของ "ทุกคน" ในห้องเป็นภาพรวมแทน
     // ดึง groupId มาด้วยเพื่อสรุปผลแยกรายทีมได้ (ยังคงเป็นค่าเฉลี่ยของทีม ไม่ใช่รายคน — ไม่ขัดกับ anonymity ของ trimOutliers)
@@ -226,13 +207,20 @@ export async function GET(req: NextRequest) {
       hostEvalsByRoomAndGroup.set(key, bucket);
     }
 
-    // MBTI type ของสมาชิกทุกคนในห้องที่ host คุม — ใช้สรุปความหลากหลายรายทีม (aggregate เท่านั้น ไม่โชว์รายคน)
-    const memberTypesByRoom = new Map<string, Record<string, { code?: string }>>();
-    for (const room of hostOnlyRooms) {
-      const allMembers = (room.matchedGroups ?? []).flatMap((g) => g.members ?? []);
-      if (allMembers.length === 0) continue;
-      memberTypesByRoom.set(room.roomId, await fetchMemberTypes(room.template ?? 'programming', allMembers));
-    }
+    // MBTI type ของสมาชิกทุกคนในห้อง — ใช้สรุปความหลากหลายรายทีมทั้งมุมมอง host (ทุกทีม) และมุมมองสมาชิก (แค่ทีมตัวเอง)
+    // ครอบคลุมทุกห้องที่ match แล้ว (ไม่ใช่แค่ hostOnlyRooms) เพราะตอนนี้กล่องทีมของสมาชิกก็ต้องใช้ typeCounts เหมือนกัน
+    // ดึงแบบขนาน (Promise.all) แทนการ await ทีละห้องในลูป — จำนวนห้องตอนนี้ครอบคลุมทั้งห้องที่เป็นสมาชิกด้วย
+    // (ไม่ใช่แค่ hostOnlyRooms แบบเดิม) ถ้า await ทีละรอบจะยิง query ต่อคิวจำนวนมากเวลาผู้ใช้มีประวัติหลายห้อง
+    const memberTypesEntries = await Promise.all(
+      rooms.map(async (room) => {
+        const allMembers = (room.matchedGroups ?? []).flatMap((g) => g.members ?? []);
+        if (allMembers.length === 0) return null;
+        return [room.roomId, await fetchMemberTypes(room.template ?? 'programming', allMembers)] as const;
+      })
+    );
+    const memberTypesByRoom = new Map(
+      memberTypesEntries.filter((e): e is Exclude<typeof e, null> => e !== null)
+    );
 
     // types ทั้งหมดที่ผู้ใช้เคยทำแบบทดสอบไว้ (เก็บใน User.types เป็น { [template]: { code, ... } })
     const userDoc = await User.findOne({ gmail }, { types: 1 }).lean<{ types?: Record<string, { code?: string }> }>();
@@ -243,6 +231,17 @@ export async function GET(req: NextRequest) {
       const tableKey = resolveTableKey(room.template ?? 'programming');
       const code = types[tableKey]?.code ?? null;
       const info = code ? TYPE_TABLES[tableKey][code] : null;
+      const targetComposition = room.typeComposition ?? {};
+
+      // กล่องทีมสไตล์เดียวกับที่ host เห็น แต่มีแค่ทีมตัวเอง 1 กล่อง — ให้ UX ตรงกัน ต่างแค่จำนวนทีมที่โชว์
+      const ownTeam: HostTeamSummary | null = group
+        ? buildTeamSummary(
+            group,
+            tableKey,
+            memberTypesByRoom.get(room.roomId) ?? {},
+            memberTeamEvalsByRoomAndGroup.get(`${room.roomId}:${group.id}`) ?? []
+          )
+        : null;
 
       return {
         roomId: room.roomId,
@@ -254,10 +253,11 @@ export async function GET(req: NextRequest) {
         mbti: code ? { code, title: info?.title ?? '', jobs: info?.jobs ?? [] } : null,
         isLeader: !!group && group.leaderId === sessionUser.name,
         isHostView: false,
-        teamCount: null as number | null,
-        memberCount: null as number | null,
+        teamCount: ownTeam ? 1 : null,
+        memberCount: ownTeam?.memberCount ?? null,
         evaluation: summarizeScores(memberEvalsByRoom.get(room.roomId) ?? []),
-        teams: null as HostTeamSummary[] | null,
+        teams: ownTeam ? [ownTeam] : null,
+        typeComposition: Object.keys(targetComposition).length ? targetComposition : null,
       };
     });
 
@@ -267,38 +267,9 @@ export async function GET(req: NextRequest) {
       const typesByName = memberTypesByRoom.get(room.roomId) ?? {};
       const targetComposition = room.typeComposition ?? {};
 
-      const teams: HostTeamSummary[] = groups.map((g) => {
-        const typeCounts: Record<string, number> = {};
-        for (const member of g.members ?? []) {
-          const code = typesByName[memberKey(member)]?.code;
-          const categoryKey = code ? categoryKeyForCode(tableKey, code) : null;
-          const key = categoryKey ?? 'ไม่ระบุ';
-          typeCounts[key] = (typeCounts[key] ?? 0) + 1;
-        }
-        return {
-          id: g.id,
-          name: g.name,
-          memberCount: (g.members ?? []).length,
-          avgEvaluation: summarizeScores(hostEvalsByRoomAndGroup.get(`${room.roomId}:${g.id}`) ?? []).overall,
-          typeCounts,
-          members: (g.members ?? []).map((m) => ({
-            name: m.name,
-            avatarSeed: m.avatarSeed ?? 1,
-            avatarImage: m.avatarImage ?? null,
-          })),
-          leaderName: g.leaderId ?? null,
-        };
-      });
-
-      // อัตราการทำแบบประเมินของห้อง: จำนวนแบบประเมินที่ส่งจริง เทียบกับจำนวนคู่ที่ "ควร" เกิดขึ้น
-      // (ทุกคนในทีมประเมินเพื่อนร่วมทีมทุกคน ไม่รวมตัวเอง)
-      const roomExpectedEvals = groups.reduce((sum, g) => sum + expectedEvalPairs((g.members ?? []).length), 0);
-      const roomDoneEvals = (hostEvalsByRoom.get(room.roomId) ?? []).length;
-      const evalCompletion: EvalCompletion = {
-        done: roomDoneEvals,
-        total: roomExpectedEvals,
-        rate: roomExpectedEvals > 0 ? Math.round((roomDoneEvals / roomExpectedEvals) * 100) : null,
-      };
+      const teams: HostTeamSummary[] = groups.map((g) =>
+        buildTeamSummary(g, tableKey, typesByName, hostEvalsByRoomAndGroup.get(`${room.roomId}:${g.id}`) ?? [])
+      );
 
       return {
         roomId: room.roomId,
@@ -313,7 +284,6 @@ export async function GET(req: NextRequest) {
         teamCount: groups.length,
         memberCount: groups.reduce((sum, g) => sum + (g.members ?? []).length, 0),
         evaluation: summarizeScores(hostEvalsByRoom.get(room.roomId) ?? []),
-        evalCompletion,
         teams,
         typeComposition: Object.keys(targetComposition).length ? targetComposition : null,
       };
@@ -327,7 +297,7 @@ export async function GET(req: NextRequest) {
         (order.get(a.roomId) ?? 0) - (order.get(b.roomId) ?? 0)
     );
 
-    return NextResponse.json({ profile, overall, projects, hostOverview });
+    return NextResponse.json({ overall, projects });
   } catch (err) {
     console.error('GET /api/summary failed:', err);
     return NextResponse.json({ projects: [], error: 'โหลดสรุปผลไม่สำเร็จ' }, { status: 500 });

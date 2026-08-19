@@ -241,7 +241,7 @@ const App = () => {
         )}
 
         <div className="relative z-20">
-          <Navbar bgColor="#5B3FD4" nameColor="white" />
+          <Navbar bgColor="#5B3FD4" nameColor="white" showSummaryButton />
         </div>
 
         <main className={`relative z-10 px-4 py-4 lg:px-8 lg:py-6 flex justify-center transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}>

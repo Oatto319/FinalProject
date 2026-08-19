@@ -4,16 +4,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Minus, ChevronLeft } from 'lucide-react';
 import Navbar from '../../navbar/page';
-import { scoreMbti, buildAxisBars, typeIcon, typeColor } from '@/lib/mbti';
-import { programmingQuestions, programmingTypeTable } from '@/lib/mbti-programming';
+import { scoreMbti, buildAxisBars, typeIcon, typeColor, sampleQuestions, AXIS_MAX } from '@/lib/mbti';
+import { programmingQuestions as programmingQuestionBank, programmingTypeTable } from '@/lib/mbti-programming';
 import { TYPE_IMAGES } from '@/lib/type-images';
 
 const QUESTIONS_PER_PAGE = 30;
-const totalPages = Math.ceil(programmingQuestions.length / QUESTIONS_PER_PAGE);
+// จำนวนข้อต่อรอบทำคงที่เสมอ (AXIS_MAX ต่อแกน) แม้คลังคำถามเต็มจะมีมากกว่านี้ เพราะแต่ละรอบสุ่มมาแค่บางส่วน
+const totalPages = Math.ceil((AXIS_MAX * 4) / QUESTIONS_PER_PAGE);
 
 const ProgrammingQuestionnaire = () => {
   const router = useRouter();
 
+  // สุ่มคำถามจากคลังทั้งหมดครั้งเดียวตอนเปิดหน้า (ไม่สุ่มใหม่ทุก render) ให้ได้ชุดคำถามที่ต่างกันในแต่ละรอบทำแบบทดสอบ
+  const [questions] = useState(() => sampleQuestions(programmingQuestionBank, AXIS_MAX));
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [currentPage, setCurrentPage] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
@@ -29,7 +32,7 @@ const ProgrammingQuestionnaire = () => {
     typeScores: { title: string; icon: string; score: number }[];
   } | null>(null);
 
-  const currentQuestions = programmingQuestions.slice(
+  const currentQuestions = questions.slice(
     currentPage * QUESTIONS_PER_PAGE,
     (currentPage + 1) * QUESTIONS_PER_PAGE,
   );
@@ -40,10 +43,10 @@ const ProgrammingQuestionnaire = () => {
   };
 
   const handleSubmit = () => {
-    const allAnswered = programmingQuestions.every((q) => answers[q.id] !== undefined);
+    const allAnswered = questions.every((q) => answers[q.id] !== undefined);
     if (!allAnswered) { alert('กรุณาตอบให้ครบทุกข้อก่อนนะครับ'); return; }
 
-    const { code, axisScore } = scoreMbti(programmingQuestions, answers);
+    const { code, axisScore } = scoreMbti(questions, answers);
     const info = programmingTypeTable[code];
     const typeScores = buildAxisBars(axisScore);
 
@@ -166,7 +169,7 @@ const ProgrammingQuestionnaire = () => {
               ))}
             </div>
             <p className="text-sm text-gray-400">
-              ข้อ {currentPage * QUESTIONS_PER_PAGE + 1}–{Math.min((currentPage + 1) * QUESTIONS_PER_PAGE, programmingQuestions.length)} จาก {programmingQuestions.length}
+              ข้อ {currentPage * QUESTIONS_PER_PAGE + 1}–{Math.min((currentPage + 1) * QUESTIONS_PER_PAGE, questions.length)} จาก {questions.length}
             </p>
           </div>
 

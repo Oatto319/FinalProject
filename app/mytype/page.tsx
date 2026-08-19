@@ -95,7 +95,7 @@ const MyTypePage = () => {
           animation: sheetSlideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
       `}</style>
-      <Navbar />
+      <Navbar showSummaryButton />
 
       {/* Top bar: back button + template tabs */}
       <div className="slide-up-1 w-full px-3 py-4 flex items-center gap-3 max-w-7xl mx-auto">
@@ -104,12 +104,6 @@ const MyTypePage = () => {
           className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center text-gray-700 transition-all active:scale-95"
         >
           <ChevronLeft size={24} strokeWidth={2.5} />
-        </button>
-        <button
-          onClick={() => router.push('/summary')}
-          className="flex-shrink-0 text-[11px] sm:text-xs font-black text-white bg-[#4B3E7A] px-3 sm:px-4 h-12 rounded-2xl flex items-center transition-all active:scale-95"
-        >
-          สรุปผล
         </button>
         <div className="flex flex-1 min-w-0 gap-1 p-1 bg-white rounded-2xl shadow-sm">
           {TABS.map(tab => (
