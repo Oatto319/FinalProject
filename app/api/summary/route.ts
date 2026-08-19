@@ -129,12 +129,6 @@ export async function GET(req: NextRequest) {
     if (!sessionUser) return NextResponse.json({ projects: [], error: 'Unauthorized' }, { status: 401 });
 
     const gmail = sessionUser.gmail.toLowerCase();
-    const profile = {
-      name: sessionUser.name,
-      avatarSeed: sessionUser.avatarSeed,
-      avatarImage: sessionUser.avatarImage,
-      role: sessionUser.role,
-    };
 
     const rooms = await Room.find({
       matchDone: true,
@@ -144,7 +138,7 @@ export async function GET(req: NextRequest) {
       .sort({ updatedAt: -1 })
       .lean<RoomLite[]>();
 
-    if (rooms.length === 0) return NextResponse.json({ profile, overall: summarizeScores([]), projects: [] });
+    if (rooms.length === 0) return NextResponse.json({ overall: summarizeScores([]), projects: [] });
 
     const isMember = (room: RoomLite) =>
       (room.matchedGroups ?? []).some((g) => (g.members ?? []).some((m) => m.gmail === gmail));
@@ -303,7 +297,7 @@ export async function GET(req: NextRequest) {
         (order.get(a.roomId) ?? 0) - (order.get(b.roomId) ?? 0)
     );
 
-    return NextResponse.json({ profile, overall, projects });
+    return NextResponse.json({ overall, projects });
   } catch (err) {
     console.error('GET /api/summary failed:', err);
     return NextResponse.json({ projects: [], error: 'โหลดสรุปผลไม่สำเร็จ' }, { status: 500 });

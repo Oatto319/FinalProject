@@ -52,27 +52,28 @@ export async function connectDB() {
   // Already connected
   if (cached!.conn && mongoose.connection.readyState === 1) return cached!.conn;
 
-  // Connection in-flight — wait instead of creating duplicate
-  if (cached!.promise) {
-    cached!.conn = await cached!.promise;
-    return cached!.conn;
+  // Connection in-flight — wait instead of creating duplicate.
+  // ต้องสร้าง promise นี้ให้ "ครอบ" ทั้งขั้นตอน resolve SRV + connect ไว้ในก้อนเดียว แล้ว assign เข้า
+  // cached!.promise แบบ synchronous (ก่อนเจอ await ตัวแรก) มิเช่นนั้นถ้ามี 2 request เข้ามาพร้อมกัน
+  // ทั้งคู่จะเห็น resolvedUri ว่างพร้อมกัน แล้วแยกกัน resolve SRV เอง (DNS SRV คืนลำดับ host ไม่คงที่ทุกครั้ง)
+  // ได้ URI ไม่ตรงกัน พอเรียก mongoose.connect() ซ้อนกันด้วยคนละ URI ก็จะโดน error "different connection strings"
+  if (!cached!.promise) {
+    cached!.promise = (async () => {
+      if (!cached!.resolvedUri) {
+        cached!.resolvedUri = await resolveMongoSRV(MONGODB_URI);
+      }
+      return mongoose.connect(cached!.resolvedUri!, {
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 0,
+        connectTimeoutMS: 10000,
+      });
+    })().catch((err) => {
+      cached!.promise = null;
+      cached!.resolvedUri = null;
+      throw err;
+    });
   }
-
-  // Resolve SRV once per process lifetime (not every request)
-  if (!cached!.resolvedUri) {
-    cached!.resolvedUri = await resolveMongoSRV(MONGODB_URI);
-  }
-
-  cached!.promise = mongoose.connect(cached!.resolvedUri, {
-    maxPoolSize: 10,
-    serverSelectionTimeoutMS: 10000,
-    socketTimeoutMS: 0,
-    connectTimeoutMS: 10000,
-  }).then((m) => m).catch((err) => {
-    cached!.promise = null;
-    cached!.resolvedUri = null;
-    throw err;
-  });
 
   cached!.conn = await cached!.promise;
   return cached!.conn;

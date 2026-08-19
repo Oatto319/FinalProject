@@ -252,7 +252,7 @@ export default function SummaryPage() {
                     {/* สรุปรายทีม — เฉพาะค่าเฉลี่ย/จำนวนนับ ไม่มีคะแนนรายคน เพื่อไม่ให้ขัดกับความไม่เปิดเผยตัวตนของแบบประเมิน */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
                       {p.teams.map((team) => (
-                        <div key={team.id} className="bg-gray-50 rounded-2xl p-4 h-[220px] overflow-hidden flex flex-col justify-between">
+                        <div key={team.id} className="bg-gray-50 rounded-2xl p-4 min-h-[220px] flex flex-col justify-between">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-xs font-bold text-gray-700 truncate">{team.name}</span>
                             <span className="text-[11px] text-gray-400 flex-shrink-0">

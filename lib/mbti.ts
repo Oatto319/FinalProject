@@ -15,8 +15,28 @@ export interface MbtiTypeInfo {
   jobs: string[];
 }
 
-/** number of questions per axis — also the max magnitude of an axis score */
+/** number of questions per axis actually asked in one quiz attempt — also the max magnitude of an axis score */
 export const AXIS_MAX = 15;
+
+const AXES: Axis[] = ['EI', 'SN', 'TF', 'JP'];
+
+function shuffle<T>(arr: T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+/**
+ * Randomly draws `perAxis` questions per axis (EI/SN/TF/JP, in that order) from a larger question bank,
+ * so a quiz attempt is a fresh subset each time instead of always the same fixed set.
+ * Keeps `perAxis` (== AXIS_MAX) questions per axis so scoreMbti/buildAxisBars' math is unaffected.
+ */
+export function sampleQuestions(bank: MbtiQuestion[], perAxis: number): MbtiQuestion[] {
+  return AXES.flatMap((axis) => shuffle(bank.filter((q) => q.dimension === axis)).slice(0, perAxis));
+}
 
 const pole = (val: number) => (val <= 3 ? 1 : val >= 5 ? -1 : 0);
 
