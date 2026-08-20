@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeGroups, type MatchInputMember, type ComputeGroupsInput } from './matching';
+import { computeGroups, buildRoomInsights, type MatchInputMember, type ComputeGroupsInput } from './matching';
 import { pairCompatibilityScore } from './mbti-compatibility';
 import { CRITERIA_KEYS } from './peer-evaluation';
 
@@ -106,6 +106,55 @@ describe('computeGroups — compatibility + skill-balance construction', () => {
       expect(group.synergyNotes.length).toBeGreaterThan(0);
       for (const note of group.synergyNotes) expect(note.reasons.length).toBeGreaterThan(0);
     }
+  });
+});
+
+function makeMember(gmail: string, code: string): MatchInputMember {
+  return { gmail, name: gmail, avatarSeed: 0, avatarImage: null, code, categoryKey: null, evalScore: 50, skillVector: CRITERIA_KEYS.map(() => 50) };
+}
+
+describe('buildRoomInsights — room-wide (cross-group) compatibility overview', () => {
+  it('puts a fully complementary pair in bestPairs, not cautionPairs', () => {
+    const members = [makeMember('a@test.com', 'INTJ'), makeMember('b@test.com', 'ESFP')];
+    const insights = buildRoomInsights(members, 'programming');
+
+    expect(insights.bestPairs).toHaveLength(1);
+    expect(insights.bestPairs[0]).toMatchObject({ gmailA: 'a@test.com', gmailB: 'b@test.com', avoid: false });
+    expect(insights.cautionPairs).toHaveLength(0);
+  });
+
+  it('flags a pair differing only on the lowest-weighted axis for the template as a caution pair', () => {
+    // INTJ vs ENTJ differ only on E/I — the lowest-weighted axis for 'programming' (see TEMPLATE_AXIS_WEIGHTS
+    // in lib/mbti-compatibility.ts) — sharing every other axis this closely is exactly the "too similar,
+    // no complementary perspective" case the avoid threshold is meant to catch.
+    const members = [makeMember('a@test.com', 'INTJ'), makeMember('b@test.com', 'ENTJ')];
+    const insights = buildRoomInsights(members, 'programming');
+
+    expect(insights.cautionPairs).toHaveLength(1);
+    expect(insights.cautionPairs[0]).toMatchObject({ gmailA: 'a@test.com', gmailB: 'b@test.com', avoid: true });
+    expect(insights.bestPairs).toHaveLength(0);
+  });
+
+  it('only recommends MBTI types that are actually present among the room members', () => {
+    const members = [
+      makeMember('a@test.com', 'INTJ'),
+      makeMember('b@test.com', 'ESFP'),
+      makeMember('c@test.com', 'ESFP'),
+    ];
+    const insights = buildRoomInsights(members, 'programming');
+
+    const codes = insights.recommendedTypes.map((r) => r.code);
+    expect(new Set(codes)).toEqual(new Set(['INTJ', 'ESFP']));
+    const esfp = insights.recommendedTypes.find((r) => r.code === 'ESFP')!;
+    expect(esfp.presentCount).toBe(2);
+  });
+
+  it('returns empty insights for a room with a single member (no pairs possible)', () => {
+    const insights = buildRoomInsights([makeMember('a@test.com', 'INTJ')], 'programming');
+    expect(insights.bestPairs).toHaveLength(0);
+    expect(insights.cautionPairs).toHaveLength(0);
+    expect(insights.recommendedTypes).toHaveLength(1);
+    expect(insights.recommendedTypes[0]).toMatchObject({ code: 'INTJ', avgScore: 0, presentCount: 1 });
   });
 });
 

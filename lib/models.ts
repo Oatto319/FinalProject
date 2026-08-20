@@ -46,6 +46,16 @@ const MatchedGroupSchema = new Schema({
   synergyNotes: { type: [SynergyNoteSchema], default: [] },
 }, { _id: false });
 
+// วิเคราะห์ความเข้ากันของทั้งห้อง (ข้ามกลุ่ม) — คนละ scope กับ synergyNotes ต่อกลุ่มใน MatchedGroupSchema
+const RoomInsightsSchema = new Schema({
+  bestPairs:    { type: [SynergyNoteSchema], default: [] },
+  cautionPairs: { type: [SynergyNoteSchema], default: [] },
+  recommendedTypes: {
+    type: [{ code: String, avgScore: Number, presentCount: Number, _id: false }],
+    default: [],
+  },
+}, { _id: false });
+
 // คำร้องที่สมาชิกในกลุ่มแจ้งว่าเพื่อนออกจากกลุ่มไปแล้ว (หลัง match) — host เป็นคนตัดสินใจเอาออกจริงหรือยกเลิกคำร้อง
 const LeaveRequestSchema = new Schema({
   groupId:       { type: Number, required: true },
@@ -74,6 +84,7 @@ const RoomSchema = new Schema({
   matchedAt:      { type: Date, default: null },
   endedManually:  { type: Boolean, default: false },
   matchedGroups:  { type: [MatchedGroupSchema], default: [] },
+  roomInsights:   { type: RoomInsightsSchema },
   votes:          { type: Schema.Types.Mixed, default: {} },
   leaveRequests:  { type: [LeaveRequestSchema], default: [] },
 }, { timestamps: true });

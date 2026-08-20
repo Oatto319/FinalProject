@@ -351,3 +351,70 @@ export function computeGroups(input: ComputeGroupsInput): MatchedGroupResult[] {
     synergyNotes: buildSynergyNotes(g.members, template),
   }));
 }
+
+/** อันดับความเข้ากันเฉลี่ยของ MBTI type หนึ่งที่ "มีคนถืออยู่จริงในห้อง" กับ type อื่นที่มีคนถืออยู่จริงในห้องเดียวกัน —
+ * ไม่ใช่คะแนนเข้ากันเทียบกับ 16 type ทั้งหมดแบบ typeCompatibilitySummary (นั่นคือ reference guide, นี่คืออิงข้อมูลห้องจริง) */
+export interface RoomTypeRecommendation {
+  code: string;
+  avgScore: number;
+  presentCount: number;
+}
+
+/** ผลวิเคราะห์ระดับ "ทั้งห้อง" หลัง match เสร็จ — คนละ scope กับ synergyNotes ต่อกลุ่มใน MatchedGroupResult
+ * (ซึ่งมองแค่ในกลุ่มเดียวกัน) อันนี้มองข้ามทุกกลุ่มในห้อง ใช้ให้ host เห็นภาพรวมการจับคู่ทั้งห้องทันทีที่กด Match */
+export interface RoomInsights {
+  /** top 5 คู่ (คนจริง) คะแนนเข้ากันสูงสุดทั้งห้อง ไม่จำกัดว่าอยู่กลุ่มเดียวกันหลัง match หรือไม่ */
+  bestPairs: SynergyNote[];
+  /** ทุกคู่ (คนจริง) ที่ถูกแฟลก avoid ทั้งห้อง (ไม่ใช่แค่ในกลุ่มเดียวกัน) */
+  cautionPairs: SynergyNote[];
+  /** top 5 type ที่มีคนถืออยู่จริงในห้อง เรียงตามคะแนนเข้ากันเฉลี่ยกับ type อื่นที่มีอยู่จริงในห้องเดียวกัน */
+  recommendedTypes: RoomTypeRecommendation[];
+}
+
+const ROOM_BEST_PAIR_COUNT = 5;
+const ROOM_RECOMMENDED_TYPE_COUNT = 5;
+
+/**
+ * วิเคราะห์ความเข้ากันของทั้งห้อง (ข้ามกลุ่ม) — เรียกครั้งเดียวตอน match เสร็จ ไม่ใช่ hot loop จึงเป็น O(n^2)
+ * all-pairs ตรงๆ ได้สบายๆ (ห้องใหญ่สุด 300 คน ≈ 45,000 คู่) ต่างจาก 2-opt local search ใน localSearchImprove
+ * ที่ต้อง optimize ให้เหลือ O(n^2) ต่อรอบเพราะถูกเรียกซ้ำนับสิบล้านครั้ง
+ */
+export function buildRoomInsights(members: MatchInputMember[], template: string): RoomInsights {
+  const weights = resolveAxisWeights(template);
+
+  const allPairs: { i: number; j: number; result: ReturnType<typeof pairCompatibility> }[] = [];
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      allPairs.push({ i, j, result: pairCompatibility(members[i].code, members[j].code, template) });
+    }
+  }
+
+  const bestPairs = [...allPairs]
+    .filter((p) => !p.result.avoid)
+    .sort((a, b) => b.result.score - a.result.score)
+    .slice(0, ROOM_BEST_PAIR_COUNT)
+    .map((p) => ({ gmailA: members[p.i].gmail, gmailB: members[p.j].gmail, reasons: p.result.reasons, avoid: false }));
+
+  const cautionPairs = allPairs
+    .filter((p) => p.result.avoid)
+    .sort((a, b) => a.result.score - b.result.score)
+    .map((p) => ({ gmailA: members[p.i].gmail, gmailB: members[p.j].gmail, reasons: p.result.reasons, avoid: true }));
+
+  // distinct type ที่มีคนถืออยู่จริงในห้อง — คำแนะนำต้องอิงจากคนจริงที่ join ห้องนี้เท่านั้น ไม่ทำนายนอกเหนือจากนั้น
+  const countByCode = new Map<string, number>();
+  for (const m of members) countByCode.set(m.code, (countByCode.get(m.code) ?? 0) + 1);
+  const distinctCodes = [...countByCode.keys()];
+
+  const recommendedTypes: RoomTypeRecommendation[] = distinctCodes
+    .map((code) => {
+      const others = distinctCodes.filter((c) => c !== code);
+      const avgScore = others.length
+        ? others.reduce((sum, other) => sum + pairCompatibilityScoreFast(code, other, weights), 0) / others.length
+        : 0;
+      return { code, avgScore: Math.round(avgScore), presentCount: countByCode.get(code)! };
+    })
+    .sort((a, b) => b.avgScore - a.avgScore)
+    .slice(0, ROOM_RECOMMENDED_TYPE_COUNT);
+
+  return { bestPairs, cautionPairs, recommendedTypes };
+}

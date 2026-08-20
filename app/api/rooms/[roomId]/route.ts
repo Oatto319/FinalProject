@@ -5,7 +5,7 @@ import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
 import { dateTimeStringToUtcDate } from '@/lib/date';
 import { fetchMemberTypes, fetchMemberEvalScores, memberKey } from '@/lib/room-member-data';
 import { categoryKeyForCode } from '@/lib/type-composition';
-import { computeGroups, type MatchInputMember } from '@/lib/matching';
+import { computeGroups, buildRoomInsights, type MatchInputMember } from '@/lib/matching';
 import { CRITERIA_KEYS } from '@/lib/peer-evaluation';
 
 interface RoomMemberLike { name: string; gmail?: string; }
@@ -193,12 +193,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         groupSize: roomObj.groupSize ?? 4,
         template,
       });
+      // ภาพรวมทั้งห้อง (ข้ามกลุ่ม) — คนละ scope กับ synergyNotes ต่อกลุ่มใน matchedGroups ด้านบน
+      const roomInsights = buildRoomInsights(matchInput, template);
 
       // Atomic: อัปเดตได้ก็ต่อเมื่อ matchDone ยังไม่ true ตอนที่เขียนจริง (ไม่ใช่แค่ตอนอ่านตอนต้นฟังก์ชัน)
       // กัน double-click/double-mount สองคำขอชนกันแล้วเขียนทับผลจับกลุ่มที่มีอยู่แล้ว
       const updated = await Room.findOneAndUpdate(
         { roomId, matchDone: { $ne: true } },
-        { $set: { matchedGroups, matchDone: true, matchedAt: new Date() } },
+        { $set: { matchedGroups, roomInsights, matchDone: true, matchedAt: new Date() } },
         { returnDocument: 'after' }
       );
 

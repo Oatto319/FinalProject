@@ -8,6 +8,7 @@ import { resolveAvatar } from '@/lib/avatar';
 import { roleColor } from '@/lib/mbti';
 import MbtiTagLegend from '../../components/MbtiTagLegend';
 import { markMatchSeen } from '../../components/notifications';
+import RoomCompatibilityInsights, { type RoomInsights } from '../../components/RoomCompatibilityInsights';
 
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface SynergyNote { gmailA: string; gmailB: string; reasons: string[]; avoid: boolean; }
@@ -32,7 +33,7 @@ const TEMPLATE_COLORS: Record<string, string> = { programming: '#FFAAAA', servic
 
 const GroupResultPage = () => {
   const router = useRouter();
-  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostGmail?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[]; endedManually?: boolean } | null>(null);
+  const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostGmail?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[]; endedManually?: boolean; roomInsights?: RoomInsights } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
   const [mbtiPopup, setMbtiPopup] = useState<{ name: string; gmail: string; groupId: number; type: MBTIResult } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -310,6 +311,13 @@ const GroupResultPage = () => {
                 );
               })}
             </div>
+          )}
+          {room?.roomInsights && (
+            <RoomCompatibilityInsights
+              roomInsights={room.roomInsights}
+              template={room.template ?? 'programming'}
+              members={groups.flatMap((g) => g.members.map((m) => ({ gmail: m.gmail, name: m.name })))}
+            />
           )}
           {groups.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-gray-400 font-medium">ไม่พบข้อมูลกลุ่ม</div>
