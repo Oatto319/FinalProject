@@ -33,6 +33,7 @@ const RoomMemberSchema = new Schema({
 const SynergyNoteSchema = new Schema({
   gmailA:  String,
   gmailB:  String,
+  score:   { type: Number, default: 0 },
   reasons: { type: [String], default: [] },
   avoid:   { type: Boolean, default: false },
 }, { _id: false });

@@ -29,6 +29,8 @@ export interface ComputeGroupsInput {
 export interface SynergyNote {
   gmailA: string;
   gmailB: string;
+  /** 0-100 คะแนนเข้ากันของคู่นี้ (เท่ากับ pairCompatibility(...).score) — ให้ UI แสดงเป็นตัวเลข/แถบคะแนนได้ */
+  score: number;
   reasons: string[];
   avoid: boolean;
 }
@@ -311,14 +313,14 @@ function buildSynergyNotes(members: MatchInputMember[], template: string): Syner
     for (let j = i + 1; j < members.length; j++) {
       const result = pairCompatibility(members[i].code, members[j].code, template);
       if (result.avoid) {
-        notes.push({ gmailA: members[i].gmail, gmailB: members[j].gmail, reasons: result.reasons, avoid: true });
+        notes.push({ gmailA: members[i].gmail, gmailB: members[j].gmail, score: result.score, reasons: result.reasons, avoid: true });
       }
       if (!best || result.score > best.result.score) best = { i, j, result };
     }
   }
 
   if (best && !best.result.avoid) {
-    notes.unshift({ gmailA: members[best.i].gmail, gmailB: members[best.j].gmail, reasons: best.result.reasons, avoid: false });
+    notes.unshift({ gmailA: members[best.i].gmail, gmailB: members[best.j].gmail, score: best.result.score, reasons: best.result.reasons, avoid: false });
   }
 
   return notes;
@@ -393,12 +395,12 @@ export function buildRoomInsights(members: MatchInputMember[], template: string)
     .filter((p) => !p.result.avoid)
     .sort((a, b) => b.result.score - a.result.score)
     .slice(0, ROOM_BEST_PAIR_COUNT)
-    .map((p) => ({ gmailA: members[p.i].gmail, gmailB: members[p.j].gmail, reasons: p.result.reasons, avoid: false }));
+    .map((p) => ({ gmailA: members[p.i].gmail, gmailB: members[p.j].gmail, score: p.result.score, reasons: p.result.reasons, avoid: false }));
 
   const cautionPairs = allPairs
     .filter((p) => p.result.avoid)
     .sort((a, b) => a.result.score - b.result.score)
-    .map((p) => ({ gmailA: members[p.i].gmail, gmailB: members[p.j].gmail, reasons: p.result.reasons, avoid: true }));
+    .map((p) => ({ gmailA: members[p.i].gmail, gmailB: members[p.j].gmail, score: p.result.score, reasons: p.result.reasons, avoid: true }));
 
   // distinct type ที่มีคนถืออยู่จริงในห้อง — คำแนะนำต้องอิงจากคนจริงที่ join ห้องนี้เท่านั้น ไม่ทำนายนอกเหนือจากนั้น
   const countByCode = new Map<string, number>();
