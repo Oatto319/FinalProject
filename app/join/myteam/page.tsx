@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Edit2, Home, Send, User, UserMinus, X } from 'lucide-react';
+import { Check, Edit2, Home, Send, Sparkles, ShieldAlert, User, UserMinus, X } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
-import { typeColor, roleColor } from '@/lib/mbti';
-import { TYPE_IMAGES } from '@/lib/type-images';
+import { roleColor } from '@/lib/mbti';
 import MbtiTagLegend from '../../components/MbtiTagLegend';
 import { markMatchSeen } from '../../components/notifications';
 
 interface ChatMessage { id: string; sender: string; text: string; time: string; avatarSeed?: number; avatarImage?: string | null; }
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
-interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; }
+interface SynergyNote { gmailA: string; gmailB: string; reasons: string[]; avoid: boolean; }
+interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; synergyNotes?: SynergyNote[]; }
 interface LeaveRequest { _id: string; groupId: number; targetGmail: string; targetName: string; reporterGmail: string; reporterName: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; totalMembers: number;
@@ -28,14 +28,12 @@ export default function MyTeamPage() {
   const [message, setMessage]         = useState('');
   const [messages, setMessages]       = useState<ChatMessage[]>([]);
   const [isMatched, setIsMatched]     = useState(false);
-  const [memberTypes, setMemberTypes] = useState<Record<string, MBTIResult>>({});
   const [memberRoles, setMemberRoles] = useState<Record<string, string>>({});
-const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIResult } | null>(null);
+const [popup, setPopup]             = useState<{ member: RoomMember; groupId: number; type: MBTIResult } | null>(null);
   const [roomDeleted, setRoomDeleted] = useState(false);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [reportTarget, setReportTarget] = useState<RoomMember | null>(null);
   const [reportSubmitting, setReportSubmitting] = useState(false);
-  const [isManualRoom, setIsManualRoom]   = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName]     = useState('');
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
@@ -48,7 +46,7 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const mobileChatRef = useRef<HTMLDivElement>(null);
   const groupIdRef = useRef<number | null>(null);
-  const memberTypesFetchedRef = useRef(false);
+  const memberRolesFetchedRef = useRef(false);
   const initialScrollDoneRef = useRef(false);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
@@ -68,51 +66,21 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
     setTemplate(room.template ?? 'programming');
     setLeaveRequests(room.leaveRequests ?? []);
     if (room.matchDone) markMatchSeen(roomId);
-    const isManual = room.matchMode === 'selection';
-    setIsManualRoom(isManual);
     if (room.matchedGroups?.length) {
       const mine = room.matchedGroups.find((g: MatchedGroup) => g.members.some((m) => (userGmail && m.gmail === userGmail) || m.name === userName));
       if (mine) {
         setMyGroup(mine);
         groupIdRef.current = mine.id;
 
-        const currentUserRaw = localStorage.getItem('currentUser');
-        const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
-
-        if (!memberTypesFetchedRef.current) {
-          memberTypesFetchedRef.current = true;
-
+        if (!memberRolesFetchedRef.current) {
+          memberRolesFetchedRef.current = true;
+          const currentUserRaw = localStorage.getItem('currentUser');
+          const currentUserLocal = currentUserRaw ? JSON.parse(currentUserRaw) : null;
           const roles: Record<string, string> = {};
           if (currentUserLocal?.name && currentUserLocal?.role) {
             roles[currentUserLocal.name] = currentUserLocal.role;
           }
           setMemberRoles(roles);
-
-          const typesRes = await fetch(`/api/rooms/${roomId}/member-types?groupId=${mine.id}`);
-          const types: Record<string, MBTIResult> = typesRes.ok ? (await typesRes.json()).types ?? {} : {};
-
-          // fallback: ถ้า currentUser ยังไม่มี type ให้ดู localStorage
-          if (currentUserLocal?.gmail && !types[currentUserLocal.gmail]) {
-            const rawTemplate = (room.template ?? '').toLowerCase();
-            const LABEL_TO_ID_LOCAL: Record<string, string> = {
-              'programming': 'programming', 'service': 'service',
-              'customer / service': 'service', 'presentation': 'presentation',
-              'design': 'design', 'design / creative': 'design',
-            };
-            const templateKey = LABEL_TO_ID_LOCAL[rawTemplate] ?? rawTemplate;
-            const localTypes = currentUserLocal.types ?? {};
-            const localType = localTypes[templateKey]
-              ?? Object.values(localTypes).find((t: unknown) => (t as { icon?: string })?.icon);
-            if (localType) {
-              const t = localType as { code: string; title: string; icon: string; description?: string; jobs?: string[] };
-              types[currentUserLocal.gmail] = { code: t.code, title: t.title, icon: t.icon, description: t.description ?? '', jobs: t.jobs ?? [] };
-            }
-          }
-
-          setMemberTypes(types);
-          if (Object.keys(types).length < mine.members.length) {
-            memberTypesFetchedRef.current = false;
-          }
         }
       }
     }
@@ -316,7 +284,6 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                     const avatarUrl = resolveAvatar(member);
                     const showRole = member.role && member.role !== 'ไม่ระบุ';
                     const roleIcon = showRole ? roleIcons[member.role!] : null;
-                    const mbtiType = memberTypes[member.gmail ?? member.name];
                     return (
                       <div key={idx} className="bg-white rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-2 shadow-sm">
                         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
@@ -336,12 +303,6 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               {isCurrentUser && <span className="bg-[#7096D1] text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">คุณ</span>}
                             </div>
                             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                              {!isManualRoom && showRole && (
-                                <div className="flex items-center gap-1">
-                                  {roleIcon && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: roleColor(roleIcon) }} />}
-                                  <p className="text-xs text-gray-500 font-medium">{member.role}</p>
-                                </div>
-                              )}
                               {memberRoles[member.name] ? (
                                 <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${memberRoles[member.name] === 'host' ? 'bg-[#FF9142]/15 text-[#FF9142]' : 'bg-[#7096D1]/15 text-[#7096D1]'}`}>
                                   {memberRoles[member.name] === 'host' ? 'Host' : 'User'}
@@ -366,23 +327,13 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
                               </div>
                             </div>
                           )}
-                          {mbtiType ? (
+                          {showRole ? (
                             <button
-                              onClick={() => setPopup({ member, type: mbtiType })}
+                              onClick={() => setPopup({ member, groupId: myGroup?.id ?? 0, type: { title: member.role!, icon: roleIcon ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
                               className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
-                              style={{ backgroundColor: `${mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon)}26` }}
+                              style={{ backgroundColor: `${roleColor(roleIcon ?? '/img/brain.png')}26` }}
                             >
-                              <span className="text-[9px] sm:text-[10px] md:text-[11px] font-black" style={{ color: mbtiType.code ? typeColor(mbtiType.code) : roleColor(mbtiType.icon) }}>
-                                {mbtiType.code ?? mbtiType.title.slice(0, 2)}
-                              </span>
-                            </button>
-                          ) : isManualRoom && member.role && member.role !== 'ไม่ระบุ' ? (
-                            <button
-                              onClick={() => setPopup({ member, type: { title: member.role!, icon: roleIcons[member.role!] ?? '/img/brain.png', description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden hover:opacity-80 transition-opacity cursor-pointer flex items-center justify-center"
-                              style={{ backgroundColor: `${roleColor(roleIcons[member.role!] ?? '/img/brain.png')}26` }}
-                            >
-                              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-center px-1" style={{ color: roleColor(roleIcons[member.role!] ?? '/img/brain.png') }}>
+                              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-black text-center px-1" style={{ color: roleColor(roleIcon ?? '/img/brain.png') }}>
                                 {member.role!.slice(0, 2)}
                               </span>
                             </button>
@@ -664,21 +615,15 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0"
-                  style={{ backgroundColor: `${popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon)}1A` }}
+                  className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center"
+                  style={{ backgroundColor: `${roleColor(popup.type.icon)}1A` }}
                 >
-                  {popup.type.code && TYPE_IMAGES[popup.type.code] ? (
-                    <img src={TYPE_IMAGES[popup.type.code]} alt={popup.type.code} className="w-full h-full object-contain" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-lg font-black" style={{ color: popup.type.code ? typeColor(popup.type.code) : roleColor(popup.type.icon) }}>
-                        {popup.type.code ?? popup.type.title.slice(0, 2)}
-                      </span>
-                    </div>
-                  )}
+                  <span className="text-lg font-black" style={{ color: roleColor(popup.type.icon) }}>
+                    {popup.type.title.slice(0, 2)}
+                  </span>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 font-medium">{isManualRoom ? 'บทบาทในทีม' : 'ประเภทบุคลิกภาพ'}</p>
+                  <p className="text-xs text-gray-400 font-medium">บทบาทในทีม</p>
                   <p className="text-xl font-black text-[#4B3E7A]">{popup.type.title}</p>
                   <p className="text-sm text-gray-500 font-medium">{popup.member.name}</p>
                 </div>
@@ -690,16 +635,34 @@ const [popup, setPopup]             = useState<{ member: RoomMember; type: MBTIR
             {popup.type.description && (
               <p className="text-gray-500 text-sm leading-relaxed mb-4">{popup.type.description}</p>
             )}
-            {popup.type.jobs?.length > 0 && (
-              <div>
-                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">ตำแหน่งงานที่เหมาะสม</p>
-                <div className="flex flex-wrap gap-2">
-                  {popup.type.jobs.map((job) => (
-                    <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1.5 rounded-full">{job}</span>
-                  ))}
+            {(() => {
+              const notes = (myGroup?.synergyNotes ?? []).filter(
+                (n) => n.gmailA === popup.member.gmail || n.gmailB === popup.member.gmail
+              );
+              if (notes.length === 0) return null;
+              const nameOf = (gmail: string) => myGroup?.members.find((m) => m.gmail === gmail)?.name ?? gmail;
+              return (
+                <div className="flex flex-col gap-2">
+                  {notes.map((note, i) => {
+                    const otherGmail = note.gmailA === popup.member.gmail ? note.gmailB : note.gmailA;
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-xl p-3 text-left ${note.avoid ? 'bg-red-50 border border-red-200' : 'bg-emerald-50 border border-emerald-200'}`}
+                      >
+                        <p className={`flex items-center gap-1.5 text-xs font-black mb-1 ${note.avoid ? 'text-red-500' : 'text-emerald-600'}`}>
+                          {note.avoid ? <ShieldAlert size={13} /> : <Sparkles size={13} />}
+                          {note.avoid ? `ควรระวังกับ ${nameOf(otherGmail)}` : `เข้ากันดีกับ ${nameOf(otherGmail)}`}
+                        </p>
+                        {note.reasons.map((r, ri) => (
+                          <p key={ri} className="text-xs text-gray-600 leading-relaxed">{r}</p>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}

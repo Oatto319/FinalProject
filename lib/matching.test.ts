@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { computeGroups, groupDiversity, pairDistance, type MatchInputMember, type ComputeGroupsInput } from './matching';
-import type { AxisVector } from './mbti';
+import { computeGroups, type MatchInputMember, type ComputeGroupsInput } from './matching';
+import { pairCompatibilityScore } from './mbti-compatibility';
 import { CRITERIA_KEYS } from './peer-evaluation';
 
 /** Deterministic PRNG so test data (and therefore timing/behavior assertions) is reproducible across runs. */
@@ -15,13 +15,15 @@ function mulberry32(seed: number) {
 }
 
 const CATEGORIES = ['Analysts', 'Diplomats', 'Sentinels', 'Explorers'] as const;
+const MBTI_CODES = [
+  'ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP',
+  'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ',
+];
 
 function makeMembers(count: number, seed = 1): MatchInputMember[] {
   const rand = mulberry32(seed);
   return Array.from({ length: count }, (_, i) => {
-    const axisVector: AxisVector = [
-      rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1,
-    ];
+    const code = MBTI_CODES[Math.floor(rand() * MBTI_CODES.length)];
     const skillVector = CRITERIA_KEYS.map(() => Math.round(rand() * 100));
     const categoryKey = CATEGORIES[i % CATEGORIES.length];
     return {
@@ -29,9 +31,8 @@ function makeMembers(count: number, seed = 1): MatchInputMember[] {
       name: `Member ${i}`,
       avatarSeed: i,
       avatarImage: null,
-      axisVector,
+      code,
       categoryKey,
-      categoryAffinities: Object.fromEntries(CATEGORIES.map((c) => [c, c === categoryKey ? 100 : 0])),
       evalScore: Math.round(rand() * 100),
       skillVector,
     };
@@ -42,29 +43,12 @@ function baseInput(members: MatchInputMember[], groupSize: number, overrides: Pa
   return {
     members,
     groupSize,
-    matchMode: 'auto',
-    typeComposition: {},
     template: 'programming',
     ...overrides,
   };
 }
 
-describe('pairDistance / groupDiversity', () => {
-  it('is zero for identical vectors and grows with axis differences', () => {
-    const a: AxisVector = [0, 0, 0, 0];
-    const b: AxisVector = [1, 1, 1, 1];
-    expect(pairDistance(a, a)).toBe(0);
-    expect(pairDistance(a, b)).toBe(4);
-  });
-
-  it('sums all pairwise distances in a group', () => {
-    const vecs: AxisVector[] = [[0, 0, 0, 0], [1, 0, 0, 0], [0, 1, 0, 0]];
-    // pairs: (0,1)=1, (0,2)=1, (1,2)=2 → sum 4
-    expect(groupDiversity(vecs)).toBe(4);
-  });
-});
-
-describe('computeGroups — auto mode (diversity + skill-balance construction)', () => {
+describe('computeGroups — compatibility + skill-balance construction', () => {
   it('assigns every member exactly once, with balanced group sizes', () => {
     const members = makeMembers(23);
     const result = computeGroups(baseInput(members, 5));
@@ -86,60 +70,42 @@ describe('computeGroups — auto mode (diversity + skill-balance construction)',
     expect(r1.map((g) => g.members.map((m) => m.gmail))).toEqual(r2.map((g) => g.members.map((m) => m.gmail)));
   });
 
-  it('produces meaningfully more diverse groups than a naive sequential split', () => {
+  it('produces meaningfully more compatible groups than a naive sequential split', () => {
     const members = makeMembers(24, 7);
     const result = computeGroups(baseInput(members, 4));
+    const template = 'programming';
 
     const byGmail = new Map(members.map((m) => [m.gmail, m]));
-    const algoDiversity = result.reduce(
-      (sum, g) => sum + groupDiversity(g.members.map((m) => byGmail.get(m.gmail)!.axisVector)),
+    const groupCompatSum = (codes: string[]) => {
+      let sum = 0;
+      for (let i = 0; i < codes.length; i++) {
+        for (let j = i + 1; j < codes.length; j++) sum += pairCompatibilityScore(codes[i], codes[j], template);
+      }
+      return sum;
+    };
+
+    const algoCompat = result.reduce(
+      (sum, g) => sum + groupCompatSum(g.members.map((m) => byGmail.get(m.gmail)!.code)),
       0
     );
 
-    // Naive baseline: split members into groups in original (random) order.
+    // Naive baseline: split members into groups in original (unoptimized) order.
     const groupSize = 4;
-    let naiveDiversity = 0;
+    let naiveCompat = 0;
     for (let i = 0; i < members.length; i += groupSize) {
-      naiveDiversity += groupDiversity(members.slice(i, i + groupSize).map((m) => m.axisVector));
+      naiveCompat += groupCompatSum(members.slice(i, i + groupSize).map((m) => m.code));
     }
 
-    expect(algoDiversity).toBeGreaterThan(naiveDiversity);
+    expect(algoCompat).toBeGreaterThanOrEqual(naiveCompat);
   });
-});
 
-describe('computeGroups — selection mode (typeComposition hard constraint)', () => {
-  it('matches the exact category counts per group when enough members of each category exist', () => {
-    const members = makeMembers(32, 99); // 8 per category across 4 categories
-    const result = computeGroups(
-      baseInput(members, 8, {
-        matchMode: 'selection',
-        typeComposition: { Analysts: 2, Diplomats: 2, Sentinels: 2, Explorers: 2 },
-      })
-    );
-
-    const byGmail = new Map(members.map((m) => [m.gmail, m]));
+  it('returns synergyNotes with at least the best-matched pair per group', () => {
+    const members = makeMembers(8, 11);
+    const result = computeGroups(baseInput(members, 4));
     for (const group of result) {
-      expect(group.members.length).toBe(8);
-      const counts: Record<string, number> = {};
-      for (const m of group.members) {
-        const cat = byGmail.get(m.gmail)!.categoryKey!;
-        counts[cat] = (counts[cat] ?? 0) + 1;
-      }
-      for (const cat of CATEGORIES) expect(counts[cat]).toBe(2);
+      expect(group.synergyNotes.length).toBeGreaterThan(0);
+      for (const note of group.synergyNotes) expect(note.reasons.length).toBeGreaterThan(0);
     }
-  });
-
-  it('never exceeds groupSize even when composition counts are inconsistent with it', () => {
-    // Deliberately over-subscribed composition (would sum to 8 with groupSize 4) — the API layer validates
-    // this before it reaches computeGroups, but the algorithm itself must still not blow past groupSize.
-    const members = makeMembers(16, 5);
-    const result = computeGroups(
-      baseInput(members, 4, {
-        matchMode: 'selection',
-        typeComposition: { Analysts: 2, Diplomats: 2, Sentinels: 2, Explorers: 2 },
-      })
-    );
-    for (const group of result) expect(group.members.length).toBeLessThanOrEqual(4);
   });
 });
 

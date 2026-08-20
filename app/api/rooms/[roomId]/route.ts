@@ -4,8 +4,7 @@ import { Room, User } from '@/lib/models';
 import { getSessionUser, isRoomHost, isGroupMember } from '@/lib/auth';
 import { dateTimeStringToUtcDate } from '@/lib/date';
 import { fetchMemberTypes, fetchMemberEvalScores, memberKey } from '@/lib/room-member-data';
-import { axisVector } from '@/lib/mbti';
-import { categoryKeyForCode, categoryAffinities } from '@/lib/type-composition';
+import { categoryKeyForCode } from '@/lib/type-composition';
 import { computeGroups, type MatchInputMember } from '@/lib/matching';
 import { CRITERIA_KEYS } from '@/lib/peer-evaluation';
 
@@ -143,29 +142,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
         }
       }
 
-      if (body.matchMode !== undefined && !['auto', 'selection'].includes(body.matchMode)) {
-        return NextResponse.json({ error: 'โหมดการจับคู่ไม่ถูกต้อง' }, { status: 400 });
-      }
-
-      if (body.typeComposition !== undefined) {
-        if (typeof body.typeComposition !== 'object' || body.typeComposition === null || Array.isArray(body.typeComposition)) {
-          return NextResponse.json({ error: 'Type composition ไม่ถูกต้อง' }, { status: 400 });
-        }
-        const counts = Object.values(body.typeComposition as Record<string, unknown>);
-        if (!counts.every((v) => typeof v === 'number' && Number.isInteger(v) && v >= 0)) {
-          return NextResponse.json({ error: 'จำนวนคนต่อ type ต้องเป็นจำนวนเต็มไม่ติดลบ' }, { status: 400 });
-        }
-        const sum = (counts as number[]).reduce((s, v) => s + v, 0);
-        if (sum > effectiveSize) {
-          return NextResponse.json({ error: 'ผลรวมจำนวนคนต่อ type ต้องไม่มากกว่าจำนวนคนต่อกลุ่ม' }, { status: 400 });
-        }
-      }
-
       const patch: Record<string, unknown> = {};
       if (body.title !== undefined) patch.title = body.title;
       if (body.description !== undefined) patch.description = body.description;
-      if (body.matchMode !== undefined) patch.matchMode = body.matchMode;
-      if (body.typeComposition !== undefined) patch.typeComposition = body.typeComposition;
       if (totalMembers !== undefined) patch.totalMembers = totalMembers;
       if (groupSize !== undefined) patch.groupSize = groupSize;
       if (deadlineValue !== undefined) patch.deadline = deadlineValue;
@@ -187,8 +166,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       if (membersList.length === 0) return NextResponse.json({ error: 'ห้องยังไม่มีสมาชิก' }, { status: 400 });
 
       const template = (roomObj.template ?? 'programming').toLowerCase();
-      const matchMode: 'auto' | 'selection' = roomObj.matchMode === 'selection' ? 'selection' : 'auto';
-      const typeComposition = (roomObj.typeComposition ?? {}) as Record<string, number>;
 
       const [typesByName, evalByName] = await Promise.all([
         fetchMemberTypes(template, membersList),
@@ -198,16 +175,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       const matchInput: MatchInputMember[] = membersList.map((m) => {
         const key = memberKey(m);
         const t = typesByName[key];
-        const typeScores = t?.typeScores ?? [];
         const criteria = evalByName[key]?.criteria;
         return {
           gmail: m.gmail,
           name: m.name,
           avatarSeed: m.avatarSeed,
           avatarImage: m.avatarImage,
-          axisVector: axisVector(typeScores),
+          code: t?.code ?? '',
           categoryKey: t?.code ? categoryKeyForCode(template, t.code) : null,
-          categoryAffinities: typeScores.length ? categoryAffinities(template, typeScores) : {},
           evalScore: evalByName[key]?.overall ?? 50,
           skillVector: CRITERIA_KEYS.map((k) => criteria?.[k] ?? 50),
         };
@@ -216,8 +191,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ro
       const matchedGroups = computeGroups({
         members: matchInput,
         groupSize: roomObj.groupSize ?? 4,
-        matchMode,
-        typeComposition,
         template,
       });
 

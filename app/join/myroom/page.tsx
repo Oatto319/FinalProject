@@ -39,7 +39,6 @@ export default function MyRoomPage() {
   const [members, setMembers]       = useState<RoomMember[]>([]);
   const [isReady, setIsReady]       = useState(false);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
-  const [matchMode, setMatchMode]   = useState('');
   const [roomDeleted, setRoomDeleted] = useState(false);
   const [copied, setCopied]           = useState(false);
 
@@ -63,7 +62,6 @@ export default function MyRoomPage() {
       }
       setMembers(data.room.members ?? []);
       setReadyUsers(data.room.readyUsers ?? []);
-      if (data.room.matchMode) setMatchMode(data.room.matchMode);
       if (checkReadyFor) {
         setIsReady((data.room.readyUsers ?? []).includes(checkReadyFor));
       }
@@ -73,9 +71,6 @@ export default function MyRoomPage() {
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (raw) setUser(JSON.parse(raw));
-
-    const pendingRaw = localStorage.getItem('pendingRoom');
-    if (pendingRaw) setMatchMode(JSON.parse(pendingRaw).matchMode ?? '');
 
     const roomRaw = localStorage.getItem('currentRoom');
     if (roomRaw) {
@@ -272,11 +267,6 @@ export default function MyRoomPage() {
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${room?.hostRole === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
                       {room?.hostRole ?? 'host'}
                     </span>
-                    {matchMode && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
-                        {matchMode === 'auto' ? 'จับคู่อัตโนมัติ' : 'กำหนดเอง'}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

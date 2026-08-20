@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Home, Copy, Users, UserMinus, ArrowRightLeft, MessageSquareText, Flag, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { X, Home, Copy, Users, UserMinus, ArrowRightLeft, MessageSquareText, Flag, CheckCircle2, AlertTriangle, Sparkles, ShieldAlert } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
-import { typeColor, roleColor } from '@/lib/mbti';
-import { TYPE_IMAGES } from '@/lib/type-images';
+import { roleColor } from '@/lib/mbti';
 import MbtiTagLegend from '../../components/MbtiTagLegend';
 import { markMatchSeen } from '../../components/notifications';
 
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
-interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; }
+interface SynergyNote { gmailA: string; gmailB: string; reasons: string[]; avoid: boolean; }
+interface MatchedGroup { id: number; name: string; members: RoomMember[]; leaderId?: string; leaderConfirmedBy?: string[]; synergyNotes?: SynergyNote[]; }
 interface MBTIResult { code?: string; title: string; icon: string; description: string; jobs: string[]; }
 interface LeaveRequest { _id: string; groupId: number; targetGmail: string; targetName: string; reporterGmail: string; reporterName: string; }
 interface CommentEntry { overall: number; comment: string; createdAt: string }
@@ -34,9 +34,7 @@ const GroupResultPage = () => {
   const router = useRouter();
   const [room, setRoom]                       = useState<{ roomId?: string; id?: string; title: string; description?: string; totalMembers: number; groupSize: number; template?: string; hostName?: string; hostGmail?: string; hostAvatarSeed?: number; hostAvatarImage?: string | null; hostRole?: string; members?: {name:string}[]; endedManually?: boolean } | null>(null);
   const [groups, setGroups]                   = useState<MatchedGroup[]>([]);
-  const [isManualRoom, setIsManualRoom]        = useState(false);
-  const [memberTypeOverrides, setMemberTypeOverrides] = useState<Record<string, MBTIResult>>({});
-  const [mbtiPopup, setMbtiPopup] = useState<{ name: string; type: MBTIResult } | null>(null);
+  const [mbtiPopup, setMbtiPopup] = useState<{ name: string; gmail: string; groupId: number; type: MBTIResult } | null>(null);
   const [copied, setCopied] = useState(false);
   const [endingActivity, setEndingActivity] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
@@ -61,21 +59,10 @@ const GroupResultPage = () => {
       if (!res.ok) return;
       const data = await res.json();
       if (!data.room) return;
-      const manual = data.room.matchMode === 'selection';
-      setIsManualRoom(manual);
       setRoom({ ...r, ...data.room });
       if (data.room.matchedGroups?.length) setGroups(data.room.matchedGroups);
       setLeaveRequests(data.room.leaveRequests ?? []);
       if (data.room.matchDone) markMatchSeen(roomId);
-
-      // manual mode ใช้ member.role โดยตรง ไม่ต้อง fetch MBTI types
-      if (!manual) {
-        const typesRes = await fetch(`/api/rooms/${roomId}/member-types`);
-        if (typesRes.ok) {
-          const typesData = await typesRes.json();
-          setMemberTypeOverrides(typesData.types ?? {});
-        }
-      }
 
       // ความคิดเห็นจากแบบประเมิน — แบบไม่ระบุตัวตนผู้ประเมิน (host เท่านั้นที่เห็นได้ ฝั่ง server เช็คให้แล้ว)
       if (data.room.matchDone) {
@@ -341,7 +328,6 @@ const GroupResultPage = () => {
                 <div className="bg-[#E8E8E8] border-2 border-[#E8E8E8] rounded-[20px] p-4 flex flex-col gap-3">
                   {group.members.map((member, mIdx) => {
                     const avatarUrl = resolveAvatar(member);
-                    const typeOverride = memberTypeOverrides[member.gmail ?? member.name];
                     const assignedRole = member.role && member.role !== 'ไม่ระบุ' ? member.role : undefined;
                     const isLeader  = group.leaderId === member.name;
                     const memberComments = member.gmail ? comments[member.gmail] : undefined;
@@ -367,22 +353,12 @@ const GroupResultPage = () => {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {isLeader && <div className="w-10 h-10 sm:w-16 sm:h-16 flex items-center justify-center"><img src="/img/crown.PNG" alt="crown" className="w-full h-full object-contain" /></div>}
-                            {isManualRoom ? (
-                              assignedRole && ROLE_ICONS[assignedRole] ? (
-                                <button
-                                  onClick={() => setMbtiPopup({ name: member.name, type: { title: assignedRole, icon: ROLE_ICONS[assignedRole], description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
-                                  className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
-                                  style={{ backgroundColor: `${roleColor(ROLE_ICONS[assignedRole])}26` }}>
-                                  <span className="text-[10px] font-black text-center px-1" style={{ color: roleColor(ROLE_ICONS[assignedRole]) }}>{assignedRole.slice(0, 2)}</span>
-                                </button>
-                              ) : <div className="w-12 h-12 rounded-full bg-gray-100" />
-                            ) : typeOverride ? (
-                              <button onClick={() => setMbtiPopup({ name: member.name, type: typeOverride })}
+                            {assignedRole && ROLE_ICONS[assignedRole] ? (
+                              <button
+                                onClick={() => setMbtiPopup({ name: member.name, gmail: member.gmail, groupId: group.id, type: { title: assignedRole, icon: ROLE_ICONS[assignedRole], description: 'บทบาทที่ได้รับมอบหมายในทีมนี้', jobs: [] } })}
                                 className="w-12 h-12 rounded-full overflow-hidden hover:opacity-80 transition-opacity flex items-center justify-center"
-                                style={{ backgroundColor: `${typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon)}26` }}>
-                                <span className="text-[10px] font-black" style={{ color: typeOverride.code ? typeColor(typeOverride.code) : roleColor(typeOverride.icon) }}>
-                                  {typeOverride.code ?? typeOverride.title.slice(0, 2)}
-                                </span>
+                                style={{ backgroundColor: `${roleColor(ROLE_ICONS[assignedRole])}26` }}>
+                                <span className="text-[10px] font-black text-center px-1" style={{ color: roleColor(ROLE_ICONS[assignedRole]) }}>{assignedRole.slice(0, 2)}</span>
                               </button>
                             ) : (
                               <div className="w-12 h-12 rounded-full bg-gray-100" />
@@ -439,28 +415,45 @@ const GroupResultPage = () => {
             </div>
             <div className="p-6 flex flex-col items-center gap-4">
               <div
-                className="w-20 h-20 rounded-2xl overflow-hidden"
-                style={{ backgroundColor: `${mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon)}1A` }}
+                className="w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center"
+                style={{ backgroundColor: `${roleColor(mbtiPopup.type.icon)}1A` }}
               >
-                {mbtiPopup.type.code && TYPE_IMAGES[mbtiPopup.type.code] ? (
-                  <img src={TYPE_IMAGES[mbtiPopup.type.code]} alt={mbtiPopup.type.code} className="w-full h-full object-contain" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-lg font-black" style={{ color: mbtiPopup.type.code ? typeColor(mbtiPopup.type.code) : roleColor(mbtiPopup.type.icon) }}>
-                      {mbtiPopup.type.code ?? mbtiPopup.type.title.slice(0, 2)}
-                    </span>
-                  </div>
-                )}
+                <span className="text-lg font-black" style={{ color: roleColor(mbtiPopup.type.icon) }}>
+                  {mbtiPopup.type.title.slice(0, 2)}
+                </span>
               </div>
               <p className="font-black text-[#4B3E7A] text-xl">{mbtiPopup.type.title}</p>
               {mbtiPopup.type.description && <p className="text-gray-500 text-sm text-center leading-relaxed">{mbtiPopup.type.description}</p>}
-              {mbtiPopup.type.jobs && mbtiPopup.type.jobs.length > 0 && (
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {mbtiPopup.type.jobs.map((job) => (
-                    <span key={job} className="bg-[#EDE9FF] text-[#4B3E7A] text-xs font-bold px-3 py-1 rounded-full">{job}</span>
-                  ))}
-                </div>
-              )}
+
+              {(() => {
+                const popupGroup = groups.find((g) => g.id === mbtiPopup.groupId);
+                const notes = (popupGroup?.synergyNotes ?? []).filter(
+                  (n) => n.gmailA === mbtiPopup.gmail || n.gmailB === mbtiPopup.gmail
+                );
+                if (notes.length === 0) return null;
+                const nameOf = (gmail: string) => popupGroup?.members.find((m) => m.gmail === gmail)?.name ?? gmail;
+                return (
+                  <div className="w-full flex flex-col gap-2">
+                    {notes.map((note, i) => {
+                      const otherGmail = note.gmailA === mbtiPopup.gmail ? note.gmailB : note.gmailA;
+                      return (
+                        <div
+                          key={i}
+                          className={`rounded-xl p-3 text-left ${note.avoid ? 'bg-red-50 border border-red-200' : 'bg-emerald-50 border border-emerald-200'}`}
+                        >
+                          <p className={`flex items-center gap-1.5 text-xs font-black mb-1 ${note.avoid ? 'text-red-500' : 'text-emerald-600'}`}>
+                            {note.avoid ? <ShieldAlert size={13} /> : <Sparkles size={13} />}
+                            {note.avoid ? `ควรระวังกับ ${nameOf(otherGmail)}` : `เข้ากันดีกับ ${nameOf(otherGmail)}`}
+                          </p>
+                          {note.reasons.map((r, ri) => (
+                            <p key={ri} className="text-xs text-gray-600 leading-relaxed">{r}</p>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

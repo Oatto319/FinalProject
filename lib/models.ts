@@ -30,12 +30,20 @@ const RoomMemberSchema = new Schema({
   role:       String,
 }, { _id: false });
 
+const SynergyNoteSchema = new Schema({
+  gmailA:  String,
+  gmailB:  String,
+  reasons: { type: [String], default: [] },
+  avoid:   { type: Boolean, default: false },
+}, { _id: false });
+
 const MatchedGroupSchema = new Schema({
   id:       Number,
   name:     String,
   members:  [RoomMemberSchema],
   leaderId: String,
   leaderConfirmedBy: { type: [String], default: [] },
+  synergyNotes: { type: [SynergyNoteSchema], default: [] },
 }, { _id: false });
 
 // คำร้องที่สมาชิกในกลุ่มแจ้งว่าเพื่อนออกจากกลุ่มไปแล้ว (หลัง match) — host เป็นคนตัดสินใจเอาออกจริงหรือยกเลิกคำร้อง
@@ -65,8 +73,6 @@ const RoomSchema = new Schema({
   matchDone:      { type: Boolean, default: false },
   matchedAt:      { type: Date, default: null },
   endedManually:  { type: Boolean, default: false },
-  matchMode:      { type: String, default: 'auto' },
-  typeComposition: { type: Schema.Types.Mixed, default: {} },
   matchedGroups:  { type: [MatchedGroupSchema], default: [] },
   votes:          { type: Schema.Types.Mixed, default: {} },
   leaveRequests:  { type: [LeaveRequestSchema], default: [] },

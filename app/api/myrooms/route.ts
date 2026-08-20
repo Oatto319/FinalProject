@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
         { 'members.gmail': sessionUser.gmail },
       ],
     })
-      .select('roomId title description totalMembers groupSize template hostName hostAvatarSeed members matchDone matchMode createdAt')
+      .select('roomId title description totalMembers groupSize template hostName hostAvatarSeed members matchDone createdAt')
       .sort({ createdAt: -1 });
     return NextResponse.json({ rooms: rooms.map((r) => r.toObject()) });
   } catch (err) {

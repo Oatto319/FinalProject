@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { roomId, title, description, totalMembers, groupSize, deadline, template, matchMode } = body;
+  const { roomId, title, description, totalMembers, groupSize, deadline, template } = body;
   if (!roomId || !title) return NextResponse.json({ error: 'ข้อมูลไม่ครบ' }, { status: 400 });
   if (String(title).length > TITLE_MAX_LENGTH) {
     return NextResponse.json({ error: `ชื่อห้องต้องไม่เกิน ${TITLE_MAX_LENGTH} ตัวอักษร` }, { status: 400 });
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const room = await Room.create({
-      roomId, title, description, totalMembers, groupSize, deadline: deadlineDate, template, matchMode,
+      roomId, title, description, totalMembers, groupSize, deadline: deadlineDate, template,
       hostName: sessionUser.name,
       hostGmail: sessionUser.gmail,
       hostAvatarSeed: sessionUser.avatarSeed,

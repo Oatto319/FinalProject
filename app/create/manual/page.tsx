@@ -2,17 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { Copy, Settings, SlidersHorizontal, Sparkles, Plus, X, Home } from 'lucide-react';
+import { Copy, Settings, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
-import { TYPES_BY_TEMPLATE } from '@/lib/type-composition';
 import { resolveAvatar } from '@/lib/avatar';
-import { typeColor, roleColor } from '@/lib/mbti';
+import { typeColor } from '@/lib/mbti';
 import DeadlinePicker from '../../components/DeadlinePicker';
 
 interface RoomMember { name: string; avatarSeed: number; avatarImage?: string | null; gmail: string; role?: string; }
 interface CurrentRoom {
   id: string; roomId?: string; title: string; description: string;
-  totalMembers: number; groupSize: number; template: string; deadline?: string | null; matchMode?: string;
+  totalMembers: number; groupSize: number; template: string; deadline?: string | null;
   hostName: string; hostAvatarSeed: number; hostAvatarImage?: string | null; members: RoomMember[];
 }
 
@@ -35,7 +34,6 @@ interface SettingsForm {
   totalMembers: string;
   groupSize: string;
   deadline: string;
-  matchMode: string;
 }
 
 // ✅ ธีมสีตาม template ของห้อง (สีอ้างอิงจากหน้า templates / app/create/match)
@@ -63,9 +61,7 @@ const ManualPage = () => {
   const [room, setRoom]             = useState<CurrentRoom | null>(null);
   const [members, setMembers]       = useState<RoomMember[]>([]);
   const [readyUsers, setReadyUsers] = useState<string[]>([]);
-  const [matchMode, setMatchMode]   = useState('');
   const [copied, setCopied]           = useState(false);
-  const [showTypeSetting, setShowTypeSetting] = useState(false);
   const [kickTarget, setKickTarget] = useState<RoomMember | null>(null);
 
   const [showSettings, setShowSettings]       = useState(false);
@@ -73,13 +69,8 @@ const ManualPage = () => {
   const [settingsError, setSettingsError]     = useState('');
   const [settingsLoading, setSettingsLoading] = useState(false);
 
-  // Type Setting popup state
-  const [tsTypes, setTsTypes]     = useState(TYPES_BY_TEMPLATE.programming);
-  const [tsCounts, setTsCounts]   = useState<Record<string, number>>({});
-  const [tsWarning, setTsWarning] = useState('');
   const [memberTypes, setMemberTypes] = useState<Record<string, { code: string; title: string; icon: string }>>({});
   const lastMemberCountRef = useRef(-1);
-  const tsLoadedRef = useRef(false);
 
   const getRoomId = (r: CurrentRoom) => r.roomId ?? r.id;
 
@@ -93,7 +84,6 @@ const ManualPage = () => {
       totalMembers: String(room.totalMembers ?? ''),
       groupSize: String(room.groupSize ?? ''),
       deadline: isoToLocalInput(room.deadline),
-      matchMode: matchMode || 'selection',
     });
     setSettingsError('');
     setShowSettings(true);
@@ -101,7 +91,7 @@ const ManualPage = () => {
 
   const handleSaveSettings = async () => {
     if (!room || !settingsForm || settingsLoading) return;
-    const { title, description, totalMembers, groupSize, deadline, matchMode: newMode } = settingsForm;
+    const { title, description, totalMembers, groupSize, deadline } = settingsForm;
 
     if (!title.trim() || !description.trim() || !totalMembers || !groupSize) {
       setSettingsError('กรุณากรอกข้อมูลให้ครบ');
@@ -135,7 +125,6 @@ const ManualPage = () => {
           totalMembers: total,
           groupSize: size,
           deadline: deadline || null,
-          matchMode: newMode,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -146,14 +135,8 @@ const ManualPage = () => {
 
       const updatedRoom = { ...room, ...data.room, id: getRoomId(room) };
       setRoom(updatedRoom);
-      setMatchMode(newMode);
       localStorage.setItem('currentRoom', JSON.stringify(updatedRoom));
       setShowSettings(false);
-
-      // เปลี่ยนกลับเป็นโหมดจับคู่อัตโนมัติ (auto) → ไม่ต้องกำหนดองค์ประกอบ MBTI เองแล้ว กลับไปหน้า match ปกติ
-      if (newMode === 'auto') {
-        router.push('/create/match');
-      }
     } catch {
       setSettingsError('เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {
@@ -169,13 +152,6 @@ const ManualPage = () => {
       const newMembers: RoomMember[] = data.room.members ?? [];
       setMembers(newMembers);
       setReadyUsers(data.room.readyUsers ?? []);
-      const pendingRaw2 = localStorage.getItem('pendingRoom');
-      const localMode2 = pendingRaw2 ? (JSON.parse(pendingRaw2).matchMode ?? '') : '';
-      if (data.room.matchMode && data.room.matchMode !== 'auto') {
-        setMatchMode(data.room.matchMode);
-      } else if (!localMode2 && data.room.matchMode) {
-        setMatchMode(data.room.matchMode);
-      }
       // Fetch member-types only when member count changes
       if (isHost && newMembers.length !== lastMemberCountRef.current) {
         lastMemberCountRef.current = newMembers.length;
@@ -185,24 +161,12 @@ const ManualPage = () => {
           setMemberTypes(typesData.types ?? {});
         }
       }
-
-      // โหลด typeComposition จาก DB ครั้งแรกที่ fetch สำเร็จ (ไม่ทับค่าที่ host กำลังแก้อยู่ในรอบ poll ถัดไป)
-      if (!tsLoadedRef.current) {
-        tsLoadedRef.current = true;
-        const savedComposition = data.room.typeComposition as Record<string, number> | undefined;
-        if (savedComposition && Object.keys(savedComposition).length > 0) {
-          setTsCounts((prev) => ({ ...prev, ...savedComposition }));
-        }
-      }
     }
   };
 
   useEffect(() => {
     const raw = localStorage.getItem('currentUser');
     if (raw) setUser(JSON.parse(raw));
-    const pendingRaw = localStorage.getItem('pendingRoom');
-    const pending = pendingRaw ? JSON.parse(pendingRaw) : null;
-    if (pending) setMatchMode(pending.matchMode ?? '');
 
     const roomRaw = localStorage.getItem('currentRoom');
     if (roomRaw) {
@@ -211,12 +175,6 @@ const ManualPage = () => {
       const parsedUser = raw ? JSON.parse(raw) : null;
       const isHost = parsedUser?.name === r.hostName;
       fetchRoom(getRoomId(r), isHost);
-
-      // Init type setting from template (ค่าจริงจะถูกโหลดทับจาก DB ใน fetchRoom เมื่อ fetch สำเร็จ)
-      const template = (pending?.template ?? r.template ?? 'programming').toLowerCase();
-      const resolvedTypes = TYPES_BY_TEMPLATE[template] ?? TYPES_BY_TEMPLATE.programming;
-      setTsTypes(resolvedTypes);
-      setTsCounts(Object.fromEntries(resolvedTypes.map((t) => [t.key, 0])));
     }
   }, []);
 
@@ -231,38 +189,6 @@ const ManualPage = () => {
   const totalMembers = room?.totalMembers ?? members.length;
   const isFull       = members.length >= totalMembers && totalMembers > 0;
   const isAllReady   = isFull && readyCount >= members.length && members.length > 0;
-
-  const tsTotal     = Object.values(tsCounts).reduce((a, b) => a + b, 0);
-  const tsGroupSize = room?.groupSize ?? 4;
-
-  const tsIncrement = (key: string) => {
-    if (tsTotal >= tsGroupSize) return;
-    setTsCounts((prev) => ({ ...prev, [key]: prev[key] + 1 }));
-    setTsWarning('');
-  };
-
-  const tsDecrement = (key: string) => {
-    if ((tsCounts[key] ?? 0) <= 0) return;
-    setTsCounts((prev) => ({ ...prev, [key]: prev[key] - 1 }));
-    setTsWarning('');
-  };
-
-  const tsSave = async () => {
-    if (tsTotal < tsGroupSize) {
-      setTsWarning(`ยังเลือกไม่ครบ (${tsTotal}/${tsGroupSize})`);
-      return;
-    }
-    if (!room) return;
-    const res = await fetch(`/api/rooms/${getRoomId(room)}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'settings', typeComposition: tsCounts }),
-    });
-    if (!res.ok) { setTsWarning('บันทึกไม่สำเร็จ กรุณาลองใหม่'); return; }
-    setTsWarning('');
-    setShowTypeSetting(false);
-    if (isAllReady) router.push('/create/matching');
-  };
 
   const handleKick = async () => {
     if (!kickTarget || !room) return;
@@ -386,19 +312,10 @@ const ManualPage = () => {
             >
               <Settings size={20} />
             </button>
-            <button
-              onClick={() => setShowTypeSetting(true)}
-              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md hover:bg-white/90 active:scale-95 transition-all"
-              style={{ color: theme.accent }}
-              title="ตั้งค่าประเภทกลุ่ม (Type Settings)"
-            >
-              <SlidersHorizontal size={20} />
-            </button>
-
             {/* Mobile-only: compact match button */}
             {isAllReady && (
               <button
-                onClick={() => { if (tsTotal <= 0) { setShowTypeSetting(true); return; } router.push('/create/matching'); }}
+                onClick={() => router.push('/create/matching')}
                 className="lg:hidden bg-[#FF8A00] text-white px-4 py-2 rounded-full font-black text-sm uppercase shadow-[0_4px_0_0_#D97706] hover:shadow-[0_2px_0_0_#D97706] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] transition-all"
               >
                 MATCH!
@@ -474,11 +391,6 @@ const ManualPage = () => {
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${user?.role === 'host' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-500'}`}>
                       {user?.role ?? 'host'}
                     </span>
-                    {matchMode && (
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${matchMode === 'auto' ? 'bg-blue-100 text-blue-600' : 'bg-purple-100 text-purple-600'}`}>
-                        {matchMode === 'auto' ? 'จับคู่อัตโนมัติ' : 'กำหนดเอง'}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -521,10 +433,7 @@ const ManualPage = () => {
                 </div>
               ) : (
                 <button
-                  onClick={() => {
-                    if (tsTotal <= 0) { setShowTypeSetting(true); return; }
-                    router.push('/create/matching');
-                  }}
+                  onClick={() => router.push('/create/matching')}
                   className="w-full relative group transition-transform active:scale-95">
                   <div className="absolute inset-0 bg-[#D97706] rounded-[20px] translate-y-2 group-active:translate-y-1"></div>
                   <div className="relative bg-[#FF8A00] hover:bg-[#FF9D2E] text-white py-6 sm:py-8 md:py-10 rounded-[20px] flex items-center justify-center transition-all border-b-4 border-white/20">
@@ -536,89 +445,6 @@ const ManualPage = () => {
           </div>
         </div>
       </div>
-
-      {/* Type Setting Popup */}
-      {showTypeSetting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-[24px] w-full max-w-md mx-4 shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="bg-[#2D3E50] px-6 py-4 flex items-center justify-between">
-              <h2 className="text-white text-2xl font-black uppercase tracking-tight">Type Settings</h2>
-              <button
-                onClick={() => { setShowTypeSetting(false); setTsWarning(''); }}
-                className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-4 sm:p-6 bg-[#C4C9E2]">
-              <p className="text-center text-xl font-black text-[#5B5EA6] mb-5">
-                {tsGroupSize} <span className="font-bold">:Members</span>
-              </p>
-
-              <div className="bg-[#E8EAF3] rounded-2xl p-3 sm:p-5">
-                <div className="grid grid-cols-4 gap-2 sm:gap-3">
-                  {/* Icons row */}
-                  {tsTypes.map((t) => (
-                    <div key={t.key} className="flex flex-col items-center gap-1">
-                      <div className="w-9 h-9 sm:w-12 sm:h-12 flex items-center justify-center rounded-full" style={{ backgroundColor: `${roleColor(t.icon)}22` }}>
-                        <img src={t.icon} alt={t.label} className="w-5 h-5 sm:w-7 sm:h-7 object-contain" />
-                      </div>
-                      <span className="text-[8px] sm:text-[9px] font-black text-[#3D3D6B] text-center leading-tight">{t.label}</span>
-                      {t.subtitle && (
-                        <span className="text-[7px] sm:text-[8px] font-bold px-1 rounded" style={{ backgroundColor: `${roleColor(t.icon)}22`, color: roleColor(t.icon) }}>{t.subtitle}</span>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Plus buttons row */}
-                  {tsTypes.map((t) => (
-                    <div key={t.key + '-plus'} className="flex justify-center">
-                      <button
-                        onClick={() => tsIncrement(t.key)}
-                        disabled={tsTotal >= tsGroupSize}
-                        className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-[#7C6FCD] text-white flex items-center justify-center shadow hover:bg-[#6B5FB8] active:scale-95 transition-all disabled:opacity-40"
-                      >
-                        <Plus size={14} strokeWidth={3} className="sm:hidden" />
-                        <Plus size={18} strokeWidth={3} className="hidden sm:block" />
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Count boxes row */}
-                  {tsTypes.map((t) => (
-                    <div key={t.key + '-count'} className="flex justify-center">
-                      <button
-                        onClick={() => tsDecrement(t.key)}
-                        className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl bg-[#8B8FAD] text-white text-sm sm:text-lg font-black flex items-center justify-center shadow active:scale-95 transition-all select-none"
-                      >
-                        {tsCounts[t.key] ?? 0}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <p className="text-center text-xs font-semibold text-[#5B5EA6] mt-3">
-                  รวม {tsTotal} / {tsGroupSize}
-                </p>
-              </div>
-
-              {tsWarning && (
-                <p className="text-center text-xs text-orange-600 font-semibold mt-3">{tsWarning}</p>
-              )}
-
-              <button
-                onClick={tsSave}
-                className="w-full mt-5 bg-[#2D3E50] text-white py-3 rounded-2xl font-bold text-lg shadow hover:bg-[#1E293B] active:scale-95 transition-all"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showSettings && settingsForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-8 overflow-y-auto" onClick={() => !settingsLoading && setShowSettings(false)}>
@@ -696,39 +522,6 @@ const ManualPage = () => {
                 )}
               </div>
 
-              {/* โหมดการจับคู่ */}
-              <div>
-                <label className="text-xs font-bold text-gray-400 mb-1.5 block">โหมดการจับกลุ่ม</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setSettingsForm((p) => p && { ...p, matchMode: 'auto' })}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 font-bold text-sm transition-all border-2 ${
-                      settingsForm.matchMode === 'auto'
-                        ? 'bg-[#E39B56] text-white border-[#E39B56]'
-                        : 'bg-gray-50 text-gray-500 border-transparent hover:border-gray-200'
-                    }`}
-                  >
-                    <Sparkles size={18} />
-                    Auto
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSettingsForm((p) => p && { ...p, matchMode: 'selection' })}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl py-3 px-2 font-bold text-sm transition-all border-2 ${
-                      settingsForm.matchMode === 'selection'
-                        ? 'bg-[#9C7BC9] text-white border-[#9C7BC9]'
-                        : 'bg-gray-50 text-gray-500 border-transparent hover:border-gray-200'
-                    }`}
-                  >
-                    <SlidersHorizontal size={18} />
-                    Manual
-                  </button>
-                </div>
-                {settingsForm.matchMode === 'auto' && (
-                  <p className="text-[11px] text-gray-400 mt-2">เปลี่ยนเป็นโหมดนี้แล้วจะพากลับไปหน้าจับคู่อัตโนมัติ</p>
-                )}
-              </div>
             </div>
 
             {settingsError && (

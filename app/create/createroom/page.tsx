@@ -150,7 +150,7 @@ export default function CreateRoomPage() {
       const roomForLocal = { ...roomData, id: roomId };
       localStorage.setItem('currentRoom', JSON.stringify(roomForLocal));
 
-      router.push('/create/typeselection');
+      router.push('/create/manual');
     } catch {
       alert('เกิดข้อผิดพลาด กรุณาลองใหม่');
     } finally {

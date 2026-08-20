@@ -1,5 +1,6 @@
-import type { AxisVector } from './mbti';
-import { resolveTemplateTypes } from './type-composition';
+import { pairCompatibility, pairCompatibilityScoreFast, resolveAxisWeights } from './mbti-compatibility';
+
+type AxisWeights = readonly [number, number, number, number];
 
 /** ค่าเฉลี่ยรายเกณฑ์ประเมิน 11 ด้าน (0-100 ต่อด้าน) เรียงตาม CRITERIA_KEYS */
 export type SkillVector = readonly number[];
@@ -9,27 +10,34 @@ export interface MatchInputMember {
   name: string;
   avatarSeed: number;
   avatarImage?: string | null;
-  axisVector: AxisVector;
+  /** 4-letter MBTI code (เช่น 'INTJ') — ใช้เป็น input หลักของ compatibility scoring */
+  code: string;
   categoryKey: string | null;
-  categoryAffinities: Record<string, number>;
   /** คะแนนประเมินรวม (0-100) ใช้แค่จัดลำดับก่อนเติมกลุ่ม (spread คนคะแนนสูง/ต่ำ) ไม่ใช่ objective หลัก */
   evalScore: number;
-  /** เวกเตอร์คะแนนรายเกณฑ์ 11 ด้าน — ใช้เป็น objective จริงสำหรับ skill balance (ละเอียดกว่า evalScore เดี่ยว) */
+  /** เวกเตอร์คะแนนรายเกณฑ์ 11 ด้าน — ใช้เป็น objective จริงสำหรับ skill balance */
   skillVector: SkillVector;
 }
 
 export interface ComputeGroupsInput {
   members: MatchInputMember[];
   groupSize: number;
-  matchMode: 'auto' | 'selection';
-  typeComposition: Record<string, number>;
   template: string;
+}
+
+/** คู่สมาชิกที่มีสัญญาณเด่นในกลุ่ม — เข้ากันดีที่สุด หรือควรหลีกเลี่ยง (ถูกจับกลุ่มร่วมกันทั้งที่ควรเลี่ยง เพราะข้อจำกัดขนาดกลุ่ม) */
+export interface SynergyNote {
+  gmailA: string;
+  gmailB: string;
+  reasons: string[];
+  avoid: boolean;
 }
 
 export interface MatchedGroupResult {
   id: number;
   name: string;
   members: { gmail: string; name: string; avatarSeed: number; avatarImage?: string | null; role: string }[];
+  synergyNotes: SynergyNote[];
 }
 
 interface WorkingGroup {
@@ -38,39 +46,30 @@ interface WorkingGroup {
   roles: string[]; // parallel to members — role label assigned to each member
 }
 
-export function pairDistance(a: AxisVector, b: AxisVector): number {
-  return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2]) + Math.abs(a[3] - b[3]);
+function codeHammingDistance(a: string, b: string): number {
+  let d = 0;
+  for (let i = 0; i < 4; i++) if (a[i] !== b[i]) d += 1;
+  return d;
 }
 
-export function marginalGain(existing: AxisVector[], candidate: AxisVector): number {
-  let sum = 0;
-  for (const v of existing) sum += pairDistance(v, candidate);
-  return sum;
-}
-
-export function groupDiversity(vectors: AxisVector[]): number {
-  let sum = 0;
-  for (let i = 0; i < vectors.length; i++) {
-    for (let j = i + 1; j < vectors.length; j++) sum += pairDistance(vectors[i], vectors[j]);
-  }
-  return sum;
-}
-
-// น้ำหนักรวมของ objective function: MBTI diversity (แกนหลัก) vs skill balance (แกนรอง จากคะแนนประเมิน)
+// น้ำหนักรวมของ objective function: MBTI compatibility (แกนหลัก) vs skill balance (แกนรอง จากคะแนนประเมิน)
 // ใช้สัดส่วนเดียวกับที่แอปนี้ใช้ผสม MBTI กับคะแนนประเมินอยู่แล้วตอนแนะนำหัวหน้าทีม (0.7/0.3)
-const DIVERSITY_WEIGHT = 0.7;
+const COMPATIBILITY_WEIGHT = 0.7;
 const SKILL_BALANCE_WEIGHT = 0.3;
-const MAX_AXIS_PAIR_DISTANCE = 8; // แต่ละแกนต่างกันได้สูงสุด 2 (-1..1) คูณ 4 แกน
 
-/** ความหลากหลายของกลุ่ม normalize เป็น 0..1 (ค่าเฉลี่ย pairwise distance ต่อคู่ เทียบระยะสูงสุดที่เป็นไปได้) */
-function normalizedGroupDiversity(vectors: AxisVector[]): number {
-  const pairCount = (vectors.length * (vectors.length - 1)) / 2;
+/** ความเข้ากันเฉลี่ยของกลุ่ม normalize เป็น 0..1 (ค่าเฉลี่ย pairCompatibilityScoreFast ต่อคู่ เทียบคะแนนสูงสุดที่เป็นไปได้ 100) */
+function normalizedGroupCompatibility(codes: string[], weights: AxisWeights): number {
+  const pairCount = (codes.length * (codes.length - 1)) / 2;
   if (pairCount === 0) return 0;
-  return groupDiversity(vectors) / (pairCount * MAX_AXIS_PAIR_DISTANCE);
+  let sum = 0;
+  for (let i = 0; i < codes.length; i++) {
+    for (let j = i + 1; j < codes.length; j++) sum += pairCompatibilityScoreFast(codes[i], codes[j], weights);
+  }
+  return sum / (pairCount * 100);
 }
 
 /** ความสมดุลของทักษะ (0..1) จากเวกเตอร์ค่าเฉลี่ยกลุ่มที่คำนวณไว้แล้ว — แยกจาก skillBalance() เพื่อให้ localSearchImprove
- * อัปเดตค่าเฉลี่ยกลุ่มแบบ incremental (บวก/ลบสมาชิกที่สลับ) แทนการ reduce เวกเตอร์ทั้งกลุ่มใหม่ทุกครั้ง (ดู diversityRawDelta ด้านล่าง) */
+ * อัปเดตค่าเฉลี่ยกลุ่มแบบ incremental (บวก/ลบสมาชิกที่สลับ) แทนการ reduce เวกเตอร์ทั้งกลุ่มใหม่ทุกครั้ง */
 function skillBalanceFromAvg(groupAvgVector: SkillVector, globalAvgVector: SkillVector): number {
   const dims = globalAvgVector.length;
   let sumAbsDeviation = 0;
@@ -87,19 +86,10 @@ function skillBalance(skillVectors: SkillVector[], globalAvgVector: SkillVector)
   return skillBalanceFromAvg(averageSkillVector(skillVectors), globalAvgVector);
 }
 
-/** Objective function หลัก: ผสม MBTI diversity กับ skill balance ตามน้ำหนักด้านบน ใช้ทั้งตอนเลือกกลุ่มให้สมาชิกใหม่
- * และตอน local search — ให้สองขั้นตอนเพิ่มประสิทธิภาพเป้าหมายเดียวกัน ไม่ใช่แค่ diversity อย่างเดียว */
-function combinedGroupScore(vectors: AxisVector[], skillVectors: SkillVector[], globalAvgVector: SkillVector): number {
-  return DIVERSITY_WEIGHT * normalizedGroupDiversity(vectors) + SKILL_BALANCE_WEIGHT * skillBalance(skillVectors, globalAvgVector);
-}
-
-function centroidOf(members: MatchInputMember[]): AxisVector {
-  const n = members.length;
-  let s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-  for (const m of members) {
-    s0 += m.axisVector[0]; s1 += m.axisVector[1]; s2 += m.axisVector[2]; s3 += m.axisVector[3];
-  }
-  return [s0 / n, s1 / n, s2 / n, s3 / n];
+/** Objective function หลัก: ผสม MBTI compatibility กับ skill balance ตามน้ำหนักด้านบน ใช้ทั้งตอนเลือกกลุ่มให้สมาชิกใหม่
+ * และตอน local search — ให้สองขั้นตอนเพิ่มประสิทธิภาพเป้าหมายเดียวกัน */
+function combinedGroupScore(codes: string[], skillVectors: SkillVector[], globalAvgVector: SkillVector, weights: AxisWeights): number {
+  return COMPATIBILITY_WEIGHT * normalizedGroupCompatibility(codes, weights) + SKILL_BALANCE_WEIGHT * skillBalance(skillVectors, globalAvgVector);
 }
 
 function balancedCapacities(n: number, numGroups: number): number[] {
@@ -116,18 +106,24 @@ function stableSortDesc<T>(arr: T[], keyFn: (t: T) => number): T[] {
     .map((x) => x.item);
 }
 
-/** Deterministic greedy farthest-first traversal: picks the member farthest from the room centroid first,
- * then repeatedly the member farthest from all seeds picked so far — spreads group "anchors" maximally apart. */
+function totalHammingDistance(member: MatchInputMember, all: MatchInputMember[]): number {
+  let sum = 0;
+  for (const m of all) sum += codeHammingDistance(member.code, m.code);
+  return sum;
+}
+
+/** Deterministic greedy farthest-first traversal over MBTI codes: picks the member whose code is most distinct
+ * from everyone else's first, then repeatedly the member farthest (by Hamming distance) from all seeds picked so
+ * far — spreads group "anchors" across type-space before the compatibility-maximizing placement below fills the rest. */
 function farthestPointSeeds(members: MatchInputMember[], k: number): MatchInputMember[] {
   const n = members.length;
   if (n === 0 || k <= 0) return [];
 
-  const centroid = centroidOf(members);
   let seed1Idx = 0;
-  let seed1Dist = -Infinity;
+  let seed1Val = -Infinity;
   members.forEach((m, i) => {
-    const d = pairDistance(m.axisVector, centroid);
-    if (d > seed1Dist) { seed1Dist = d; seed1Idx = i; }
+    const v = totalHammingDistance(m, members);
+    if (v > seed1Val) { seed1Val = v; seed1Idx = i; }
   });
 
   const seeds: MatchInputMember[] = [members[seed1Idx]];
@@ -139,7 +135,7 @@ function farthestPointSeeds(members: MatchInputMember[], k: number): MatchInputM
     members.forEach((m, i) => {
       if (seedIdx.has(i)) return;
       let minDist = Infinity;
-      for (const s of seeds) minDist = Math.min(minDist, pairDistance(m.axisVector, s.axisVector));
+      for (const s of seeds) minDist = Math.min(minDist, codeHammingDistance(m.code, s.code));
       if (minDist > bestMinDist) { bestMinDist = minDist; bestIdx = i; }
     });
     if (bestIdx === -1) break;
@@ -150,8 +146,14 @@ function farthestPointSeeds(members: MatchInputMember[], k: number): MatchInputM
   return seeds;
 }
 
-/** Auto mode, and selection mode with no typeComposition set — diversity + skill-balance maximizing construction. */
-function assignByDiversityConstruction(members: MatchInputMember[], groups: WorkingGroup[], capacities: number[], globalAvgSkill: SkillVector): void {
+/** จับกลุ่มโดย maximize MBTI compatibility (ตาม template) ผสม skill balance — path เดียวที่ใช้เสมอ */
+function assignByCompatibilityConstruction(
+  members: MatchInputMember[],
+  groups: WorkingGroup[],
+  capacities: number[],
+  globalAvgSkill: SkillVector,
+  weights: AxisWeights
+): void {
   const seeds = farthestPointSeeds(members, groups.length);
   const seedGmails = new Set(seeds.map((s) => s.gmail));
 
@@ -168,9 +170,9 @@ function assignByDiversityConstruction(members: MatchInputMember[], groups: Work
     let bestScore = -Infinity;
     groups.forEach((g, i) => {
       if (g.members.length >= capacities[i]) return;
-      const vectorsAfter = [...g.members.map((mm) => mm.axisVector), m.axisVector];
+      const codesAfter = [...g.members.map((mm) => mm.code), m.code];
       const skillVectorsAfter = [...g.members.map((mm) => mm.skillVector), m.skillVector];
-      const score = combinedGroupScore(vectorsAfter, skillVectorsAfter, globalAvgSkill);
+      const score = combinedGroupScore(codesAfter, skillVectorsAfter, globalAvgSkill, weights);
       if (score > bestScore) { bestScore = score; bestIdx = i; }
     });
     if (bestIdx === -1) {
@@ -181,81 +183,29 @@ function assignByDiversityConstruction(members: MatchInputMember[], groups: Work
   }
 }
 
-/** Selection mode with typeComposition set — category counts per group are a hard constraint. */
-function assignByComposition(
-  members: MatchInputMember[],
-  groups: WorkingGroup[],
-  typeComposition: Record<string, number>,
-  categories: string[],
-  groupSize: number,
-  globalAvgSkill: SkillVector
-): void {
-  let unassigned = stableSortDesc(members, (m) => m.evalScore);
-  const numGroups = groups.length;
-
-  for (const key of categories) {
-    const count = typeComposition[key] ?? 0;
-    if (!count) continue;
-
-    const exact = unassigned.filter((m) => m.categoryKey === key);
-    const fallback = stableSortDesc(unassigned.filter((m) => m.categoryKey !== key), (m) => m.categoryAffinities[key] ?? 0);
-    const chosen = [...exact, ...fallback].slice(0, count * numGroups);
-    const chosenGmails = new Set(chosen.map((m) => m.gmail));
-    unassigned = unassigned.filter((m) => !chosenGmails.has(m.gmail));
-
-    const remainingSlots = new Array(numGroups).fill(count);
-    for (const m of chosen) {
-      let bestIdx = -1;
-      let bestScore = -Infinity;
-      groups.forEach((g, i) => {
-        if (remainingSlots[i] <= 0) return;
-        const vectorsAfter = [...g.members.map((mm) => mm.axisVector), m.axisVector];
-        const skillVectorsAfter = [...g.members.map((mm) => mm.skillVector), m.skillVector];
-        const score = combinedGroupScore(vectorsAfter, skillVectorsAfter, globalAvgSkill);
-        if (score > bestScore) { bestScore = score; bestIdx = i; }
-      });
-      if (bestIdx === -1) continue;
-      groups[bestIdx].members.push(m);
-      groups[bestIdx].roles.push(key);
-      remainingSlots[bestIdx] -= 1;
-    }
-  }
-
-  // สมาชิกที่เหลือ (ไม่ครอบคลุมโดย composition ใดๆ) → ใส่กลุ่มที่ยังไม่ครบ groupSize ก่อน
-  for (const m of unassigned) {
-    const underCap = groups.filter((g) => g.members.length < groupSize);
-    const pool = underCap.length > 0 ? underCap : groups;
-    let best = pool[0];
-    for (const g of pool) if (g.members.length < best.members.length) best = g;
-    best.members.push(m);
-    best.roles.push(m.categoryKey ?? 'ไม่ระบุ');
-  }
-}
-
-/** sum of pairDistance(vec, others[k]) for every k except excludeIdx — the O(n) building block
- * that lets a single-member swap's diversity impact be measured without re-summing all pairs in the group. */
-function sumDistanceToOthers(vec: AxisVector, others: AxisVector[], excludeIdx: number): number {
+/** sum of pairCompatibilityScoreFast(code, others[k]) for every k except excludeIdx — the O(n) building block
+ * that lets a single-member swap's compatibility impact be measured without re-summing all pairs in the group. */
+function sumCompatibilityToOthers(code: string, others: string[], excludeIdx: number, weights: AxisWeights): number {
   let sum = 0;
   for (let k = 0; k < others.length; k++) {
-    if (k !== excludeIdx) sum += pairDistance(vec, others[k]);
+    if (k !== excludeIdx) sum += pairCompatibilityScoreFast(code, others[k], weights);
   }
   return sum;
 }
 
 /** Bounded 2-opt local search: swap two members across groups whenever it improves the combined
- * diversity+skill-balance objective. When roleLocked, only swaps within the same role slot so
- * typeComposition category counts never change.
+ * compatibility+skill-balance objective.
  *
- * Evaluating every candidate swap by rebuilding both groups' vectors and recomputing combinedGroupScore
- * from scratch is O(n) per candidate for the diversity sum alone (pairwise) times O(n) candidates per
- * group-pair times O(n) again inside groupDiversity's own double loop — O(n^4) per group-pair per round,
- * which times out on large rooms (e.g. 300 members / 50 per group). Swapping a single member only changes
- * the pairs touching that member, so each candidate's delta can be measured in O(n) (diversity) + O(dims)
+ * Evaluating every candidate swap by rebuilding both groups' code lists and recomputing combinedGroupScore
+ * from scratch is O(n) per candidate for the compatibility sum alone (pairwise) times O(n) candidates per
+ * group-pair times O(n) again inside normalizedGroupCompatibility's own double loop — O(n^4) per group-pair per
+ * round, which times out on large rooms (e.g. 300 members / 50 per group). Swapping a single member only changes
+ * the pairs touching that member, so each candidate's delta can be measured in O(n) (compatibility) + O(dims)
  * (skill balance, via the incrementally-updated group average) instead of recomputing the whole O(n^2) sum —
  * turning the group-pair sweep from O(n^4) into O(n^3) while producing the exact same deltas (up to
  * floating-point rounding) as the brute-force version above.
  */
-function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalAvgSkill: SkillVector): void {
+function localSearchImprove(groups: WorkingGroup[], globalAvgSkill: SkillVector, weights: AxisWeights): void {
   const maxRounds = 50;
   const dims = globalAvgSkill.length;
 
@@ -267,12 +217,12 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalA
       for (let gj = gi + 1; gj < groups.length; gj++) {
         const groupA = groups[gi];
         const groupB = groups[gj];
-        const vecsA = groupA.members.map((m) => m.axisVector);
-        const vecsB = groupB.members.map((m) => m.axisVector);
+        const codesA = groupA.members.map((m) => m.code);
+        const codesB = groupB.members.map((m) => m.code);
         const skillsA = groupA.members.map((m) => m.skillVector);
         const skillsB = groupB.members.map((m) => m.skillVector);
-        const nA = vecsA.length;
-        const nB = vecsB.length;
+        const nA = codesA.length;
+        const nB = codesB.length;
         const pairCountA = (nA * (nA - 1)) / 2;
         const pairCountB = (nB * (nB - 1)) / 2;
         const avgSkillA = averageSkillVector(skillsA);
@@ -282,17 +232,15 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalA
 
         // Precomputed once per (ai) / (bi) — reused across every candidate on the other side, since it
         // only depends on the member being replaced, not on what it's being replaced with.
-        const oldSumA = vecsA.map((v, idx) => (nA > 1 ? sumDistanceToOthers(v, vecsA, idx) : 0));
-        const oldSumB = vecsB.map((v, idx) => (nB > 1 ? sumDistanceToOthers(v, vecsB, idx) : 0));
+        const oldSumA = codesA.map((c, idx) => (nA > 1 ? sumCompatibilityToOthers(c, codesA, idx, weights) : 0));
+        const oldSumB = codesB.map((c, idx) => (nB > 1 ? sumCompatibilityToOthers(c, codesB, idx, weights) : 0));
 
         for (let ai = 0; ai < nA; ai++) {
           for (let bi = 0; bi < nB; bi++) {
-            if (roleLocked && groupA.roles[ai] !== groupB.roles[bi]) continue;
-
-            const diversityRawDeltaA = nA > 1 ? sumDistanceToOthers(vecsB[bi], vecsA, ai) - oldSumA[ai] : 0;
-            const diversityRawDeltaB = nB > 1 ? sumDistanceToOthers(vecsA[ai], vecsB, bi) - oldSumB[bi] : 0;
-            const normalizedDeltaA = pairCountA > 0 ? diversityRawDeltaA / (pairCountA * MAX_AXIS_PAIR_DISTANCE) : 0;
-            const normalizedDeltaB = pairCountB > 0 ? diversityRawDeltaB / (pairCountB * MAX_AXIS_PAIR_DISTANCE) : 0;
+            const compatRawDeltaA = nA > 1 ? sumCompatibilityToOthers(codesB[bi], codesA, ai, weights) - oldSumA[ai] : 0;
+            const compatRawDeltaB = nB > 1 ? sumCompatibilityToOthers(codesA[ai], codesB, bi, weights) - oldSumB[bi] : 0;
+            const normalizedDeltaA = pairCountA > 0 ? compatRawDeltaA / (pairCountA * 100) : 0;
+            const normalizedDeltaB = pairCountB > 0 ? compatRawDeltaB / (pairCountB * 100) : 0;
 
             let skillDeltaA = 0;
             let skillDeltaB = 0;
@@ -308,7 +256,7 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalA
             }
 
             const delta =
-              DIVERSITY_WEIGHT * (normalizedDeltaA + normalizedDeltaB) +
+              COMPATIBILITY_WEIGHT * (normalizedDeltaA + normalizedDeltaB) +
               SKILL_BALANCE_WEIGHT * (skillDeltaA + skillDeltaB);
 
             if (delta > bestDelta) {
@@ -327,12 +275,8 @@ function localSearchImprove(groups: WorkingGroup[], roleLocked: boolean, globalA
     const memberB = groups[gj].members[bi];
     groups[gi].members[ai] = memberB;
     groups[gj].members[bi] = memberA;
-
-    if (!roleLocked) {
-      groups[gi].roles[ai] = memberB.categoryKey ?? 'ไม่ระบุ';
-      groups[gj].roles[bi] = memberA.categoryKey ?? 'ไม่ระบุ';
-    }
-    // roleLocked: roles at the swapped positions are already equal (guaranteed by the filter above), no update needed
+    groups[gi].roles[ai] = memberB.categoryKey ?? 'ไม่ระบุ';
+    groups[gj].roles[bi] = memberA.categoryKey ?? 'ไม่ระบุ';
   }
 }
 
@@ -343,25 +287,42 @@ function averageSkillVector(vectors: SkillVector[]): SkillVector {
   return sums.map((s) => s / vectors.length);
 }
 
+/** เลือกคู่ที่ควรโชว์เป็นเหตุผลให้ผู้ใช้เห็น: คู่ที่เข้ากันดีที่สุดในกลุ่ม (ถ้าไม่ได้ถูกแนะนำให้เลี่ยง) เสมอ
+ * บวกทุกคู่ที่ถูกแนะนำให้เลี่ยงแต่สุดท้ายอยู่กลุ่มเดียวกันจริง (เกิดได้เมื่อขนาดกลุ่มบีบให้ต้องอยู่ด้วยกัน) — คำนวณครั้งเดียวหลังกลุ่มนิ่งแล้ว ไม่ใช่ hot loop */
+function buildSynergyNotes(members: MatchInputMember[], template: string): SynergyNote[] {
+  const notes: SynergyNote[] = [];
+  let best: { i: number; j: number; result: ReturnType<typeof pairCompatibility> } | null = null;
+
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      const result = pairCompatibility(members[i].code, members[j].code, template);
+      if (result.avoid) {
+        notes.push({ gmailA: members[i].gmail, gmailB: members[j].gmail, reasons: result.reasons, avoid: true });
+      }
+      if (!best || result.score > best.result.score) best = { i, j, result };
+    }
+  }
+
+  if (best && !best.result.avoid) {
+    notes.unshift({ gmailA: members[best.i].gmail, gmailB: members[best.j].gmail, reasons: best.result.reasons, avoid: false });
+  }
+
+  return notes;
+}
+
 export function computeGroups(input: ComputeGroupsInput): MatchedGroupResult[] {
-  const { members, matchMode, typeComposition, template } = input;
+  const { members, template } = input;
   const groupSize = Math.max(1, input.groupSize || 1);
   const numGroups = Math.max(1, Math.ceil(members.length / groupSize));
 
   const groups: WorkingGroup[] = Array.from({ length: numGroups }, (_, i) => ({ id: i + 1, members: [], roles: [] }));
 
   const globalAvgSkill = averageSkillVector(members.map((m) => m.skillVector));
-  const hasComposition = matchMode === 'selection' && Object.values(typeComposition).some((v) => v > 0);
+  const capacities = balancedCapacities(members.length, numGroups);
+  const weights = resolveAxisWeights(template);
 
-  if (hasComposition) {
-    const categories = resolveTemplateTypes(template).map((t) => t.key);
-    assignByComposition(members, groups, typeComposition, categories, groupSize, globalAvgSkill);
-    localSearchImprove(groups, true, globalAvgSkill);
-  } else {
-    const capacities = balancedCapacities(members.length, numGroups);
-    assignByDiversityConstruction(members, groups, capacities, globalAvgSkill);
-    localSearchImprove(groups, false, globalAvgSkill);
-  }
+  assignByCompatibilityConstruction(members, groups, capacities, globalAvgSkill, weights);
+  localSearchImprove(groups, globalAvgSkill, weights);
 
   return groups.map((g, i) => ({
     id: g.id,
@@ -373,5 +334,6 @@ export function computeGroups(input: ComputeGroupsInput): MatchedGroupResult[] {
       avatarImage: m.avatarImage,
       role: g.roles[idx],
     })),
+    synergyNotes: buildSynergyNotes(g.members, template),
   }));
 }

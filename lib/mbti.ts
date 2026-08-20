@@ -64,7 +64,7 @@ const AXIS_ICON: Record<Axis, string> = {
   JP: '/img/pencil.png',
 };
 
-const AXIS_LABEL: Record<Axis, [string, string]> = {
+export const AXIS_LABEL: Record<Axis, [string, string]> = {
   EI: ['E · เปิดเผย เข้าสังคม', 'I · ใคร่ครวญ สงบนิ่ง'],
   SN: ['S · ปฏิบัติ ลงรายละเอียด', 'N · มองภาพรวม จินตนาการ'],
   TF: ['T · เหตุผล ตรรกะ', 'F · ความรู้สึก คน'],
@@ -89,14 +89,6 @@ export function letterAffinity(typeScores: { title: string; score: number }[], l
   const bar = typeScores.find((b) => b.title[0] === letter || b.title[0] === partner);
   if (!bar) return 50;
   return bar.title[0] === letter ? bar.score : 100 - bar.score;
-}
-
-/** Signed per-axis lean [-1..1] for E, S, T, J, derived from persisted typeScores via letterAffinity. */
-export type AxisVector = readonly [number, number, number, number];
-
-export function axisVector(typeScores: { title: string; score: number }[]): AxisVector {
-  const norm = (letter: Letter) => (letterAffinity(typeScores, letter) - 50) / 50;
-  return [norm('E'), norm('S'), norm('T'), norm('J')];
 }
 
 /**

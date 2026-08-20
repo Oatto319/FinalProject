@@ -1,4 +1,4 @@
-import { typeIcon, letterAffinity } from './mbti';
+import { typeIcon } from './mbti';
 
 export type TypeOption = { key: string; label: string; icon: string; subtitle?: string };
 
@@ -28,23 +28,4 @@ export function resolveTemplateTypes(template: string): TypeOption[] {
 export function categoryKeyForCode(template: string, code: string): string | null {
   const icon = typeIcon(code);
   return resolveTemplateTypes(template).find((o) => o.icon === icon)?.key ?? null;
-}
-
-/**
- * 0-100 fit score for each of the 4 MBTI group categories, derived from a member's axis bars.
- * Used as a tie-breaker when no unassigned member exactly matches a composition slot.
- */
-export function categoryAffinities(template: string, typeScores: { title: string; score: number }[]): Record<string, number> {
-  const N = letterAffinity(typeScores, 'N');
-  const T = letterAffinity(typeScores, 'T');
-  const J = letterAffinity(typeScores, 'J');
-  const affinityByIcon: Record<string, number> = {
-    '/img/brain.png':  (N + T) / 2,
-    '/img/idea.png':   (N + (100 - T)) / 2,
-    '/img/make.png':   (100 - N + J) / 2,
-    '/img/pencil.png': (100 - N + (100 - J)) / 2,
-  };
-  const result: Record<string, number> = {};
-  for (const opt of resolveTemplateTypes(template)) result[opt.key] = affinityByIcon[opt.icon] ?? 0;
-  return result;
 }

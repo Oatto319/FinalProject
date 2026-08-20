@@ -15,7 +15,7 @@ const MatchingPage = () => {
         const localRoom = JSON.parse(roomRaw);
         const roomId = localRoom.roomId ?? localRoom.id;
 
-        // การจับกลุ่มจริงคำนวณฝั่ง server ทั้งหมด (อ่าน matchMode/typeComposition/สมาชิก/ผล MBTI จาก DB เอง)
+        // การจับกลุ่มจริงคำนวณฝั่ง server ทั้งหมด (อ่านสมาชิก/ผล MBTI จาก DB เอง แล้วจับตาม MBTI compatibility matrix)
         // client แค่สั่งให้เริ่มจับกลุ่มเท่านั้น
         const matchPayload = JSON.stringify({ action: 'match' });
         let saveRes = await fetch(`/api/rooms/${roomId}`, {
