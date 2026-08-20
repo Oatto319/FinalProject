@@ -183,13 +183,11 @@ function assignByCompatibilityConstruction(
   }
 }
 
-/** sum of pairCompatibilityScoreFast(code, others[k]) for every k except excludeIdx — the O(n) building block
- * that lets a single-member swap's compatibility impact be measured without re-summing all pairs in the group. */
-function sumCompatibilityToOthers(code: string, others: string[], excludeIdx: number, weights: AxisWeights): number {
+/** sum of pairCompatibilityScoreFast(code, others[k]) over every k (self-inclusive if code is itself in `others`) —
+ * the O(n) building block that both group-cohesion (oldSumA/oldSumB) and cross-group candidate scores derive from. */
+function rowSum(code: string, others: string[], weights: AxisWeights): number {
   let sum = 0;
-  for (let k = 0; k < others.length; k++) {
-    if (k !== excludeIdx) sum += pairCompatibilityScoreFast(code, others[k], weights);
-  }
+  for (let k = 0; k < others.length; k++) sum += pairCompatibilityScoreFast(code, others[k], weights);
   return sum;
 }
 
@@ -232,13 +230,29 @@ function localSearchImprove(groups: WorkingGroup[], globalAvgSkill: SkillVector,
 
         // Precomputed once per (ai) / (bi) — reused across every candidate on the other side, since it
         // only depends on the member being replaced, not on what it's being replaced with.
-        const oldSumA = codesA.map((c, idx) => (nA > 1 ? sumCompatibilityToOthers(c, codesA, idx, weights) : 0));
-        const oldSumB = codesB.map((c, idx) => (nB > 1 ? sumCompatibilityToOthers(c, codesB, idx, weights) : 0));
+        //
+        // rowSum(x, codesA) sums pairCompat(x, codesA[k]) over ALL k, self-term included when x is itself
+        // a codesA element — that self-term (pairCompat(x,x), a constant) is subtracted back out below for
+        // oldSumA/oldSumB. This lets every "sum to the rest of the group excluding one index" value be read
+        // in O(1) instead of re-summed in O(n) per candidate — the (ai,bi) loop below would otherwise recompute
+        // an O(n) sum per candidate, making the whole pass O(n^3) per group-pair. That was fine for the old
+        // pairDistance-based diversity metric (cheap arithmetic, no branches) but pairCompatibilityScoreFast
+        // does ~5x more work per call (charCodeAt x4 + branches + weight lookups), so the O(n^3) version blew
+        // past the request-timeout budget on large rooms. Precomputing these row sums drops the (ai,bi) loop
+        // itself to O(1) per candidate — O(n^2) per group-pair instead of O(n^3).
+        const oldSumA = codesA.map((c) => (nA > 1 ? rowSum(c, codesA, weights) - pairCompatibilityScoreFast(c, c, weights) : 0));
+        const oldSumB = codesB.map((c) => (nB > 1 ? rowSum(c, codesB, weights) - pairCompatibilityScoreFast(c, c, weights) : 0));
+        // Sum of each B-candidate against every member of A (and vice versa) — computed once per bi/ai here,
+        // then reused for every ai/bi it's paired with in the loop below instead of resumming per (ai,bi) pair.
+        const candSumAforB = codesB.map((c) => rowSum(c, codesA, weights));
+        const candSumBforA = codesA.map((c) => rowSum(c, codesB, weights));
 
         for (let ai = 0; ai < nA; ai++) {
           for (let bi = 0; bi < nB; bi++) {
-            const compatRawDeltaA = nA > 1 ? sumCompatibilityToOthers(codesB[bi], codesA, ai, weights) - oldSumA[ai] : 0;
-            const compatRawDeltaB = nB > 1 ? sumCompatibilityToOthers(codesA[ai], codesB, bi, weights) - oldSumB[bi] : 0;
+            // pairCompatibilityScoreFast is symmetric, so this single call covers both subtractions below.
+            const cross = pairCompatibilityScoreFast(codesA[ai], codesB[bi], weights);
+            const compatRawDeltaA = nA > 1 ? (candSumAforB[bi] - cross) - oldSumA[ai] : 0;
+            const compatRawDeltaB = nB > 1 ? (candSumBforA[ai] - cross) - oldSumB[bi] : 0;
             const normalizedDeltaA = pairCountA > 0 ? compatRawDeltaA / (pairCountA * 100) : 0;
             const normalizedDeltaB = pairCountB > 0 ? compatRawDeltaB / (pairCountB * 100) : 0;
 

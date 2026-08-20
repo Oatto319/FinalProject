@@ -126,3 +126,34 @@ export function pairCompatibility(codeA: string, codeB: string, template: string
 
   return { score, reasons, avoid: score < AVOID_THRESHOLD };
 }
+
+const BEST_PARTNER_COUNT = 3;
+
+/**
+ * สรุปว่า MBTI type หนึ่ง เข้ากับ type อื่นๆ อีก 15 ชนิดที่เหลืออย่างไรบ้าง สำหรับ template ที่กำหนด — ใช้แสดงในหน้า
+ * "MBTI Templates" (คู่มืออ้างอิงสำหรับ host) ไม่ใช่ hot loop ของอัลกอริทึม เรียกไม่บ่อย เลยไม่ต้องรับ weights ที่ resolve ไว้แล้ว
+ *
+ * cautionPartners มักมีแค่ 0-2 รายการ (ไม่ใช่รายชื่อ "ศัตรู") — เกิดเฉพาะกับ type ที่ต่างจาก code แค่ 1 ตัวอักษรบนแกนที่มีน้ำหนักต่ำ
+ * สำหรับ template นั้น จึงมีสไตล์การทำงานคล้ายกันเกือบทุกด้านจนขาดมุมมองเสริม — คำอธิบาย (reasons) เป็นภาษาสไตล์การทำงาน
+ * ที่ต่างกัน ไม่ใช่ข้อสรุปว่า "เข้ากันไม่ได้แน่นอน" (ดู pairCompatibility ด้านบน)
+ */
+export function typeCompatibilitySummary(code: string, template: string): TypeCompatibilitySummary {
+  const results = MBTI_CODES
+    .filter((c) => c !== code)
+    .map((other) => {
+      const r = pairCompatibility(code, other, template);
+      return { code: other, score: r.score, reasons: r.reasons, avoid: r.avoid };
+    });
+
+  const bestPartners = [...results]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, BEST_PARTNER_COUNT)
+    .map(({ code, score, reasons }) => ({ code, score, reasons }));
+
+  const cautionPartners = results
+    .filter((r) => r.avoid)
+    .sort((a, b) => a.score - b.score)
+    .map(({ code, score, reasons }) => ({ code, score, reasons }));
+
+  return { bestPartners, cautionPartners };
+}

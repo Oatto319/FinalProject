@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
-import { Copy, Settings, X, Home } from 'lucide-react';
+import { Copy, Settings, BookOpen, X, Home } from 'lucide-react';
 import Navbar from '../../navbar/page';
 import { resolveAvatar } from '@/lib/avatar';
 import { typeColor } from '@/lib/mbti';
@@ -311,6 +311,14 @@ const ManualPage = () => {
               title="ตั้งค่าห้อง"
             >
               <Settings size={20} />
+            </button>
+            <button
+              onClick={() => room && router.push(`/create/mbti-guide?roomId=${getRoomId(room)}&template=${room.template ?? 'programming'}`)}
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-md hover:bg-white/90 active:scale-95 transition-all"
+              style={{ color: theme.accent }}
+              title="MBTI Templates — คู่มือความเข้ากันของ MBTI"
+            >
+              <BookOpen size={20} />
             </button>
             {/* Mobile-only: compact match button */}
             {isAllReady && (
